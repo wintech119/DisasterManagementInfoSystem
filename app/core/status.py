@@ -73,6 +73,40 @@ DBINTAKE_ITEM_STATUS = {
     'V': 'Verified'
 }
 
+NEEDS_LIST_STATUS = {
+    'Draft': 'Draft',
+    'Submitted': 'Submitted',
+    'Under Review': 'Under Review',
+    'Approved': 'Approved',
+    'Rejected': 'Rejected',
+    'In Fulfilment': 'In Fulfilment',
+    'Completed': 'Completed'
+}
+
+NEEDS_LIST_PRIORITY = {
+    'LOW': 'Low',
+    'MEDIUM': 'Medium',
+    'HIGH': 'High',
+    'CRITICAL': 'Critical'
+}
+
+FULFILMENT_STATUS = {
+    'In Preparation': 'In Preparation',
+    'Ready': 'Ready',
+    'Dispatched': 'Dispatched',
+    'Received': 'Received',
+    'Completed': 'Completed',
+    'Cancelled': 'Cancelled'
+}
+
+DISTRIBUTION_PACKAGE_STATUS = {
+    'Draft': 'Draft',
+    'Approved': 'Approved',
+    'Dispatched': 'Dispatched',
+    'Delivered': 'Delivered',
+    'Cancelled': 'Cancelled'
+}
+
 STATUS_BADGE_MAP = {
     'event': {'A': 'success', 'C': 'secondary'},
     'warehouse': {'A': 'success', 'I': 'secondary'},
@@ -84,7 +118,11 @@ STATUS_BADGE_MAP = {
     'reliefrqst_item': {'R': 'info', 'U': 'danger', 'W': 'warning', 'D': 'danger', 'P': 'warning', 'L': 'info', 'F': 'success'},
     'urgency': {'L': 'secondary', 'M': 'info', 'H': 'warning', 'C': 'danger'},
     'dbintake': {'I': 'warning', 'C': 'success', 'V': 'primary'},
-    'dbintake_item': {'P': 'warning', 'V': 'success'}
+    'dbintake_item': {'P': 'warning', 'V': 'success'},
+    'needs_list': {'Draft': 'secondary', 'Submitted': 'info', 'Under Review': 'warning', 'Approved': 'success', 'Rejected': 'danger', 'In Fulfilment': 'primary', 'Completed': 'success'},
+    'needs_list_priority': {'LOW': 'secondary', 'MEDIUM': 'info', 'HIGH': 'warning', 'CRITICAL': 'danger'},
+    'fulfilment': {'In Preparation': 'warning', 'Ready': 'info', 'Dispatched': 'primary', 'Received': 'success', 'Completed': 'success', 'Cancelled': 'secondary'},
+    'distribution_package': {'Draft': 'secondary', 'Approved': 'info', 'Dispatched': 'primary', 'Delivered': 'success', 'Cancelled': 'danger'}
 }
 
 def get_status_label(status_code, status_type='event'):
@@ -101,7 +139,11 @@ def get_status_label(status_code, status_type='event'):
         'intake': INTAKE_STATUS,
         'dbintake': INTAKE_STATUS,
         'dbintake_item': DBINTAKE_ITEM_STATUS,
-        'urgency': URGENCY_IND
+        'urgency': URGENCY_IND,
+        'needs_list': NEEDS_LIST_STATUS,
+        'needs_list_priority': NEEDS_LIST_PRIORITY,
+        'fulfilment': FULFILMENT_STATUS,
+        'distribution_package': DISTRIBUTION_PACKAGE_STATUS
     }
     
     return mappings.get(status_type, {}).get(status_code, str(status_code))
