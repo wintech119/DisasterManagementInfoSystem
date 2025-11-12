@@ -15,7 +15,7 @@
                     <p class="text-muted mb-0">{{ request.agency.agency_name }}</p>
                 </div>
                 <div>
-                    {% if request.status_code == 10 %}
+                    {% if request.status_code == 0 %}
                         <a href="{{ url_for('requests.edit_items', request_id=request.reliefrqst_id) }}" class="btn btn-warning">
                             <i class="bi bi-pencil"></i> Edit Items
                         </a>
@@ -77,19 +77,19 @@
                     <tr>
                         <th>Status:</th>
                         <td>
-                            {% if request.status_code == 10 %}
+                            {% if request.status_code == 0 %}
                                 <span class="badge bg-secondary">Draft</span>
-                            {% elif request.status_code == 20 %}
+                            {% elif request.status_code == 3 %}
                                 <span class="badge bg-primary">Submitted</span>
-                            {% elif request.status_code == 30 %}
+                            {% elif request.status_code == 1 %}
                                 <span class="badge bg-info text-dark">In Review</span>
-                            {% elif request.status_code == 40 %}
+                            {% elif request.status_code == 5 %}
                                 <span class="badge bg-warning text-dark">Approved</span>
-                            {% elif request.status_code == 60 %}
+                            {% elif request.status_code == 5 %}
                                 <span class="badge bg-success">Dispatched</span>
-                            {% elif request.status_code == 70 %}
+                            {% elif request.status_code == 7 %}
                                 <span class="badge bg-success">Partially Received</span>
-                            {% elif request.status_code == 80 %}
+                            {% elif request.status_code == 6 %}
                                 <span class="badge bg-success">Completed</span>
                             {% endif %}
                         </td>
@@ -113,7 +113,7 @@
     <div class="drims-card">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="mb-0"><i class="bi bi-list-ul"></i> Requested Items</h5>
-            {% if request.status_code == 10 %}
+            {% if request.status_code == 0 %}
                 <a href="{{ url_for('requests.edit_items', request_id=request.reliefrqst_id) }}" class="btn btn-sm btn-goj">
                     <i class="bi bi-plus-circle"></i> Add Items
                 </a>
@@ -174,7 +174,7 @@
         <div class="text-center py-4">
             <i class="bi bi-inbox" style="font-size: 3rem; color: #dee2e6;"></i>
             <p class="text-muted mt-2 mb-3">No items added yet</p>
-            {% if request.status_code == 10 %}
+            {% if request.status_code == 0 %}
                 <a href="{{ url_for('requests.edit_items', request_id=request.reliefrqst_id) }}" class="btn btn-goj btn-sm">
                     <i class="bi bi-plus-circle"></i> Add Items Now
                 </a>
@@ -205,13 +205,13 @@
                         <td>{{ package.create_dtime.strftime('%Y-%m-%d') }}</td>
                         <td><span class="badge bg-secondary">{{ package.items|length }} item(s)</span></td>
                         <td>
-                            {% if package.status_code == 10 %}
+                            {% if package.status_code == 0 %}
                                 <span class="badge bg-secondary">Draft</span>
-                            {% elif package.status_code == 20 %}
+                            {% elif package.status_code == 3 %}
                                 <span class="badge bg-success">Ready</span>
-                            {% elif package.status_code == 30 %}
+                            {% elif package.status_code == 1 %}
                                 <span class="badge bg-info text-dark">Dispatched</span>
-                            {% elif package.status_code == 40 %}
+                            {% elif package.status_code == 5 %}
                                 <span class="badge bg-success">Received</span>
                             {% endif %}
                         </td>
