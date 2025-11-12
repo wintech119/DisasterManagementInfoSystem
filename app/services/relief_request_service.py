@@ -13,20 +13,21 @@ from app.db.models import (
     ReliefPkg, ReliefPkgItem, DBIntake, DBIntakeItem
 )
 from app.core.exceptions import OptimisticLockError
+from app.core.status_codes import ReliefRequestStatus, UrgencyLevel
 
 
-# Status codes mapping (as per spec)
-STATUS_DRAFT = 10
-STATUS_SUBMITTED = 20
-STATUS_UNDER_REVIEW = 30
-STATUS_APPROVED = 40
-STATUS_PACKAGE_PREPARED = 60
-STATUS_DISPATCHED = 70
-STATUS_DELIVERED = 80
+# Import canonical status codes from ODPEM AIDMGMT-3 schema (0-7 range)
+STATUS_DRAFT = ReliefRequestStatus.DRAFT  # 0
+STATUS_SUBMITTED = ReliefRequestStatus.SUBMITTED  # 3
+STATUS_UNDER_REVIEW = ReliefRequestStatus.AWAITING_APPROVAL  # 1
+STATUS_APPROVED = ReliefRequestStatus.PART_FILLED  # 5 (in progress)
+STATUS_PACKAGE_PREPARED = ReliefRequestStatus.PART_FILLED  # 5
+STATUS_DISPATCHED = ReliefRequestStatus.FILLED  # 7 (dispatched means filled)
+STATUS_DELIVERED = ReliefRequestStatus.CLOSED  # 6 (completed)
 
-URGENCY_HIGH = 'H'
-URGENCY_MEDIUM = 'M'
-URGENCY_LOW = 'L'
+URGENCY_HIGH = UrgencyLevel.HIGH
+URGENCY_MEDIUM = UrgencyLevel.MEDIUM
+URGENCY_LOW = UrgencyLevel.LOW
 
 
 def get_workflow_steps(status_code: int) -> Dict:
