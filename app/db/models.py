@@ -124,12 +124,15 @@ class Agency(db.Model):
     
     agency_id = db.Column(db.Integer, primary_key=True)
     agency_name = db.Column(db.String(120), nullable=False, unique=True)
+    agency_type = db.Column(db.String(16), nullable=False)
     address1_text = db.Column(db.String(255), nullable=False)
     address2_text = db.Column(db.String(255))
     parish_code = db.Column(db.CHAR(2), db.ForeignKey('parish.parish_code'), nullable=False)
     contact_name = db.Column(db.String(50), nullable=False)
     phone_no = db.Column(db.String(20), nullable=False)
     email_text = db.Column(db.String(100))
+    ineligible_event_id = db.Column(db.Integer, db.ForeignKey('event.event_id'))
+    status_code = db.Column(db.CHAR(1), nullable=False)
     create_by_id = db.Column(db.String(20), nullable=False)
     create_dtime = db.Column(db.DateTime, nullable=False)
     update_by_id = db.Column(db.String(20), nullable=False)
@@ -137,6 +140,7 @@ class Agency(db.Model):
     version_nbr = db.Column(db.Integer, nullable=False, default=1)
     
     parish = db.relationship('Parish', backref='agencies')
+    ineligible_event = db.relationship('Event', backref='ineligible_agencies')
 
 class Parish(db.Model):
     """Jamaican Parish"""
@@ -270,7 +274,10 @@ class ReliefRqst(db.Model):
     reliefrqst_id = db.Column(db.Integer, primary_key=True)
     agency_id = db.Column(db.Integer, db.ForeignKey('agency.agency_id'), nullable=False)
     request_date = db.Column(db.Date, nullable=False)
+    eligible_event_id = db.Column(db.Integer, db.ForeignKey('event.event_id'))
     urgency_ind = db.Column(db.CHAR(1), nullable=False)
+    rqst_notes_text = db.Column(db.Text)
+    review_notes_text = db.Column(db.Text)
     status_code = db.Column(db.SmallInteger, nullable=False)
     create_by_id = db.Column(db.String(20), nullable=False)
     create_dtime = db.Column(db.DateTime, nullable=False)
@@ -281,6 +288,7 @@ class ReliefRqst(db.Model):
     version_nbr = db.Column(db.Integer, nullable=False, default=1)
     
     agency = db.relationship('Agency', backref='relief_requests')
+    eligible_event = db.relationship('Event', backref='eligible_relief_requests')
 
 class ReliefRqstItem(db.Model):
     """Relief Request Item"""
@@ -289,11 +297,11 @@ class ReliefRqstItem(db.Model):
     reliefrqst_id = db.Column(db.Integer, db.ForeignKey('reliefrqst.reliefrqst_id'), primary_key=True)
     item_id = db.Column(db.Integer, db.ForeignKey('item.item_id'), primary_key=True)
     request_qty = db.Column(db.Numeric(12, 2), nullable=False)
-    issue_qty = db.Column(db.Numeric(12, 2), nullable=False, default=0)
+    issue_qty = db.Column(db.Numeric(12, 2), nullable=False)
     urgency_ind = db.Column(db.CHAR(1), nullable=False)
     rqst_reason_desc = db.Column(db.String(255))
     required_by_date = db.Column(db.Date)
-    status_code = db.Column(db.CHAR(1), nullable=False, default='R')
+    status_code = db.Column(db.CHAR(1), nullable=False)
     status_reason_desc = db.Column(db.String(255))
     action_by_id = db.Column(db.String(20))
     action_dtime = db.Column(db.DateTime)
@@ -320,6 +328,8 @@ class ReliefPkg(db.Model):
     update_dtime = db.Column(db.DateTime)
     verify_by_id = db.Column(db.String(20), nullable=False)
     verify_dtime = db.Column(db.DateTime)
+    received_by_id = db.Column(db.String(20), nullable=False)
+    received_dtime = db.Column(db.DateTime)
     version_nbr = db.Column(db.Integer, nullable=False, default=1)
     
     relief_request = db.relationship('ReliefRqst', backref='packages')
@@ -591,8 +601,8 @@ class Transfer(db.Model):
     fr_inventory_id = db.Column(db.Integer, db.ForeignKey('inventory.inventory_id'), nullable=False)
     to_inventory_id = db.Column(db.Integer, db.ForeignKey('inventory.inventory_id'), nullable=False)
     transfer_date = db.Column(db.Date, nullable=False)
-    transport_mode = db.Column(db.String(255))
-    comments_text = db.Column(db.String(255))
+    event_id = db.Column(db.Integer, db.ForeignKey('event.event_id'))
+    reason_text = db.Column(db.String(255))
     status_code = db.Column(db.CHAR(1), nullable=False)
     create_by_id = db.Column(db.String(20), nullable=False)
     create_dtime = db.Column(db.DateTime, nullable=False)
@@ -604,6 +614,7 @@ class Transfer(db.Model):
     
     from_inventory = db.relationship('Inventory', foreign_keys=[fr_inventory_id])
     to_inventory = db.relationship('Inventory', foreign_keys=[to_inventory_id])
+    event = db.relationship('Event', backref='transfers')
 
 class TransferItem(db.Model):
     """Transfer item details"""
