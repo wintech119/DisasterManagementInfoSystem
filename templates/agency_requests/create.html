@@ -12,7 +12,7 @@
     </div>
 
     <div class="drims-card">
-        <form method="POST" action="{{ url_for('agency_requests.create_request') }}">
+        <form method="POST" action="{{ url_for('requests.create_request') }}">
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="agency_name" class="form-label">Requesting Agency</label>
@@ -27,8 +27,8 @@
 
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label for="event_id" class="form-label">Disaster Event *</label>
-                    <select class="form-select" id="event_id" name="event_id" required>
+                    <label for="eligible_event_id" class="form-label">Disaster Event *</label>
+                    <select class="form-select" id="eligible_event_id" name="eligible_event_id" required>
                         <option value="">Select event...</option>
                         {% for event in events %}
                         <option value="{{ event.event_id }}">{{ event.event_name }}</option>
@@ -40,17 +40,16 @@
                     <label for="urgency_ind" class="form-label">Urgency Level *</label>
                     <select class="form-select" id="urgency_ind" name="urgency_ind" required>
                         <option value="">Select urgency...</option>
-                        <option value="1">Emergency - Immediate response required</option>
-                        <option value="2">Urgent - Response needed within 24 hours</option>
-                        <option value="3">Normal - Standard processing time</option>
-                        <option value="4">Low - No immediate urgency</option>
+                        <option value="H">High - Emergency response required</option>
+                        <option value="M">Medium - Urgent action needed</option>
+                        <option value="L">Low - Standard processing</option>
                     </select>
                 </div>
             </div>
 
             <div class="mb-3">
-                <label for="notes" class="form-label">Request Notes</label>
-                <textarea class="form-control" id="notes" name="notes" rows="4" placeholder="Provide additional details about this relief request..."></textarea>
+                <label for="rqst_notes_text" class="form-label">Request Notes</label>
+                <textarea class="form-control" id="rqst_notes_text" name="rqst_notes_text" rows="4" placeholder="Provide additional details about this relief request..."></textarea>
                 <small class="text-muted">Optional: Add context, special requirements, or delivery instructions</small>
             </div>
 
@@ -65,7 +64,7 @@
                 <button type="submit" class="btn btn-goj">
                     <i class="bi bi-check-circle"></i> Create Request
                 </button>
-                <a href="{{ url_for('agency_requests.list_requests') }}" class="btn btn-secondary">Cancel</a>
+                <a href="{{ url_for('requests.list_requests') }}" class="btn btn-secondary">Cancel</a>
             </div>
         </form>
     </div>

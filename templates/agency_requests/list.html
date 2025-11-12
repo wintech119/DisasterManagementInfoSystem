@@ -11,7 +11,7 @@
                     <h2 class="text-goj-green mb-1"><i class="bi bi-box-seam"></i> My Relief Requests</h2>
                     <p class="text-muted mb-0">AIDMGMT Workflow - {{ current_user.agency.agency_name }}</p>
                 </div>
-                <a href="{{ url_for('agency_requests.create_request') }}" class="btn btn-goj">
+                <a href="{{ url_for('requests.create_request') }}" class="btn btn-goj">
                     <i class="bi bi-plus-circle"></i> New Request
                 </a>
             </div>
@@ -35,7 +35,7 @@
                 </thead>
                 <tbody>
                     {% for request in requests %}
-                    <tr data-href="{{ url_for('agency_requests.view_request', reliefrqst_id=request.reliefrqst_id) }}">
+                    <tr data-href="{{ url_for('requests.view_request', request_id=request.reliefrqst_id) }}">
                         <td><strong>{{ request.reliefrqst_id }}</strong></td>
                         <td>
                             {% if request.event %}
@@ -49,14 +49,12 @@
                             <span class="badge bg-secondary">{{ request.items|length }} item(s)</span>
                         </td>
                         <td>
-                            {% if request.urgency_ind == 1 %}
-                                <span class="badge bg-danger">Emergency</span>
-                            {% elif request.urgency_ind == 2 %}
-                                <span class="badge bg-warning text-dark">Urgent</span>
-                            {% elif request.urgency_ind == 3 %}
-                                <span class="badge bg-info text-dark">Normal</span>
-                            {% elif request.urgency_ind == 4 %}
-                                <span class="badge bg-secondary">Low</span>
+                            {% if request.urgency_ind == 'H' %}
+                                <span class="badge bg-danger">High</span>
+                            {% elif request.urgency_ind == 'M' %}
+                                <span class="badge bg-warning text-dark">Medium</span>
+                            {% elif request.urgency_ind == 'L' %}
+                                <span class="badge bg-info text-dark">Low</span>
                             {% else %}
                                 <span class="badge bg-light text-dark">Unknown</span>
                             {% endif %}
@@ -82,11 +80,11 @@
                         </td>
                         <td class="text-end">
                             {% if request.status_code == 10 %}
-                                <a href="{{ url_for('agency_requests.edit_items', reliefrqst_id=request.reliefrqst_id) }}" class="btn btn-sm btn-warning" onclick="event.stopPropagation();">
+                                <a href="{{ url_for('requests.edit_items', request_id=request.reliefrqst_id) }}" class="btn btn-sm btn-warning" onclick="event.stopPropagation();">
                                     <i class="bi bi-pencil"></i> Edit
                                 </a>
                             {% else %}
-                                <a href="{{ url_for('agency_requests.view_request', reliefrqst_id=request.reliefrqst_id) }}" class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation();">
+                                <a href="{{ url_for('requests.view_request', request_id=request.reliefrqst_id) }}" class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation();">
                                     <i class="bi bi-eye"></i> View
                                 </a>
                             {% endif %}
@@ -102,7 +100,7 @@
         <i class="bi bi-inbox" style="font-size: 4rem; color: #dee2e6;"></i>
         <h4 class="text-muted mt-3">No Relief Requests</h4>
         <p class="text-muted">Click "New Request" to submit your first relief request to ODPEM.</p>
-        <a href="{{ url_for('agency_requests.create_request') }}" class="btn btn-goj mt-2">
+        <a href="{{ url_for('requests.create_request') }}" class="btn btn-goj mt-2">
             <i class="bi bi-plus-circle"></i> Create First Request
         </a>
     </div>

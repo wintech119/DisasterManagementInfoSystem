@@ -1,77 +1,109 @@
 {% extends 'base.html' %}
 
-{% block title %}Relief Requests{% endblock %}
+{% block title %}My Relief Requests{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
     <div class="row mb-3">
-        <div class="col-md-6">
-            <h2 class="text-goj-green"><i class="bi bi-file-text"></i> Relief Requests</h2>
-            <p class="text-muted">AIDMGMT Workflow</p>
-        </div>
-        <div class="col-md-6 text-end">
-            <a href="{{ url_for('requests.create_request') }}" class="btn btn-goj">
-                <i class="bi bi-plus-circle"></i> Create Request
-            </a>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="card-header">
-            <ul class="nav nav-tabs card-header-tabs">
-                <li class="nav-item">
-                    <a class="nav-link {% if status_filter == 'all' %}active{% endif %}" href="{{ url_for('requests.list_requests') }}">All</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if status_filter == 'pending' %}active{% endif %}" href="{{ url_for('requests.list_requests', status='pending') }}">Pending</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if status_filter == 'completed' %}active{% endif %}" href="{{ url_for('requests.list_requests', status='completed') }}">Completed</a>
-                </li>
-            </ul>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Agency</th>
-                            <th>Request Date</th>
-                            <th>Urgency</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for request in requests %}
-                        <tr>
-                            <td>{{ request.reliefrqst_id }}</td>
-                            <td>{{ request.agency.agency_name }}</td>
-                            <td>{{ request.request_date }}</td>
-                            <td>
-                                <span class="badge bg-{{ request.urgency_ind|status_badge('urgency') }}">
-                                    {{ request.urgency_ind|status_label('urgency') }}
-                                </span>
-                            </td>
-                            <td>
-                                <span class="badge bg-{{ request.status_code|status_badge('reliefrqst') }}">
-                                    {{ request.status_code|status_label('reliefrqst') }}
-                                </span>
-                            </td>
-                            <td>
-                                <a href="{{ url_for('requests.view_request', request_id=request.reliefrqst_id) }}" class="btn btn-sm btn-primary">View</a>
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="6" class="text-center text-muted">No relief requests found</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="text-goj-green mb-1"><i class="bi bi-box-seam"></i> My Relief Requests</h2>
+                    <p class="text-muted mb-0">AIDMGMT Workflow - {{ current_user.agency.agency_name }}</p>
+                </div>
+                <a href="{{ url_for('requests.create_request') }}" class="btn btn-goj">
+                    <i class="bi bi-plus-circle"></i> New Request
+                </a>
             </div>
         </div>
     </div>
+
+    {% if requests %}
+    <div class="drims-card">
+        <div class="table-responsive">
+            <table class="table drims-table table-clickable">
+                <thead>
+                    <tr>
+                        <th>Request #</th>
+                        <th>Event</th>
+                        <th>Request Date</th>
+                        <th>Items</th>
+                        <th>Urgency</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for request in requests %}
+                    <tr data-href="{{ url_for('requests.view_request', request_id=request.reliefrqst_id) }}">
+                        <td><strong>{{ request.reliefrqst_id }}</strong></td>
+                        <td>
+                            {% if request.event %}
+                                {{ request.event.event_name }}
+                            {% else %}
+                                <span class="text-muted">Not specified</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ request.request_date.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            <span class="badge bg-secondary">{{ request.items|length }} item(s)</span>
+                        </td>
+                        <td>
+                            {% if request.urgency_ind == 'H' %}
+                                <span class="badge bg-danger">High</span>
+                            {% elif request.urgency_ind == 'M' %}
+                                <span class="badge bg-warning text-dark">Medium</span>
+                            {% elif request.urgency_ind == 'L' %}
+                                <span class="badge bg-info text-dark">Low</span>
+                            {% else %}
+                                <span class="badge bg-light text-dark">Unknown</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if request.status_code == 10 %}
+                                <span class="badge bg-secondary">Draft</span>
+                            {% elif request.status_code == 20 %}
+                                <span class="badge bg-primary">Submitted</span>
+                            {% elif request.status_code == 30 %}
+                                <span class="badge bg-info text-dark">In Review</span>
+                            {% elif request.status_code == 40 %}
+                                <span class="badge bg-warning text-dark">Approved</span>
+                            {% elif request.status_code == 60 %}
+                                <span class="badge bg-success">Dispatched</span>
+                            {% elif request.status_code == 70 %}
+                                <span class="badge bg-success">Partially Received</span>
+                            {% elif request.status_code == 80 %}
+                                <span class="badge bg-success">Completed</span>
+                            {% else %}
+                                <span class="badge bg-light text-dark">Unknown</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            {% if request.status_code == 10 %}
+                                <a href="{{ url_for('requests.edit_items', request_id=request.reliefrqst_id) }}" class="btn btn-sm btn-warning" onclick="event.stopPropagation();">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('requests.view_request', request_id=request.reliefrqst_id) }}" class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation();">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-inbox" style="font-size: 4rem; color: #dee2e6;"></i>
+        <h4 class="text-muted mt-3">No Relief Requests</h4>
+        <p class="text-muted">Click "New Request" to submit your first relief request to ODPEM.</p>
+        <a href="{{ url_for('requests.create_request') }}" class="btn btn-goj mt-2">
+            <i class="bi bi-plus-circle"></i> Create First Request
+        </a>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

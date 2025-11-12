@@ -16,16 +16,16 @@
                 </div>
                 <div>
                     {% if request.status_code == 10 %}
-                        <a href="{{ url_for('agency_requests.edit_items', reliefrqst_id=request.reliefrqst_id) }}" class="btn btn-warning">
+                        <a href="{{ url_for('requests.edit_items', request_id=request.reliefrqst_id) }}" class="btn btn-warning">
                             <i class="bi bi-pencil"></i> Edit Items
                         </a>
-                        <form method="POST" action="{{ url_for('agency_requests.submit_request', reliefrqst_id=request.reliefrqst_id) }}" style="display: inline;" onsubmit="return confirm('Submit this request to ODPEM? You will not be able to edit it after submission.');">
+                        <form method="POST" action="{{ url_for('requests.submit_request', request_id=request.reliefrqst_id) }}" style="display: inline;" onsubmit="return confirm('Submit this request to ODPEM? You will not be able to edit it after submission.');">
                             <button type="submit" class="btn btn-goj">
                                 <i class="bi bi-send"></i> Submit to ODPEM
                             </button>
                         </form>
                     {% endif %}
-                    <a href="{{ url_for('agency_requests.list_requests') }}" class="btn btn-secondary">
+                    <a href="{{ url_for('requests.list_requests') }}" class="btn btn-secondary">
                         <i class="bi bi-arrow-left"></i> Back to List
                     </a>
                 </div>
@@ -65,14 +65,12 @@
                     <tr>
                         <th>Urgency Level:</th>
                         <td>
-                            {% if request.urgency_ind == 1 %}
-                                <span class="badge bg-danger">Emergency</span>
-                            {% elif request.urgency_ind == 2 %}
-                                <span class="badge bg-warning text-dark">Urgent</span>
-                            {% elif request.urgency_ind == 3 %}
-                                <span class="badge bg-info text-dark">Normal</span>
-                            {% elif request.urgency_ind == 4 %}
-                                <span class="badge bg-secondary">Low</span>
+                            {% if request.urgency_ind == 'H' %}
+                                <span class="badge bg-danger">High</span>
+                            {% elif request.urgency_ind == 'M' %}
+                                <span class="badge bg-warning text-dark">Medium</span>
+                            {% elif request.urgency_ind == 'L' %}
+                                <span class="badge bg-info text-dark">Low</span>
                             {% endif %}
                         </td>
                     </tr>
@@ -103,8 +101,8 @@
         <div class="col-md-6 mb-3">
             <div class="drims-card">
                 <h5 class="mb-3"><i class="bi bi-journal-text"></i> Notes</h5>
-                {% if request.notes %}
-                    <p class="mb-0">{{ request.notes }}</p>
+                {% if request.rqst_notes_text %}
+                    <p class="mb-0">{{ request.rqst_notes_text }}</p>
                 {% else %}
                     <p class="text-muted mb-0">No notes provided.</p>
                 {% endif %}
@@ -116,7 +114,7 @@
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="mb-0"><i class="bi bi-list-ul"></i> Requested Items</h5>
             {% if request.status_code == 10 %}
-                <a href="{{ url_for('agency_requests.edit_items', reliefrqst_id=request.reliefrqst_id) }}" class="btn btn-sm btn-goj">
+                <a href="{{ url_for('requests.edit_items', request_id=request.reliefrqst_id) }}" class="btn btn-sm btn-goj">
                     <i class="bi bi-plus-circle"></i> Add Items
                 </a>
             {% endif %}
@@ -141,7 +139,7 @@
                         <td>{{ item.item.item_name }}</td>
                         <td><code>{{ item.item.sku_code }}</code></td>
                         <td class="text-end">
-                            <strong>{{ "%.2f"|format(item.item_qty) }}</strong>
+                            <strong>{{ "%.2f"|format(item.request_qty) }}</strong>
                             {{ item.uom.uom_code }}
                         </td>
                         <td class="text-end">
@@ -152,19 +150,17 @@
                             {% endif %}
                         </td>
                         <td>
-                            {% if item.urgency_ind == 1 %}
-                                <span class="badge bg-danger">Emergency</span>
-                            {% elif item.urgency_ind == 2 %}
-                                <span class="badge bg-warning text-dark">Urgent</span>
-                            {% elif item.urgency_ind == 3 %}
-                                <span class="badge bg-info text-dark">Normal</span>
-                            {% elif item.urgency_ind == 4 %}
-                                <span class="badge bg-secondary">Low</span>
+                            {% if item.urgency_ind == 'H' %}
+                                <span class="badge bg-danger">High</span>
+                            {% elif item.urgency_ind == 'M' %}
+                                <span class="badge bg-warning text-dark">Medium</span>
+                            {% elif item.urgency_ind == 'L' %}
+                                <span class="badge bg-info text-dark">Low</span>
                             {% endif %}
                         </td>
                         <td>
-                            {% if item.notes %}
-                                {{ item.notes }}
+                            {% if item.rqst_reason_desc %}
+                                {{ item.rqst_reason_desc }}
                             {% else %}
                                 <span class="text-muted">—</span>
                             {% endif %}
@@ -179,7 +175,7 @@
             <i class="bi bi-inbox" style="font-size: 3rem; color: #dee2e6;"></i>
             <p class="text-muted mt-2 mb-3">No items added yet</p>
             {% if request.status_code == 10 %}
-                <a href="{{ url_for('agency_requests.edit_items', reliefrqst_id=request.reliefrqst_id) }}" class="btn btn-goj btn-sm">
+                <a href="{{ url_for('requests.edit_items', request_id=request.reliefrqst_id) }}" class="btn btn-goj btn-sm">
                     <i class="bi bi-plus-circle"></i> Add Items Now
                 </a>
             {% endif %}
