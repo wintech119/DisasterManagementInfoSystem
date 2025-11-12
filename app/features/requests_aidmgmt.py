@@ -123,8 +123,8 @@ def view_request(request_id):
                          request=relief_request,
                          STATUS_DRAFT=rr_service.STATUS_DRAFT,
                          STATUS_SUBMITTED=rr_service.STATUS_SUBMITTED,
-                         STATUS_DISPATCHED=rr_service.STATUS_DISPATCHED,
-                         STATUS_DELIVERED=rr_service.STATUS_DELIVERED)
+                         STATUS_CLOSED=rr_service.STATUS_CLOSED,
+                         STATUS_FILLED=rr_service.STATUS_FILLED)
 
 
 @requests_bp.route('/<int:request_id>/edit', methods=['GET', 'POST'])
