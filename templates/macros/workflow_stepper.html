@@ -2,6 +2,8 @@
 {# 
   Reusable workflow stepper for agency relief requests
   Shows 5-step process: Prepare → Submitted → Processing → Dispatched → Received
+  Canonical status codes from ODPEM AIDMGMT-3 schema (0-7 range):
+  0=Draft, 1=Awaiting approval, 2=Cancelled, 3=Submitted, 4=Denied, 5=Part filled, 6=Closed, 7=Filled
   
   Usage:
     {% from 'macros/workflow_stepper.html' import relief_request_stepper %}
@@ -13,35 +15,35 @@
     'number': 1,
     'name': 'Prepare Request',
     'description': 'Draft and add items',
-    'status_codes': [10],
+    'status_codes': [0],
     'icon': 'bi-pencil-square'
   },
   {
     'number': 2,
     'name': 'Submitted to ODPEM',
     'description': 'Awaiting review',
-    'status_codes': [20],
+    'status_codes': [1, 3],
     'icon': 'bi-send-check'
   },
   {
     'number': 3,
     'name': 'ODPEM Processing',
     'description': 'Review and package preparation',
-    'status_codes': [30, 40, 60],
+    'status_codes': [5],
     'icon': 'bi-gear'
   },
   {
     'number': 4,
     'name': 'Goods Dispatched',
     'description': 'In transit to your agency',
-    'status_codes': [70],
+    'status_codes': [7],
     'icon': 'bi-truck'
   },
   {
     'number': 5,
     'name': 'Goods Received',
     'description': 'Request closed',
-    'status_codes': [80],
+    'status_codes': [6],
     'icon': 'bi-check-circle'
   }
 ] %}
