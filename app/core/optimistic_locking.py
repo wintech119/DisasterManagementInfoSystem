@@ -4,6 +4,7 @@ Uses version_nbr column to prevent concurrent modification conflicts
 """
 from sqlalchemy import event, inspect
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import instance_state
 from app.core.exceptions import OptimisticLockError
 import logging
 
@@ -21,59 +22,67 @@ def setup_optimistic_locking(db):
     @event.listens_for(Session, "before_flush")
     def enforce_optimistic_lock(session, flush_context, instances):
         """
-        Before flush event: Check version_nbr for all dirty objects
-        and prepare optimistic locking updates.
+        Before flush event: For all dirty objects with version_nbr,
+        execute a manual UPDATE with version_nbr in WHERE clause.
         """
-        for obj in session.dirty:
+        for obj in list(session.dirty):
             if not hasattr(obj, 'version_nbr'):
                 continue
             
             if not session.is_modified(obj):
                 continue
             
-            state = inspect(obj)
+            state = instance_state(obj)
+            mapper = state.mapper
+            table = mapper.local_table
             
-            if state.attrs.version_nbr.history.has_changes():
+            if 'version_nbr' not in table.c:
                 continue
             
-            original_version = obj.version_nbr
+            history = state.attrs.version_nbr.history
+            if history.has_changes():
+                continue
             
-            if original_version is None:
+            current_version = obj.version_nbr
+            if current_version is None:
                 logger.warning(
                     f"Object {obj.__class__.__name__} has None version_nbr, skipping optimistic lock"
                 )
                 continue
             
-            obj.version_nbr = original_version + 1
+            pk_columns = [col for col in mapper.primary_key]
+            pk_dict = {col.name: getattr(obj, col.name) for col in pk_columns}
             
-            obj._original_version_nbr = original_version
-    
-    @event.listens_for(Session, "after_flush")
-    def verify_optimistic_lock(session, flush_context):
-        """
-        After flush event: Verify that updates succeeded with correct version.
-        If no rows were updated, it means the version was stale.
-        """
-        for obj in session.identity_map.values():
-            if hasattr(obj, '_original_version_nbr'):
-                original_version = obj._original_version_nbr
-                delattr(obj, '_original_version_nbr')
-                
-                state = inspect(obj)
-                if state.persistent and hasattr(obj, 'version_nbr'):
-                    if obj.version_nbr != original_version + 1:
-                        logger.error(
-                            f"Optimistic lock failed for {obj.__class__.__name__}, "
-                            f"expected version {original_version + 1}, got {obj.version_nbr}"
-                        )
-                        
-                        pk_columns = [col.name for col in inspect(obj.__class__).primary_key]
-                        record_id = {col: getattr(obj, col) for col in pk_columns}
-                        
-                        session.rollback()
-                        raise OptimisticLockError(
-                            obj.__class__.__name__,
-                            record_id
-                        )
+            update_values = {}
+            for attr in state.attrs:
+                if attr.key == 'version_nbr':
+                    continue
+                if attr.history.has_changes():
+                    update_values[attr.key] = getattr(obj, attr.key)
+            
+            if not update_values:
+                continue
+            
+            update_values['version_nbr'] = current_version + 1
+            
+            stmt = table.update()
+            for col_name, col_value in pk_dict.items():
+                stmt = stmt.where(table.c[col_name] == col_value)
+            stmt = stmt.where(table.c.version_nbr == current_version)
+            stmt = stmt.values(**update_values)
+            
+            result = session.execute(stmt)
+            
+            if result.rowcount == 0:
+                session.rollback()
+                raise OptimisticLockError(
+                    obj.__class__.__name__,
+                    pk_dict,
+                    f"Stale version {current_version} - record was modified by another transaction"
+                )
+            
+            obj.version_nbr = current_version + 1
+            
+            session.expire(obj)
     
     logger.info("Optimistic locking enabled for all tables with version_nbr")
