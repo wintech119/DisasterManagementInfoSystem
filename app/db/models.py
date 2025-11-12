@@ -801,3 +801,24 @@ class AgencyAccountRequestAudit(db.Model):
     
     request = db.relationship('AgencyAccountRequest', backref='audit_log')
     actor = db.relationship('User', foreign_keys=[actor_user_id], backref='audit_actions')
+
+class Notification(db.Model):
+    """In-app notifications for users"""
+    __tablename__ = 'notification'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    warehouse_id = db.Column(db.Integer, db.ForeignKey('warehouse.warehouse_id'))
+    reliefrqst_id = db.Column(db.Integer, db.ForeignKey('reliefrqst.reliefrqst_id'))
+    title = db.Column(db.String(200), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    type = db.Column(db.String(50), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default='unread')
+    link_url = db.Column(db.String(500))
+    payload = db.Column(db.Text)
+    is_archived = db.Column(db.Boolean, nullable=False, default=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    
+    user = db.relationship('User', backref='notifications')
+    warehouse = db.relationship('Warehouse', backref='notifications')
+    relief_request = db.relationship('ReliefRqst', backref='notifications')

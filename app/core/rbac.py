@@ -75,6 +75,43 @@ def has_all_roles(*role_codes):
     return all(code in user_role_codes for code in role_codes)
 
 
+def agency_user_required(f):
+    """
+    Decorator to restrict access to agency users only.
+    Ensures current_user has an agency_id set.
+    
+    Usage:
+        @agency_user_required
+        def my_route():
+            # Only accessible to users with agency_id
+            ...
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            flash('Please log in to access this page.', 'warning')
+            return redirect(url_for('login'))
+        
+        if not current_user.agency_id:
+            flash('This page is only accessible to agency users.', 'danger')
+            abort(403)
+        
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def is_agency_user():
+    """
+    Check if the current user is an agency user (has agency_id set).
+    
+    Returns:
+        bool: True if user is authenticated and has agency_id
+    """
+    if not current_user.is_authenticated:
+        return False
+    return current_user.agency_id is not None
+
+
 def has_warehouse_access(warehouse_id):
     """
     Check if the current user has access to a specific warehouse.

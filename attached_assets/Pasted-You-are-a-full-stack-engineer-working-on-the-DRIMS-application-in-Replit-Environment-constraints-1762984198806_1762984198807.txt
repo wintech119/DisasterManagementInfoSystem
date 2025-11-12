@@ -1,0 +1,335 @@
+You are a full-stack engineer working on the DRIMS application in Replit.
+
+Environment / constraints
+
+Backend: Flask (Python) with SQLAlchemy.
+
+DB: PostgreSQL 16+ in production, SQLite in development.
+
+Schema: Use the existing DRIMS schema as documented in DRIMS_DATABASE_SCHEMA.md.
+
+Do NOT create or alter any database tables, columns, constraints, or triggers.
+
+Optimistic locking: Respect version_nbr on all relevant tables (read → modify → update with version_nbr guard). 
+
+DRIMS_DATABASE_SCHEMA
+
+User story
+
+As an Agency, I want to prepare and submit a relief request so that I can distribute to affected communities.
+
+Functional requirements:
+
+The system should allow an agency user to prepare a relief request by:
+
+Selecting active items,
+
+Entering requested quantities,
+
+Providing justifications per item,
+
+Adding overall notes,
+
+Setting urgency,
+
+Choosing an associated event,
+
+Submitting the request to ODPEM for processing.
+
+The system should show a live/dynamic workflow guide with high-level steps:
+
+Prepare request,
+
+Submitted to ODPEM,
+
+ODPEM processing (no internal sub-steps visible),
+
+Goods dispatched,
+
+Goods received / request closed.
+
+The system should automatically close the request when all allocated amounts have been confirmed as received.
+
+The system should notify the agency user via in-app and email when ODPEM dispatches goods associated with the request.
+
+1) Data model mapping (use existing tables only)
+
+Use these existing entities (no schema changes):
+
+Request header: reliefrqst
+
+reliefrqst.agency_id → requesting agency.
+
+reliefrqst.eligible_event_id → associated event.
+
+reliefrqst.urgency_ind (H/M/L) → request-level urgency.
+
+reliefrqst.rqst_notes_text → overall request notes.
+
+reliefrqst.status_code (10=Draft, 20=Submitted, 30=Under Review, 40=Approved, 60=Package Prepared, 70=Dispatched, 80=Delivered) → main workflow state. 
+
+DRIMS_DATABASE_SCHEMA
+
+reliefrqst.version_nbr → optimistic locking.
+
+Request items: reliefrqst_item
+
+reliefrqst_item.request_qty → requested quantity.
+
+reliefrqst_item.issue_qty → quantity approved/issued.
+
+reliefrqst_item.urgency_ind → item-level urgency if needed.
+
+reliefrqst_item.rqst_reason_desc → per-item justification.
+
+reliefrqst_item.item_notes_text → additional per-item notes.
+
+reliefrqst_item.status_code (A/I).
+
+reliefrqst_item.version_nbr → optimistic locking. 
+
+DRIMS_DATABASE_SCHEMA
+
+Items catalogue: item
+
+Use status_code='A' and any other filters to show only active relief items. 
+
+DRIMS_DATABASE_SCHEMA
+
+Packaging / dispatch / receipt:
+
+reliefpkg + reliefpkg_item for prepared and dispatched packages (status_code: P/ D/ R). 
+
+DRIMS_DATABASE_SCHEMA
+
+dbintake + dbintake_item for received quantities per item and inventory. 
+
+DRIMS_DATABASE_SCHEMA
+
+Events: event (for eligible_event_id). 
+
+DRIMS_DATABASE_SCHEMA
+
+Notifications: notification
+
+Use user_id, reliefrqst_id, title, message, type, status, link_url to implement in-app notifications tied to a request. 
+
+DRIMS_DATABASE_SCHEMA
+
+Users & roles: user, user_role, role, user_warehouse, agency.
+
+Agency users have user.agency_id set and appropriate roles in user_role. 
+
+DRIMS_DATABASE_SCHEMA
+
+2) API / service layer: endpoints & behaviours
+2.1 Prepare relief request (Agency role)
+
+Routes:
+
+GET /relief-requests
+
+List relief requests for the current user’s agency_id only.
+
+Filter by reliefrqst.agency_id = current_user.agency_id.
+
+POST /relief-requests
+
+Create a new Draft relief request:
+
+reliefrqst.agency_id = current_user.agency_id.
+
+reliefrqst.request_date = current_date.
+
+reliefrqst.urgency_ind = body.urgency_ind (H/M/L).
+
+reliefrqst.eligible_event_id = selected event_id.
+
+reliefrqst.rqst_notes_text = body.notes.
+
+reliefrqst.status_code = 10 (Draft).
+
+reliefrqst.version_nbr = 1.
+
+Return the new reliefrqst_id and version_nbr.
+
+All updates must use optimistic locking:
+For example, when updating reliefrqst, use WHERE reliefrqst_id = :id AND version_nbr = :current_version and then SET version_nbr = version_nbr + 1. If 0 rows are affected, return a concurrency error.
+
+2.2 Manage items on the draft
+
+GET /relief-requests/<id>/items
+
+Return all reliefrqst_item rows for that request, joined to item for name, SKU, etc.
+
+POST /relief-requests/<id>/items
+
+Add or update items while request is in status 10 (Draft):
+
+Validate reliefrqst.agency_id = current agency.
+
+Validate reliefrqst.status_code = 10.
+
+For each item:
+
+Ensure item is active: item.status_code = 'A'.
+
+Insert or update reliefrqst_item:
+
+request_qty from input.
+
+urgency_ind from request-level or per item.
+
+rqst_reason_desc for justification.
+
+item_notes_text for further notes.
+
+status_code = 'A'.
+
+Initialize or increment version_nbr.
+
+2.3 Submit request to ODPEM
+
+POST /relief-requests/<id>/submit
+
+Preconditions:
+
+Request belongs to current agency.
+
+status_code = 10 (Draft).
+
+At least one reliefrqst_item with request_qty > 0.
+
+Actions:
+
+Update reliefrqst.status_code to 20 (Submitted).
+
+Optionally set reliefrqst.action_by_id / action_dtime as appropriate.
+
+Write audit/log via existing transaction logging if available.
+
+Create notification rows to ODPEM/Logistics users (e.g. type reliefrqst_submitted with reliefrqst_id and a link to the review page).
+
+Send emails to ODPEM distribution list using existing mail service.
+
+3) Workflow guide (dynamic stepper)
+
+Implement a UI component (e.g. in the request detail page) that maps reliefrqst.status_code to high-level workflow steps:
+
+Step 1 – Prepare Request
+
+status_code = 10 (Draft).
+
+Step 2 – Submitted to ODPEM
+
+status_code = 20 (Submitted).
+
+Step 3 – ODPEM Processing
+
+status_code IN (30, 40, 60) → Under Review / Approved / Package Prepared.
+
+Do not show internal ODPEM sub-statuses; just show “Processing”.
+
+Step 4 – Goods Dispatched
+
+status_code = 70 (Dispatched).
+
+Step 5 – Goods Received / Closed
+
+status_code = 80 (Delivered / closed).
+
+The stepper should:
+
+Highlight the current step based on status.
+
+Show short helper text/tooltips for each step.
+
+Update live when the status changes (via AJAX polling or WebSocket if available).
+
+4) Auto-close logic when all goods received
+
+Use reliefrqst → reliefpkg → dbintake / dbintake_item to decide when the request is fully satisfied:
+
+When ODPEM prepares and dispatches packages (reliefpkg.status_code transitions through P → D → R), link each reliefpkg to its reliefrqst_id. 
+
+DRIMS_DATABASE_SCHEMA
+
+For each reliefrqst_item:
+
+Determine the total issued quantity (from reliefrqst_item.issue_qty or by summing reliefpkg_item.item_qty for that reliefrqst_id and item_id). 
+
+DRIMS_DATABASE_SCHEMA
+
+Determine the total received usable quantity from dbintake_item.usable_qty for the packages and inventory entries tied back to that request. 
+
+DRIMS_DATABASE_SCHEMA
+
+Define “fully received”:
+
+For each item in the request, sum of received usable quantity ≥ issued quantity (or requested quantity if issued_quantity not set).
+
+There are no pending packages for that request (no reliefpkg in P or D states).
+
+When the condition is met:
+
+Update reliefrqst.status_code to 80 (Delivered / closed) using optimistic locking.
+
+Write an audit/log entry (via existing logging pattern).
+
+Optionally create a notification to the agency confirming “Request fully received and closed”.
+
+This logic can run:
+
+As part of the receipt confirmation flow (after each dbintake update), or
+
+In a scheduled job that periodically checks open requests and closes them when satisfied.
+
+5) Notifications: in-app + email on dispatch
+
+Hook into the point where ODPEM dispatches goods for a relief request, typically when:
+
+reliefpkg.status_code changes to D (Dispatched), or
+
+reliefrqst.status_code transitions to 70 (Dispatched).
+
+On that event:
+
+Identify all users for the requesting agency (user.agency_id = reliefrqst.agency_id) with active status. 
+
+DRIMS_DATABASE_SCHEMA
+
+For each such user:
+
+Insert a notification row:
+
+user_id = target user
+
+reliefrqst_id = the request
+
+title = 'Relief goods dispatched by ODPEM'
+
+message = 'ODPEM has dispatched goods for relief request <RQST_ID> (Event: <EVENT_NAME>). Please confirm receipt when delivered.'
+
+type = 'reliefrqst_dispatch'
+
+status = 'unread'
+
+link_url = URL to the request detail / receipt confirmation page.
+
+Send an email with equivalent information using the existing email service:
+
+To each agency user’s email, or a designated primary agency contact.
+
+Subject: “DRIMS – Goods dispatched for your relief request”.
+
+Body: include request ID, event, dispatch date, and link.
+
+No new notification tables may be created; use notification only.
+
+6) Technical expectations
+
+Use SQLAlchemy models that map to the existing tables as-is.
+
+Enforce optimistic locking with version_nbr for reliefrqst, reliefrqst_item, reliefpkg, dbintake, and any other table you update.
+
+All changes must compile and run against the current PostgreSQL schema with no DDL changes.
