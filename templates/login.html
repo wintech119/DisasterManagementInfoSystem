@@ -1,217 +1,178 @@
-<!DOCTYPE html>
+{% set next_url = request.args.get('next', '/') %}
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - DRIMS</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <style>
-        :root {
-            --goj-green: #006B3E;
-            --goj-green-dark: #004d2e;
-            --goj-gold: #FFD100;
+  <meta charset="utf-8">
+  <title>Login · DRIMS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'goj-green': '#009639',
+            'goj-green-dark': '#006B3E',
+            'goj-gold': '#FDB913'
+          }
         }
-        body {
-            background: linear-gradient(135deg, var(--goj-green) 0%, var(--goj-green-dark) 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-        }
-        .login-container {
-            position: relative;
-            z-index: 1;
-        }
-        .login-card {
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            border: none;
-            overflow: hidden;
-        }
-        .login-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--goj-green), var(--goj-gold));
-        }
-        .logo-container {
-            position: relative;
-            padding: 2rem 0 1rem;
-        }
-        .logo-container img {
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
-            transition: transform 0.3s ease;
-        }
-        .logo-container img:hover {
-            transform: scale(1.05);
-        }
-        .brand-title {
-            color: var(--goj-green);
-            font-weight: 700;
-            font-size: 2.25rem;
-            letter-spacing: -0.5px;
-            margin-bottom: 0.5rem;
-        }
-        .brand-subtitle {
-            color: #6c757d;
-            font-size: 0.95rem;
-            font-weight: 500;
-            line-height: 1.5;
-        }
-        .form-label {
-            font-weight: 600;
-            color: #495057;
-            font-size: 0.875rem;
-            margin-bottom: 0.5rem;
-        }
-        .form-control {
-            border-radius: 8px;
-            border: 2px solid #e9ecef;
-            padding: 0.75rem 1rem;
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-        }
-        .form-control:focus {
-            border-color: var(--goj-green);
-            box-shadow: 0 0 0 0.2rem rgba(0, 107, 62, 0.15);
-        }
-        .input-group-text {
-            background-color: transparent;
-            border: 2px solid #e9ecef;
-            border-right: none;
-            border-radius: 8px 0 0 8px;
-            color: #6c757d;
-        }
-        .input-group .form-control {
-            border-left: none;
-            border-radius: 0 8px 8px 0;
-        }
-        .input-group:focus-within .input-group-text {
-            border-color: var(--goj-green);
-        }
-        .btn-goj {
-            background: linear-gradient(135deg, var(--goj-green) 0%, #005030 100%);
-            border: none;
-            color: white;
-            font-weight: 600;
-            padding: 0.875rem;
-            border-radius: 8px;
-            font-size: 1rem;
-            letter-spacing: 0.3px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0, 107, 62, 0.3);
-        }
-        .btn-goj:hover {
-            background: linear-gradient(135deg, #005030 0%, var(--goj-green) 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 107, 62, 0.4);
-        }
-        .btn-goj:active {
-            transform: translateY(0);
-        }
-        .alert {
-            border-radius: 8px;
-            border: none;
-            font-size: 0.9rem;
-        }
-        .footer-text {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 0.85rem;
-            margin-top: 2rem;
-        }
-    </style>
+      }
+    }
+  </script>
 </head>
-<body>
-    <div class="container login-container">
-        <div class="row justify-content-center">
-            <div class="col-md-6 col-lg-5">
-                <div class="card login-card position-relative">
-                    <div class="card-body p-4 p-md-5">
-                        <div class="text-center logo-container">
-                            <div class="d-flex justify-content-center align-items-center gap-3 mb-3">
-                                <img src="/static/images/jamaica-coat-of-arms.png" 
-                                     alt="Government of Jamaica - Coat of Arms" 
-                                     style="height: 85px; width: auto;">
-                                
-                                <img src="/static/images/odpem-logo.png" 
-                                     alt="Office of Disaster Preparedness and Emergency Management" 
-                                     style="height: 85px; width: auto;">
-                            </div>
-                            
-                            <h1 class="brand-title">DRIMS</h1>
-                            <p class="brand-subtitle mb-1">Disaster Relief Inventory Management System</p>
-                            <p class="brand-subtitle small">Office of Disaster Preparedness and Emergency Management</p>
-                            <p class="brand-subtitle small text-muted">Government of Jamaica</p>
-                        </div>
-
-                        {% with messages = get_flashed_messages(with_categories=true) %}
-                            {% if messages %}
-                                {% for category, message in messages %}
-                                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                                        <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ message }}
-                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                    </div>
-                                {% endfor %}
-                            {% endif %}
-                        {% endwith %}
-
-                        <form method="POST" class="mt-4">
-                            <div class="mb-4">
-                                <label for="email" class="form-label">Email Address</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                                    <input type="email" 
-                                           class="form-control" 
-                                           id="email" 
-                                           name="email" 
-                                           placeholder="your.email@odpem.gov.jm"
-                                           required 
-                                           autofocus>
-                                </div>
-                            </div>
-                            
-                            <div class="mb-4">
-                                <label for="password" class="form-label">Password</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                                    <input type="password" 
-                                           class="form-control" 
-                                           id="password" 
-                                           name="password" 
-                                           placeholder="Enter your password"
-                                           required>
-                                </div>
-                            </div>
-                            
-                            <div class="d-grid">
-                                <button type="submit" class="btn btn-goj btn-lg">
-                                    <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
-                                </button>
-                            </div>
-                            
-                            <div class="text-center mt-3">
-                                <p class="text-muted small mb-2">Need an account for your agency?</p>
-                                <a href="{{ url_for('account_requests.submit_form') }}" class="btn btn-outline-primary btn-sm">
-                                    <i class="bi bi-building-add me-1"></i>Request Agency Account
-                                </a>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-                
-                <p class="text-center footer-text mt-3">
-                    <i class="bi bi-shield-check me-1"></i>Secure Government System
-                </p>
-            </div>
-        </div>
+<body class="min-h-screen bg-gradient-to-br from-goj-green to-goj-green-dark">
+  <!-- Header / Hero -->
+  <header class="bg-gradient-to-r from-goj-green to-goj-green-dark text-white">
+    <div class="mx-auto max-w-5xl px-6 py-10 text-center">
+      <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight">
+        Disaster Relief Inventory Management System
+      </h1>
+      <p class="mt-3 text-2xl text-white/90 font-bold">DRIMS</p>
+      <p class="mt-2 text-sm text-white/80">Government of Jamaica</p>
     </div>
+  </header>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Main -->
+  <main class="mx-auto max-w-6xl px-6 py-12">
+    <div class="grid lg:grid-cols-2 gap-8">
+      <!-- Left: Login card -->
+      <section class="bg-white shadow-2xl ring-1 ring-black/5 rounded-3xl p-8">
+        <h2 class="text-2xl font-bold text-gray-900">Sign in to your account</h2>
+        <p class="mt-2 text-sm text-gray-600">Use your email and password to access DRIMS.</p>
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="mt-6 space-y-3">
+              {% for category, message in messages %}
+                <div class="rounded-xl px-4 py-3 text-sm font-medium shadow-sm
+                    {% if category == 'danger' or category == 'error' %}bg-red-50 text-red-800 ring-1 ring-red-200{% elif category == 'warning' %}bg-amber-50 text-amber-800 ring-1 ring-amber-200{% elif category == 'info' %}bg-blue-50 text-blue-800 ring-1 ring-blue-200{% else %}bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200{% endif %}">
+                  {{ message }}
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <form method="post" action="{{ url_for('login') }}" class="mt-8 space-y-6" novalidate>
+          <div>
+            <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              autocomplete="email"
+              class="block w-full rounded-xl border-2 border-gray-300 px-4 py-3 text-gray-900 placeholder-gray-400 shadow-sm focus:border-goj-green focus:ring-2 focus:ring-goj-green/20 focus:outline-none transition-all"
+              placeholder="your.email@odpem.gov.jm"
+              value="{{ request.form.get('email', '') }}"
+              aria-describedby="email-help">
+            <p id="email-help" class="mt-2 text-xs text-gray-500">Enter the email address associated with your DRIMS account</p>
+          </div>
+
+          <div>
+            <label for="password" class="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              required
+              autocomplete="current-password"
+              class="block w-full rounded-xl border-2 border-gray-300 px-4 py-3 text-gray-900 placeholder-gray-400 shadow-sm focus:border-goj-green focus:ring-2 focus:ring-goj-green/20 focus:outline-none transition-all"
+              placeholder="Enter your password">
+          </div>
+
+          <div class="flex items-center justify-between">
+            <label class="inline-flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+              <input type="checkbox" name="remember" class="h-4 w-4 rounded border-gray-300 text-goj-green focus:ring-goj-green">
+              <span class="font-medium">Remember me</span>
+            </label>
+          </div>
+
+          <button type="submit"
+            class="w-full inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-goj-green to-goj-green-dark px-6 py-3.5 text-white font-bold text-lg shadow-lg hover:shadow-xl hover:from-goj-green-dark hover:to-goj-green focus:outline-none focus:ring-4 focus:ring-goj-green/50 transition-all duration-200">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+            </svg>
+            Sign In
+          </button>
+        </form>
+      </section>
+
+      <!-- Right: Welcome / CTA -->
+      <aside class="flex flex-col gap-6">
+        <!-- Primary CTA Card -->
+        <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-2xl ring-1 ring-black/5 rounded-3xl p-8 text-white">
+          <div class="flex items-center gap-3 mb-4">
+            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+            </svg>
+            <h3 class="text-2xl font-bold">New Agency?</h3>
+          </div>
+          
+          <p class="text-emerald-50 text-base leading-relaxed mb-6">
+            Relief agencies can request access to DRIMS to submit relief requests and manage disaster response distributions.
+          </p>
+
+          <!-- Primary CTA Button -->
+          <a href="{{ url_for('account_requests.submit_form') }}"
+             class="block w-full text-center rounded-xl bg-white px-6 py-4 text-emerald-600 font-bold text-lg shadow-lg hover:shadow-xl hover:bg-emerald-50 focus:outline-none focus:ring-4 focus:ring-white/50 transition-all duration-200">
+            <svg class="w-6 h-6 inline-block mr-2 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Request Agency Account
+          </a>
+
+          <!-- Info List -->
+          <ul class="mt-6 space-y-3 text-sm text-emerald-50">
+            <li class="flex items-start gap-2">
+              <svg class="w-5 h-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+              </svg>
+              <span>Approval by ODPEM required</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-5 h-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+              </svg>
+              <span>Email updates on request status</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-5 h-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+              </svg>
+              <span>Full access after approval</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Info Card -->
+        <div class="bg-white/95 backdrop-blur shadow-xl ring-1 ring-black/5 rounded-3xl p-6">
+          <h4 class="font-bold text-gray-900 mb-3">About DRIMS</h4>
+          <p class="text-sm text-gray-600 leading-relaxed">
+            DRIMS is the official disaster relief inventory management platform for Jamaica's disaster preparedness and emergency response operations.
+          </p>
+        </div>
+
+        <!-- System Status -->
+        <div class="text-center text-sm text-white/80">
+          <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur rounded-full px-4 py-2">
+            <svg class="w-4 h-4 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+            </svg>
+            <span class="font-medium">Secure Government System</span>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="mt-16 pb-10 text-center">
+    <div class="text-sm text-white/70">
+      <p>© {% if now %}{{ now.year }}{% else %}2025{% endif %} DRIMS – Disaster Relief Inventory Management System</p>
+      <p class="mt-2 text-xs">By signing in you agree to the acceptable use and data policies</p>
+    </div>
+  </footer>
 </body>
 </html>

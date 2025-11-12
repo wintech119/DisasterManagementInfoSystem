@@ -1,0 +1,155 @@
+Modernize the Flask login page.
+
+Requirements:
+- Emphasize product name: "Disaster Relief Inventory Management System (DRIMS)" as the main heading.
+- Remove any text "Office of Disaster Preparedness and Emergency Management".
+- Make "Request agency account" a primary, prominent CTA near the form.
+- Clean, accessible, responsive UI with WCAG-friendly contrast and clear labels.
+- Keep existing auth endpoints: POST /login, forgot password (if any), and next param.
+- Do not change backend logic.
+
+Replace templates/auth/login.html with the following Tailwind-based template (CDN allowed):
+templates/auth/login.html (Jinja, Tailwind CDN; no backend changes)
+html
+Copy code
+{% set next_url = request.args.get('next', '/') %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Login · DRIMS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Tailwind CDN (ok for Replit; for prod, compile locally) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gray-50">
+  <!-- Header / Hero -->
+  <header class="bg-gradient-to-r from-indigo-600 to-blue-600 text-white">
+    <div class="mx-auto max-w-3xl px-6 py-10 text-center">
+      <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight">
+        Disaster Relief Inventory Management System
+      </h1>
+      <p class="mt-2 text-indigo-100 font-semibold">DRIMS</p>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="mx-auto max-w-3xl px-6 py-8">
+    <div class="grid md:grid-cols-2 gap-8">
+      <!-- Left: Login card -->
+      <section class="bg-white shadow-sm ring-1 ring-gray-200 rounded-2xl p-6">
+        <h2 class="text-xl font-semibold text-gray-900">Sign in</h2>
+        <p class="mt-1 text-sm text-gray-600">Use your email and password to access DRIMS.</p>
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="mt-4 space-y-2">
+              {% for category, message in messages %}
+                <div class="rounded-lg px-4 py-3 text-sm 
+                    {% if category == 'error' %}bg-red-50 text-red-700 ring-1 ring-red-200{% else %}bg-green-50 text-green-700 ring-1 ring-green-200{% endif %}">
+                  {{ message }}
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <form method="post" action="{{ url_for('auth.login', next=next_url) }}" class="mt-6 space-y-4" novalidate>
+          {{ form.csrf_token() if form and form.csrf_token }}
+
+          <div>
+            <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              autocomplete="email"
+              class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              placeholder="you@example.com"
+              value="{{ (form.email.data if form and form.email.data) or request.form.get('email','') }}"
+              aria-describedby="email-help">
+            <p id="email-help" class="mt-1 text-xs text-gray-500">Use the email for your DRIMS account.</p>
+          </div>
+
+          <div>
+            <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              required
+              autocomplete="current-password"
+              class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              placeholder="••••••••">
+          </div>
+
+          <div class="flex items-center justify-between">
+            <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+              <input type="checkbox" name="remember" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+              Remember me
+            </label>
+            {% if url_for('auth.forgot_password', _external=False) %}
+              <a href="{{ url_for('auth.forgot_password') }}" class="text-sm font-medium text-indigo-700 hover:text-indigo-900">Forgot password?</a>
+            {% endif %}
+          </div>
+
+          <button type="submit"
+            class="w-full inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-white font-semibold shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            Sign in
+          </button>
+
+          {% if next_url and next_url != '/' %}
+            <input type="hidden" name="next" value="{{ next_url }}">
+          {% endif %}
+        </form>
+      </section>
+
+      <!-- Right: Welcome / CTA -->
+      <aside class="flex flex-col justify-between">
+        <div class="bg-white shadow-sm ring-1 ring-gray-200 rounded-2xl p-6">
+          <h3 class="text-lg font-semibold text-gray-900">New to DRIMS?</h3>
+          <p class="mt-2 text-sm text-gray-600">
+            Agencies can request access to submit relief requests and manage distributions.
+          </p>
+
+          <!-- Primary CTA: Request agency account -->
+          <a href="{{ url_for('account_requests.new') if url_for else '/account-requests/new' }}"
+             class="mt-4 inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-white font-semibold shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            Request agency account
+          </a>
+
+          <!-- Secondary info -->
+          <ul class="mt-6 space-y-2 text-sm text-gray-700">
+            <li>• Approval by ODPEM – PEOD required</li>
+            <li>• You’ll receive email updates on your request</li>
+            <li>• Approved users can submit relief requests</li>
+          </ul>
+        </div>
+
+        <!-- System hints / status -->
+        <div class="mt-6 text-xs text-gray-500 text-center">
+          <span>By signing in you agree to DRIMS acceptable use & data policies.</span>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="mt-12 pb-8 text-center text-xs text-gray-500">
+    © {{ (now() if now else namespace(y='')).y if false else '' }} DRIMS — Disaster Relief Inventory Management System
+  </footer>
+</body>
+</html>
+Notes
+
+Removes any mention of “Office of Disaster Preparedness and Emergency Management.”
+
+Big, clear product name with DRIMS acronym.
+
+Prominent “Request agency account” CTA on the right card (green button). If your route differs, update the href accordingly.
+
+Keeps your existing POST /login and next param handling intact.
+
+Accessible labels, good contrast, and responsive layout.
