@@ -22,10 +22,10 @@
     {% endif %}
 {% endwith %}
 
-<div class="card">
-    <div class="card-body">
+<div class="card drims-card border-0 shadow-sm">
+    <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover">
+            <table class="table drims-table table-hover table-sm table-clickable mb-0">
                 <thead>
                     <tr>
                         <th>List Number</th>
@@ -35,20 +35,20 @@
                         <th>Status</th>
                         <th>Items</th>
                         <th>Created</th>
-                        <th>Actions</th>
+                        <th class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for list in needs_lists %}
-                    <tr>
+                    <tr data-href="{{ url_for('needs_list.view', needs_list_id=list.id) }}">
                         <td><strong>{{ list.list_number }}</strong></td>
                         <td>{{ list.agency.agency_name }}</td>
                         <td>{{ list.event.event_name }}</td>
                         <td>{{ render_status_badge(list.priority, 'needs_list_priority') }}</td>
                         <td>{{ render_status_badge(list.status, 'needs_list') }}</td>
-                        <td>{{ list.items|length }} items</td>
-                        <td>{{ list.created_at.strftime('%Y-%m-%d %H:%M') if list.created_at else 'N/A' }}</td>
-                        <td>
+                        <td><span class="badge bg-secondary">{{ list.items|length }}</span></td>
+                        <td><small class="text-muted">{{ list.created_at.strftime('%Y-%m-%d %H:%M') if list.created_at else 'N/A' }}</small></td>
+                        <td class="text-end">
                             <a href="{{ url_for('needs_list.view', needs_list_id=list.id) }}" class="btn btn-sm btn-outline-primary">
                                 <i class="bi bi-eye"></i> View
                             </a>
@@ -56,7 +56,10 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="8" class="text-center text-muted">No needs lists found</td>
+                        <td colspan="8" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.5;"></i>
+                            <div class="mt-2">No needs lists found</div>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>

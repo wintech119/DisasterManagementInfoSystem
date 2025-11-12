@@ -270,6 +270,61 @@
                 margin-left: 0;
             }
         }
+        
+        .drims-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        }
+        
+        .drims-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+        }
+        
+        .drims-table {
+            margin-bottom: 0;
+        }
+        
+        .drims-table thead {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .drims-table thead th {
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            color: #495057;
+            padding: 12px;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .drims-table tbody tr {
+            transition: background-color 0.15s ease;
+        }
+        
+        .drims-table tbody tr:hover {
+            background-color: rgba(0, 150, 57, 0.05);
+        }
+        
+        .table-clickable tbody tr {
+            cursor: pointer;
+        }
+        
+        .table-clickable tbody tr:hover {
+            background-color: rgba(0, 150, 57, 0.08);
+        }
+        
+        .drims-table td {
+            vertical-align: middle;
+            padding: 12px;
+        }
+        
+        .drims-table .btn-sm {
+            padding: 0.25rem 0.75rem;
+            font-size: 0.875rem;
+        }
     </style>
     {% block extra_styles %}{% endblock %}
 </head>
@@ -473,6 +528,14 @@
                 })
                 .catch(error => console.error('Error loading notifications:', error));
         }
+        
+        document.querySelectorAll('.table-clickable tbody tr[data-href]').forEach(row => {
+            row.addEventListener('click', function(e) {
+                if (!e.target.closest('button') && !e.target.closest('a')) {
+                    window.location.href = this.dataset.href;
+                }
+            });
+        });
     </script>
     {% block scripts %}{% endblock %}
 </body>

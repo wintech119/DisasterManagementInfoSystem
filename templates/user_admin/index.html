@@ -20,46 +20,46 @@
   {% endif %}
 {% endwith %}
 
-<div class="card">
-    <div class="card-body">
+<div class="card drims-card border-0 shadow-sm">
+    <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover">
+            <table class="table drims-table table-hover table-sm table-clickable mb-0">
                 <thead>
                     <tr>
-                        <th>ID</th>
+                        <th style="width: 60px;">ID</th>
                         <th>Email</th>
                         <th>Name</th>
                         <th>Organization</th>
                         <th>Roles</th>
                         <th>Warehouses</th>
-                        <th>Status</th>
-                        <th>Actions</th>
+                        <th style="width: 100px;">Status</th>
+                        <th class="text-end" style="width: 180px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for user in users %}
-                    <tr>
-                        <td>{{ user.id }}</td>
-                        <td>{{ user.email }}</td>
+                    <tr data-href="{{ url_for('user_admin.view', user_id=user.id) }}">
+                        <td><span class="badge bg-light text-dark">{{ user.id }}</span></td>
+                        <td><strong>{{ user.email }}</strong></td>
                         <td>{{ user.full_name or '-' }}</td>
-                        <td>{{ user.organization or '-' }}</td>
+                        <td><small class="text-muted">{{ user.organization or '-' }}</small></td>
                         <td>
                             {% if user.roles %}
                                 {% for role in user.roles[:2] %}
-                                    <span class="badge bg-primary">{{ role.name }}</span>
+                                    <span class="badge bg-primary me-1">{{ role.name }}</span>
                                 {% endfor %}
                                 {% if user.roles|length > 2 %}
                                     <span class="badge bg-secondary">+{{ user.roles|length - 2 }}</span>
                                 {% endif %}
                             {% else %}
-                                <span class="text-muted">No roles</span>
+                                <span class="text-muted small">No roles</span>
                             {% endif %}
                         </td>
                         <td>
                             {% if user.warehouses %}
-                                <span class="badge bg-info">{{ user.warehouses|length }} warehouse(s)</span>
+                                <span class="badge bg-info">{{ user.warehouses|length }}</span>
                             {% else %}
-                                <span class="text-muted">All warehouses</span>
+                                <span class="text-muted small">All</span>
                             {% endif %}
                         </td>
                         <td>
@@ -69,12 +69,12 @@
                                 <span class="badge bg-danger">Inactive</span>
                             {% endif %}
                         </td>
-                        <td>
-                            <a href="{{ url_for('user_admin.view', user_id=user.id) }}" class="btn btn-sm btn-primary">
-                                <i class="bi bi-eye"></i> View
+                        <td class="text-end">
+                            <a href="{{ url_for('user_admin.view', user_id=user.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i>
                             </a>
                             <a href="{{ url_for('user_admin.edit', user_id=user.id) }}" class="btn btn-sm btn-warning">
-                                <i class="bi bi-pencil"></i> Edit
+                                <i class="bi bi-pencil"></i>
                             </a>
                         </td>
                     </tr>
