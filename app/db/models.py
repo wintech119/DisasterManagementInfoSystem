@@ -346,6 +346,7 @@ class ReliefRqstStatus(db.Model):
     
     status_code = db.Column(db.SmallInteger, primary_key=True)
     status_desc = db.Column(db.String(20), nullable=False)
+    reason_rqrd_flag = db.Column(db.Boolean, nullable=False, default=False)
     is_active_flag = db.Column(db.Boolean, nullable=False, default=True)
 
 class ReliefRqst(db.Model):
@@ -355,11 +356,13 @@ class ReliefRqst(db.Model):
     reliefrqst_id = db.Column(db.Integer, primary_key=True)
     agency_id = db.Column(db.Integer, db.ForeignKey('agency.agency_id'), nullable=False)
     request_date = db.Column(db.Date, nullable=False)
+    tracking_no = db.Column(db.String(7), nullable=False)
     eligible_event_id = db.Column(db.Integer, db.ForeignKey('event.event_id'))
     urgency_ind = db.Column(db.CHAR(1), nullable=False)
     rqst_notes_text = db.Column(db.Text)
     review_notes_text = db.Column(db.Text)
     status_code = db.Column(db.SmallInteger, db.ForeignKey('reliefrqst_status.status_code'), nullable=False, default=0)
+    status_reason_desc = db.Column(db.String(255))
     create_by_id = db.Column(db.String(20), nullable=False)
     create_dtime = db.Column(db.DateTime, nullable=False)
     review_by_id = db.Column(db.String(20))
