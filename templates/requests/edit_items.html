@@ -58,9 +58,9 @@
                 </div>
             </div>
             <div class="mb-3">
-                <label for="rqst_reason_desc" class="form-label">Justification / Notes *</label>
-                <textarea class="form-control" id="rqst_reason_desc" name="rqst_reason_desc" rows="2" placeholder="Explain why this item is needed and how it will be used..." required></textarea>
-                <small class="text-muted">Provide specific justification for this item request</small>
+                <label for="rqst_reason_desc" class="form-label">Justification / Notes <span id="justification_required_indicator" class="text-danger" style="display: none;">*</span></label>
+                <textarea class="form-control" id="rqst_reason_desc" name="rqst_reason_desc" rows="2" placeholder="Explain why this item is needed and how it will be used..."></textarea>
+                <small class="text-muted" id="justification_hint">Required for High urgency items only</small>
             </div>
             <button type="submit" class="btn btn-goj">
                 <i class="bi bi-plus-circle"></i> Add Item to Request
@@ -151,6 +151,29 @@ document.getElementById('item_id').addEventListener('change', function() {
         uomHint.textContent = uomCode;
     } else {
         uomHint.textContent = '—';
+    }
+});
+
+// Toggle justification requirement based on urgency selection
+document.getElementById('urgency_ind').addEventListener('change', function() {
+    const justificationField = document.getElementById('rqst_reason_desc');
+    const requiredIndicator = document.getElementById('justification_required_indicator');
+    const hint = document.getElementById('justification_hint');
+    
+    if (this.value === 'H') {
+        // High urgency - justification required
+        justificationField.setAttribute('required', 'required');
+        requiredIndicator.style.display = 'inline';
+        hint.textContent = 'Required for High urgency items';
+        hint.classList.remove('text-muted');
+        hint.classList.add('text-danger');
+    } else {
+        // Medium or Low urgency - justification optional
+        justificationField.removeAttribute('required');
+        requiredIndicator.style.display = 'none';
+        hint.textContent = 'Optional for Medium/Low urgency items';
+        hint.classList.remove('text-danger');
+        hint.classList.add('text-muted');
     }
 });
 </script>
