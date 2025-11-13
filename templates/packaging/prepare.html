@@ -285,18 +285,7 @@
 
 .allocation-input {
     width: 90px;
-    padding: 0.25rem 0.5rem;
-    border: 1px solid #ced4da;
-    border-radius: 0.25rem;
-    font-size: 0.875rem;
-    text-align: right;
     margin-left: auto;
-}
-
-.allocation-input:focus {
-    outline: none;
-    border-color: #86b7fe;
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
 }
 
 .hub-select {
@@ -617,13 +606,13 @@
                                             class="allocation-input"
                                             id="allocation_{{ item.item_id }}_{{ warehouse.warehouse_id }}"
                                             name="allocation_{{ item.item_id }}_{{ warehouse.warehouse_id }}"
-                                            value="0"
                                             min="0"
                                             step="1"
                                             autocomplete="off"
                                             data-item-id="{{ item.item_id }}"
                                             data-warehouse-id="{{ warehouse.warehouse_id }}"
                                             data-requested-qty="{{ item.request_qty }}"
+                                            placeholder="0"
                                             aria-label="Allocate from {{ warehouse.warehouse_name }}">
                                     </div>
                                     {% endfor %}
