@@ -140,7 +140,7 @@
                         <td><code>{{ item.item.sku_code }}</code></td>
                         <td class="text-end">
                             <strong>{{ "%.2f"|format(item.request_qty) }}</strong>
-                            {{ item.uom.uom_code }}
+                            {{ item.item.default_uom_code }}
                         </td>
                         <td class="text-end">
                             {% if item.issue_qty %}
