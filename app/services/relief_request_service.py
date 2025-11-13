@@ -502,8 +502,12 @@ def submit_eligibility_decision(reliefrqst_id: int, decision: str, reason: Optio
     
     if decision == 'N':
         # Mark as INELIGIBLE and set review fields
+        # Constraint c_reliefrqst_5a requires action_by_id when status_code >= 4
+        # Constraint c_reliefrqst_5b requires action_dtime when action_by_id is set
         relief_request.status_code = STATUS_INELIGIBLE
         relief_request.status_reason_desc = reason.strip()
+        relief_request.action_by_id = reviewer_email[:20]
+        relief_request.action_dtime = datetime.now()
         relief_request.version_nbr += 1
         
         db.session.flush()
