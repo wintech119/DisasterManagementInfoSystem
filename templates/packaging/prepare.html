@@ -330,9 +330,9 @@
     display: inline-block;
 }
 
-.status-unallocated {
-    background: #fce4ec;
-    color: #c2185b;
+.status-filled {
+    background: #e8f5e9;
+    color: #388e3c;
 }
 
 .status-partial {
@@ -340,9 +340,19 @@
     color: #f57c00;
 }
 
-.status-filled {
-    background: #e8f5e9;
-    color: #388e3c;
+.status-unallocated {
+    background: #fce4ec;
+    color: #c2185b;
+}
+
+.status-waiting {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.status-requested {
+    background: #f5f5f5;
+    color: #616161;
 }
 
 .workflow-sidebar-modern {
@@ -634,8 +644,20 @@
                                 <strong class="remaining-qty" id="remaining_{{ item.item_id }}">{{ item.request_qty }}</strong>
                             </td>
                             <td>
-                                <span class="status-badge-inline status-unallocated" id="status_badge_{{ item.item_id }}">Unallocated</span>
-                                <input type="hidden" name="status_{{ item.item_id }}" id="status_{{ item.item_id }}" value="U">
+                                {% set status_label = item_status_labels.get(item.status_code, 'Unknown') %}
+                                {% if item.status_code == 'F' %}
+                                    {% set badge_class = 'status-filled' %}
+                                {% elif item.status_code in ['P', 'L'] %}
+                                    {% set badge_class = 'status-partial' %}
+                                {% elif item.status_code in ['D', 'U'] %}
+                                    {% set badge_class = 'status-unallocated' %}
+                                {% elif item.status_code == 'W' %}
+                                    {% set badge_class = 'status-waiting' %}
+                                {% else %}
+                                    {% set badge_class = 'status-requested' %}
+                                {% endif %}
+                                <span class="status-badge-inline {{ badge_class }}" id="status_badge_{{ item.item_id }}" data-status-code="{{ item.status_code }}">{{ status_label }}</span>
+                                <input type="hidden" name="status_{{ item.item_id }}" id="status_{{ item.item_id }}" value="{{ item.status_code }}">
                             </td>
                         </tr>
                         {% endfor %}
@@ -817,27 +839,36 @@ function updateItemCalculations(itemId) {
 function updateStatusBadge(itemId, allocated, requested) {
     const badge = document.getElementById(`status_badge_${itemId}`);
     
+    // Map allocation status to database status codes
+    const itemStatusLabels = {{ item_status_labels|tojson }};
+    let statusCode, statusClass;
+    
     if (allocated === 0) {
-        badge.className = 'status-badge-inline status-unallocated';
-        badge.textContent = 'Unallocated';
+        statusCode = 'R';  // Requested
+        statusClass = 'status-requested';
     } else if (allocated >= requested) {
-        badge.className = 'status-badge-inline status-filled';
-        badge.textContent = 'Fully Allocated';
+        statusCode = 'F';  // Filled
+        statusClass = 'status-filled';
     } else {
-        badge.className = 'status-badge-inline status-partial';
-        badge.textContent = 'Partially Allocated';
+        statusCode = 'P';  // Partly filled
+        statusClass = 'status-partial';
     }
+    
+    badge.className = 'status-badge-inline ' + statusClass;
+    badge.textContent = itemStatusLabels[statusCode] || statusCode;
+    badge.dataset.statusCode = statusCode;
 }
 
 function updateHiddenStatus(itemId, allocated, requested) {
     const statusInput = document.getElementById(`status_${itemId}`);
     
+    // Use database status codes: R=Requested, P=Partly filled, F=Filled
     if (allocated === 0) {
-        statusInput.value = 'U';  // Unallocated
+        statusInput.value = 'R';  // Requested
     } else if (allocated >= requested) {
         statusInput.value = 'F';  // Filled
     } else {
-        statusInput.value = 'P';  // Partly Filled
+        statusInput.value = 'P';  // Partly filled
     }
 }
 

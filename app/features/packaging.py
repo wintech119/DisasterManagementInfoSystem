@@ -159,7 +159,8 @@ def prepare_package(reliefrqst_id):
                              lock=lock,
                              is_locked_by_me=(lock and lock.fulfiller_user_id == current_user.user_id),
                              is_logistics_officer=is_logistics_officer(),
-                             is_logistics_manager=is_logistics_manager())
+                             is_logistics_manager=is_logistics_manager(),
+                             item_status_labels=rr_service.ITEM_STATUS_LABELS)
     
     if not can_edit:
         flash(f'This request is currently being prepared by {blocking_user}', 'warning')
