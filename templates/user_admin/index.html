@@ -38,8 +38,8 @@
                 </thead>
                 <tbody>
                     {% for user in users %}
-                    <tr data-href="{{ url_for('user_admin.view', user_id=user.id) }}">
-                        <td><span class="badge bg-light text-dark">{{ user.id }}</span></td>
+                    <tr data-href="{{ url_for('user_admin.view', user_id=user.user_id) }}">
+                        <td><span class="badge bg-light text-dark">{{ user.user_id }}</span></td>
                         <td><strong>{{ user.email }}</strong></td>
                         <td>{{ user.full_name or '-' }}</td>
                         <td><small class="text-muted">{{ user.organization or '-' }}</small></td>
@@ -70,10 +70,10 @@
                             {% endif %}
                         </td>
                         <td class="text-end">
-                            <a href="{{ url_for('user_admin.view', user_id=user.id) }}" class="btn btn-sm btn-outline-primary">
+                            <a href="{{ url_for('user_admin.view', user_id=user.user_id) }}" class="btn btn-sm btn-outline-primary">
                                 <i class="bi bi-eye"></i>
                             </a>
-                            <a href="{{ url_for('user_admin.edit', user_id=user.id) }}" class="btn btn-sm btn-warning">
+                            <a href="{{ url_for('user_admin.edit', user_id=user.user_id) }}" class="btn btn-sm btn-warning">
                                 <i class="bi bi-pencil"></i>
                             </a>
                         </td>

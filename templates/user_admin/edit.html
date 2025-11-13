@@ -3,7 +3,7 @@
 
 {% block content %}
 <h2><i class="bi bi-pencil"></i> Edit User: {{ user.email }}</h2>
-<a href="{{ url_for('user_admin.view', user_id=user.id) }}" class="btn btn-secondary mb-3">
+<a href="{{ url_for('user_admin.view', user_id=user.user_id) }}" class="btn btn-secondary mb-3">
     <i class="bi bi-arrow-left"></i> Back to User Details
 </a>
 
@@ -141,7 +141,7 @@
         <button type="submit" class="btn btn-warning">
             <i class="bi bi-save"></i> Update User
         </button>
-        <a href="{{ url_for('user_admin.view', user_id=user.id) }}" class="btn btn-secondary">Cancel</a>
+        <a href="{{ url_for('user_admin.view', user_id=user.user_id) }}" class="btn btn-secondary">Cancel</a>
     </div>
 </form>
 {% endblock %}
