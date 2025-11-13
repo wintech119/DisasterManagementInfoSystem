@@ -138,7 +138,7 @@ def add_or_update_request_item(reliefrqst_id: int, item_id: int, request_qty: De
         request_item.issue_qty = Decimal('0.00')  # Initially 0, filled by ODPEM
         request_item.urgency_ind = urgency_ind
         request_item.rqst_reason_desc = rqst_reason_desc
-        request_item.status_code = 'A'  # Active
+        request_item.status_code = 'R'  # Requested
         request_item.version_nbr = 1
         
         db.session.add(request_item)
