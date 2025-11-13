@@ -1,0 +1,171 @@
+You are working on an existing DRIMS disaster relief web app.
+
+Goal: Update the Relief Request – Edit Items page to be easier to use and navigate, add a “Submit to ODPEM” action, show a simple workflow guide on the right side, and allow saving edits as a draft so users can return later to complete the request.
+
+Page to update:
+https://55c0acc5-372c-40d4-82b9-8782b69b8423-00-3scg7f8ywatso.worf.repl.co/relief-requests/9/items/edit
+
+Very important constraints
+
+Do not change the existing database schema.
+
+Do not remove or break any existing functionality on this page.
+
+You may refactor the frontend and backend handlers for this page, but all must still work with the current models and tables.
+
+If you need to persist “draft” state, use the existing fields (e.g. status_code, version_nbr, etc.) and existing patterns used elsewhere in the app (for DRAFT status), not new columns.
+
+UX / Layout Changes
+
+Update the /relief-requests/:id/items/edit page with a two-column layout:
+
+Left Column (main content – ~70%)
+
+Clear page title:
+
+Example: Edit Items for Relief Request #{{tracking_no}} or Edit Relief Request Items
+
+Show key summary info at the top in a small card/strip:
+
+Agency name
+
+Request date
+
+Tracking number
+
+Current status (e.g. Draft / Submitted / Partially Filled / Filled)
+
+Below the summary, show the items edit table/form:
+
+Each line item (row) should display:
+
+Item name
+
+Requested quantity (editable)
+
+Urgency (L/M/H/C – dropdown or radio)
+
+Reason (text input/textarea)
+
+Required by date (date picker)
+
+Make sure inputs are clearly labeled and spaced so it’s easy to scan.
+
+Provide inline validation messages for required fields:
+
+request_qty > 0
+
+If urgency_ind is H or C, then require rqst_reason_desc and required_by_date (per DB constraints).
+
+At the bottom of the left column, add action buttons in a logical order:
+
+Save Draft (primary or secondary)
+
+Submit to ODPEM (primary)
+
+Cancel / Back (link or secondary button back to the request details page)
+
+Right Column (workflow guide – ~30%)
+
+Add a simple vertical stepper / workflow guide showing where the user is in the process. For example:
+
+Create Relief Request
+
+Add / Edit Items (current step – highlighted)
+
+Review & Confirm
+
+Submit to ODPEM
+
+ODPEM Review & Decision
+
+Visually indicate the current step (bold, different color, or a filled icon).
+
+Optionally show short explanatory text under the current step, e.g.:
+
+“On this step, you can add, edit, or remove requested items and set urgency and reasons. Save as draft if you need to come back later.”
+
+Use responsive CSS so on smaller screens the workflow guide stacks below the main content.
+
+Functional Requirements
+1. Save Draft
+
+Implement a “Save Draft” button that:
+
+Persists all current edits to the items form.
+
+Sets/keeps the request in a DRAFT status using existing status logic (e.g. status_code = 0 or whatever DRAFT is defined as in the app).
+
+Does not trigger any ODPEM approval or workflow beyond saving data.
+
+After a successful save:
+
+Show a non-intrusive success message / toast: “Draft saved. You can return later to complete this request.”
+
+If there is already a draft state for this request, re-use it and update it instead of creating duplicates.
+
+2. Submit to ODPEM
+
+Implement a “Submit to ODPEM” button with the following behavior:
+
+Validate all required fields:
+
+request_qty > 0
+
+urgency_ind is one of L, M, H, C
+
+If urgency_ind is H or C, require rqst_reason_desc and required_by_date
+
+If validation fails, show clear inline error messages next to the offending fields and do not submit.
+
+If validation passes:
+
+Save any unsaved edits.
+
+Update the relief request status to the correct “SUBMITTED / Awaiting ODPEM” code, using the existing status code system (do not invent a new one; reuse the common one used by reliefrqst / reliefrqst_status).
+
+Trigger any existing backend logic that represents “submitted to ODPEM” if such a pattern already exists.
+
+After successful submission:
+
+Redirect to a suitable page (e.g. the relief request detail page) and show a banner or toast:
+
+“Request submitted to ODPEM successfully.”
+
+3. Draft Auto-Load
+
+When the user returns to /relief-requests/:id/items/edit for a request that has DRAFT status or existing saved items:
+
+Pre-fill all fields with the last saved values for that request and its items.
+
+Ensure that the user can resume editing without losing prior data.
+
+Technical Notes
+
+Keep using the existing backend framework and ORM (SQLAlchemy, etc.) and data models (reliefrqst, reliefrqst_item, etc.).
+
+Don’t add, drop, or modify database columns. Only read and update via existing fields like:
+
+reliefrqst.status_code
+
+reliefrqst_item.request_qty
+
+reliefrqst_item.urgency_ind
+
+reliefrqst_item.rqst_reason_desc
+
+reliefrqst_item.required_by_date
+
+Ensure that all new logic respects existing constraints and checks already defined on reliefrqst_item (e.g. conditions involving status_code, issue_qty, urgency, reasons, etc.).
+
+If needed, refactor the view/template/component for this page into smaller components for better readability, but keep the route URL and general backend contract intact so other parts of the app don’t break.
+
+When you’re done, the page should:
+
+Be easy to scan and edit items.
+
+Have a clear “Save Draft” path.
+
+Have a clear “Submit to ODPEM” action.
+
+Show the user where they are in the overall workflow via a right-side stepper/guide.
