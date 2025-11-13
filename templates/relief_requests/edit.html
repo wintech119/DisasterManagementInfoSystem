@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css') }}">
 {% endblock %}
 
-{% block title %}Relief Request - {{ request.tracking_no or request.reliefrqst_id }}{% endblock %}
+{% block title %}Relief Request - RR-{{ '%06d'|format(request.reliefrqst_id) }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
@@ -16,7 +16,7 @@
     <div class="alert-banner alert-banner-success" role="alert">
         <i class="bi bi-check-circle-fill"></i>
         <div class="alert-banner-content">
-            Relief request {{ request.tracking_no or 'RR-' + '%06d'|format(request.reliefrqst_id) }} created successfully.
+            Relief request RR-{{ '%06d'|format(request.reliefrqst_id) }} created successfully.
         </div>
         <button type="button" class="alert-banner-close" onclick="this.parentElement.remove()" aria-label="Close">
             <i class="bi bi-x"></i>
@@ -26,7 +26,7 @@
 
     <!-- Back Button -->
     <div class="mb-3">
-        <a href="{{ url_for('relief_requests.list') }}" class="btn-back">
+        <a href="{{ url_for('requests.list_requests') }}" class="btn-back">
             <i class="bi bi-arrow-left"></i>
             Back
         </a>
@@ -39,22 +39,22 @@
                 <div class="page-title">
                     <i class="bi bi-clipboard-check page-title-icon"></i>
                     <h1 class="page-title-text">
-                        {{ request.tracking_no or 'RR-' + '%06d'|format(request.reliefrqst_id) }}
+                        RR-{{ '%06d'|format(request.reliefrqst_id) }}
                     </h1>
                     <span class="page-title-badge">
-                        {{ status_badge(request.status_cd) }}
+                        {{ status_badge(request.status_code) }}
                     </span>
                 </div>
                 <p class="page-subtitle">
-                    {{ request.agency.name if request.agency else 'Unknown Agency' }}
-                    {% if request.agency and request.agency.agency_type_cd %}
-                    ({{ request.agency.agency_type_cd }})
+                    {{ request.agency.agency_name if request.agency else 'Unknown Agency' }}
+                    {% if request.agency and request.agency.contact_name %}
+                    <span class="text-muted">({{ request.agency.contact_name }})</span>
                     {% endif %}
                 </p>
             </div>
 
             <!-- Info Panel -->
-            {% if request.status_cd == 0 %}
+            {% if request.status_code == 0 %}
             <div class="info-panel" role="region" aria-label="Draft status information">
                 <div class="info-panel-title">
                     <i class="bi bi-info-circle-fill"></i>
@@ -115,18 +115,29 @@
                             {% for item in request.items %}
                             <tr>
                                 <td>
-                                    <strong>{{ item.item.name if item.item else 'Unknown Item' }}</strong>
-                                    {% if item.item and item.item.sku %}
-                                    <div class="table-sku">SKU: {{ item.item.sku }}</div>
+                                    <strong>{{ item.item.item_name if item.item else 'Unknown Item' }}</strong>
+                                    {% if item.item and item.item.sku_code %}
+                                    <div class="table-sku">SKU: {{ item.item.sku_code }}</div>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <strong>{{ item.qty_rqst }}</strong>
-                                    {{ item.item.unit_of_measure if item.item else '' }}
+                                    <strong>{{ item.request_qty }}</strong>
+                                    {{ item.item.default_uom.uom_desc if (item.item and item.item.default_uom) else '' }}
                                 </td>
                                 <td>
-                                    {{ status_badge(0, 'Draft') }}
+                                    {% if request.status_code == 0 %}
+                                    <span class="status-badge status-badge-draft">Draft</span>
                                     <div class="table-sku">Awaiting submission</div>
+                                    {% else %}
+                                    {% if item.issue_qty and item.issue_qty >= item.request_qty %}
+                                    <span class="status-badge status-badge-completed">Fulfilled</span>
+                                    {% elif item.issue_qty and item.issue_qty > 0 %}
+                                    <span class="status-badge status-badge-part-filled">Partial</span>
+                                    <div class="table-sku">{{ item.issue_qty }} of {{ item.request_qty }}</div>
+                                    {% else %}
+                                    <span class="status-badge status-badge-urgent">Unfilled</span>
+                                    {% endif %}
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}
@@ -143,14 +154,14 @@
 
             <!-- Action Buttons -->
             <div class="mt-4 d-flex gap-2">
-                {% if request.status_cd == 0 %}
-                <form method="POST" action="{{ url_for('relief_requests.submit', request_id=request.reliefrqst_id) }}">
+                {% if request.status_code == 0 %}
+                <form method="POST" action="{{ url_for('requests.submit_request', request_id=request.reliefrqst_id) }}">
                     <button type="submit" class="btn-relief-primary">
                         <i class="bi bi-send"></i>
                         Submit to ODPEM
                     </button>
                 </form>
-                <a href="{{ url_for('relief_requests.edit_items', request_id=request.reliefrqst_id) }}" class="btn-relief-secondary">
+                <a href="{{ url_for('requests.edit_items', request_id=request.reliefrqst_id) }}" class="btn-relief-secondary">
                     <i class="bi bi-pencil"></i>
                     Edit Items
                 </a>
@@ -162,11 +173,11 @@
         <div class="col-lg-3">
             {% set workflow_steps = [
                 {'number': 1, 'title': 'Create Request', 'description': 'Add items you need', 'completed': True},
-                {'number': 2, 'title': 'Submit to ODPEM', 'description': 'Send request for review', 'completed': request.status_cd >= 1},
-                {'number': 3, 'title': 'ODPEM Processing', 'description': 'Awaiting review', 'completed': request.status_cd >= 3},
-                {'number': 4, 'title': 'Receive Items', 'description': 'Awaiting dispatch', 'completed': request.status_cd >= 7}
+                {'number': 2, 'title': 'Submit to ODPEM', 'description': 'Send request for review', 'completed': request.status_code >= 1},
+                {'number': 3, 'title': 'ODPEM Processing', 'description': 'Awaiting review', 'completed': request.status_code >= 3},
+                {'number': 4, 'title': 'Receive Items', 'description': 'Awaiting dispatch', 'completed': request.status_code >= 7}
             ] %}
-            {{ render_workflow_sidebar(1 if request.status_cd == 0 else 2, workflow_steps) }}
+            {{ render_workflow_sidebar(1 if request.status_code == 0 else 2, workflow_steps) }}
         </div>
     </div>
 </div>

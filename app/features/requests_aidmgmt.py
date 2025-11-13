@@ -132,15 +132,58 @@ def view_request(request_id):
         flash('You do not have permission to view this request.', 'danger')
         abort(403)
     
-    # Add workflow metadata
-    relief_request.workflow_step = rr_service.get_workflow_steps(relief_request.status_code)
+    # Calculate metrics for summary cards
+    total_requested = sum(item.request_qty for item in relief_request.items)
+    fulfilled_count = sum(item.issue_qty or 0 for item in relief_request.items)
+    shortfall_count = total_requested - fulfilled_count
+    fulfillment_rate = int((fulfilled_count / total_requested * 100) if total_requested > 0 else 0)
     
-    return render_template('requests/view.html',
+    # Get dispatch and receive dates from packages (if any)
+    dispatch_date = None
+    receive_date = None
+    confirmed_by = None
+    confirmed_agency = None
+    
+    # Build timeline events
+    timeline_events = []
+    if relief_request.create_dtime:
+        timeline_events.append({
+            'icon': 'file-earmark-text',
+            'title': 'Request Created',
+            'description': f'Draft created by {relief_request.agency.agency_name}',
+            'timestamp': relief_request.create_dtime,
+            'variant': 'default'
+        })
+    
+    if relief_request.request_date and relief_request.status_code >= rr_service.STATUS_AWAITING_APPROVAL:
+        timeline_events.append({
+            'icon': 'send',
+            'title': 'Submitted to ODPEM',
+            'description': 'Request submitted for review',
+            'timestamp': relief_request.request_date,
+            'variant': 'primary'
+        })
+    
+    if relief_request.status_code >= rr_service.STATUS_SUBMITTED:
+        timeline_events.append({
+            'icon': 'check-circle',
+            'title': 'Approved',
+            'description': 'Request approved for fulfillment',
+            'timestamp': relief_request.update_dtime,
+            'variant': 'success'
+        })
+    
+    return render_template('relief_requests/details.html',
                          request=relief_request,
-                         STATUS_DRAFT=rr_service.STATUS_DRAFT,
-                         STATUS_SUBMITTED=rr_service.STATUS_SUBMITTED,
-                         STATUS_CLOSED=rr_service.STATUS_CLOSED,
-                         STATUS_FILLED=rr_service.STATUS_FILLED)
+                         total_requested=total_requested,
+                         fulfilled_count=fulfilled_count,
+                         shortfall_count=shortfall_count,
+                         fulfillment_rate=fulfillment_rate,
+                         dispatch_date=dispatch_date,
+                         receive_date=receive_date,
+                         confirmed_by=confirmed_by,
+                         confirmed_agency=confirmed_agency,
+                         timeline_events=timeline_events)
 
 
 @requests_bp.route('/<int:request_id>/edit', methods=['GET', 'POST'])
@@ -160,13 +203,19 @@ def edit_request(request_id):
         flash('Only draft requests can be edited.', 'warning')
         return redirect(url_for('requests.view_request', request_id=request_id))
     
+    # Calculate metrics for summary cards
+    allocated_count = sum(1 for item in relief_request.items if item.issue_qty and item.issue_qty >= item.request_qty)
+    partial_count = sum(1 for item in relief_request.items if item.issue_qty and 0 < item.issue_qty < item.request_qty)
+    unallocated_count = sum(1 for item in relief_request.items if not item.issue_qty or item.issue_qty == 0)
+    
     if request.method == 'POST':
         try:
-            current_version = int(request.form.get('version_nbr'))
+            version_str = request.form.get('version_nbr')
+            current_version = int(version_str) if version_str else relief_request.version_nbr
             
             # Optimistic locking check
             if relief_request.version_nbr != current_version:
-                raise OptimisticLockError('This request was modified by another user. Please refresh.')
+                raise OptimisticLockError(record_id=request_id, message='This request was modified by another user. Please refresh.')
             
             # Update fields
             relief_request.urgency_ind = request.form.get('urgency_ind', 'M')
@@ -190,9 +239,12 @@ def edit_request(request_id):
     
     events = Event.query.filter_by(status_code='A').order_by(Event.start_date.desc()).all()
     
-    return render_template('requests/edit.html',
+    return render_template('relief_requests/edit.html',
                          request=relief_request,
-                         events=events)
+                         events=events,
+                         allocated_count=allocated_count,
+                         partial_count=partial_count,
+                         unallocated_count=unallocated_count)
 
 
 @requests_bp.route('/<int:request_id>/items', methods=['GET'])

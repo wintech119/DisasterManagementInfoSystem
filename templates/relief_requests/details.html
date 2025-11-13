@@ -8,16 +8,16 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css') }}">
 {% endblock %}
 
-{% block title %}Relief Request - {{ request.tracking_no or request.reliefrqst_id }}{% endblock %}
+{% block title %}Relief Request - RR-{{ '%06d'|format(request.reliefrqst_id) }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
     <!-- Completion Success Banner -->
-    {% if request.status_cd == 7 %}
+    {% if request.status_code == 7 %}
     <div class="alert-banner alert-banner-success" role="alert">
         <i class="bi bi-check-circle-fill"></i>
         <div class="alert-banner-content">
-            Receipt confirmed for relief request {{ request.tracking_no or 'RR-' + '%06d'|format(request.reliefrqst_id) }}. Request is now completed.
+            Receipt confirmed for relief request RR-{{ '%06d'|format(request.reliefrqst_id) }}. Request is now completed.
         </div>
         <button type="button" class="alert-banner-close" onclick="this.parentElement.remove()" aria-label="Close">
             <i class="bi bi-x"></i>
@@ -27,7 +27,7 @@
 
     <!-- Back Button -->
     <div class="mb-3">
-        <a href="{{ url_for('relief_requests.list') }}" class="btn-back">
+        <a href="{{ url_for('requests.list_requests') }}" class="btn-back">
             <i class="bi bi-arrow-left"></i>
             Back
         </a>
@@ -40,26 +40,26 @@
                 <div class="page-title">
                     <i class="bi bi-clipboard-check page-title-icon"></i>
                     <h1 class="page-title-text">
-                        {{ request.tracking_no or 'RR-' + '%06d'|format(request.reliefrqst_id) }}
+                        RR-{{ '%06d'|format(request.reliefrqst_id) }}
                     </h1>
                     <span class="page-title-badge">
-                        {% if request.status_cd == 7 %}
+                        {% if request.status_code == 7 %}
                         {{ status_badge('completed') }}
                         {% else %}
-                        {{ status_badge(request.status_cd) }}
+                        {{ status_badge(request.status_code) }}
                         {% endif %}
                     </span>
                 </div>
                 <p class="page-subtitle">
-                    {{ request.agency.name if request.agency else 'Unknown Agency' }}
-                    {% if request.agency and request.agency.agency_type_cd %}
-                    ({{ request.agency.agency_type_cd }})
+                    {{ request.agency.agency_name if request.agency else 'Unknown Agency' }}
+                    {% if request.agency and request.agency.contact_name %}
+                    <span class="text-muted">({{ request.agency.contact_name }})</span>
                     {% endif %}
                 </p>
             </div>
 
             <!-- Workflow Completed Message -->
-            {% if request.status_cd == 7 %}
+            {% if request.status_code == 7 %}
             <div class="workflow-completed">
                 <div class="workflow-completed-icon">
                     <i class="bi bi-check-circle-fill"></i>
@@ -68,9 +68,9 @@
                     <h4>Workflow Completed</h4>
                     <p>All approved items have been dispatched and received</p>
                 </div>
-                <a href="{{ url_for('reports.relief_request', request_id=request.reliefrqst_id) }}" 
+                <a href="#" 
                    class="btn btn-outline-primary"
-                   aria-label="Download report for {{ request.tracking_no or request.reliefrqst_id }}">
+                   aria-label="Download report for RR-{{ '%06d'|format(request.reliefrqst_id) }}">
                     <i class="bi bi-download"></i>
                     Download Report
                 </a>
@@ -174,26 +174,26 @@
                             {% for item in request.items %}
                             <tr>
                                 <td>
-                                    <strong>{{ item.item.name if item.item else 'Unknown Item' }}</strong>
-                                    {% if item.item and item.item.sku %}
-                                    <div class="table-sku">SKU: {{ item.item.sku }}</div>
+                                    <strong>{{ item.item.item_name if item.item else 'Unknown Item' }}</strong>
+                                    {% if item.item and item.item.sku_code %}
+                                    <div class="table-sku">SKU: {{ item.item.sku_code }}</div>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <strong>{{ item.qty_rqst }}</strong>
-                                    {{ item.item.unit_of_measure if item.item else '' }}
+                                    <strong>{{ item.request_qty }}</strong>
+                                    {{ item.item.default_uom.uom_desc if (item.item and item.item.default_uom) else '' }}
                                 </td>
                                 <td>
-                                    <strong>{{ item.qty_filled or 0 }}</strong>
-                                    {{ item.item.unit_of_measure if item.item else '' }}
+                                    <strong>{{ item.issue_qty or 0 }}</strong>
+                                    {{ item.item.default_uom.uom_desc if (item.item and item.item.default_uom) else '' }}
                                 </td>
                                 <td>
-                                    {% if item.qty_filled and item.qty_filled >= item.qty_rqst %}
-                                    {{ status_badge('completed', 'Fulfilled') }}
-                                    {% elif item.qty_filled and item.qty_filled > 0 %}
-                                    {{ status_badge('part-filled', 'Partial') }}
+                                    {% if item.issue_qty and item.issue_qty >= item.request_qty %}
+                                    <span class="status-badge status-badge-completed">Fulfilled</span>
+                                    {% elif item.issue_qty and item.issue_qty > 0 %}
+                                    <span class="status-badge status-badge-part-filled">Partial</span>
                                     {% else %}
-                                    {{ status_badge('urgent', 'Unfilled') }}
+                                    <span class="status-badge status-badge-urgent">Unfilled</span>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -211,12 +211,12 @@
                 {'number': 1, 'title': 'Create Request', 'description': 'Add items you need', 'completed': True},
                 {'number': 2, 'title': 'Submit to ODPEM', 'description': 'Send request for review', 'completed': True},
                 {'number': 3, 'title': 'ODPEM Processing', 'description': 'Awaiting review', 'completed': True},
-                {'number': 4, 'title': 'Receive Items', 'description': 'Items received and confirmed', 'completed': request.status_cd >= 7}
+                {'number': 4, 'title': 'Receive Items', 'description': 'Items received and confirmed', 'completed': request.status_code >= 7}
             ] %}
-            {{ render_workflow_sidebar(4, workflow_steps, completed=(request.status_cd >= 7)) }}
+            {{ render_workflow_sidebar(4, workflow_steps, completed=(request.status_code >= 7)) }}
             
             <!-- Info Panel -->
-            {% if request.status_cd == 7 %}
+            {% if request.status_code == 7 %}
             <div class="info-panel mt-3">
                 <div class="info-panel-title">
                     <i class="bi bi-info-circle-fill"></i>
@@ -235,16 +235,22 @@
                 <div class="card-body">
                     <div class="mb-2">
                         <small class="text-muted">Status:</small><br>
-                        {% if request.status_cd == 7 %}
+                        {% if request.status_code == 7 %}
                         {{ status_badge('completed') }}
                         {% else %}
-                        {{ status_badge(request.status_cd) }}
+                        {{ status_badge(request.status_code) }}
                         {% endif %}
                     </div>
                     <div class="mb-2">
                         <small class="text-muted">Priority:</small><br>
-                        {% if request.priority_cd %}
-                        {{ status_badge(request.priority_cd.lower() if request.priority_cd else 'medium') }}
+                        {% if request.urgency_ind %}
+                        {% if request.urgency_ind == 'H' %}
+                        <span class="status-badge status-badge-high">High</span>
+                        {% elif request.urgency_ind == 'M' %}
+                        <span class="status-badge status-badge-medium">Medium</span>
+                        {% else %}
+                        <span class="status-badge status-badge-low">Low</span>
+                        {% endif %}
                         {% else %}
                         <span class="text-muted">N/A</span>
                         {% endif %}
@@ -255,10 +261,10 @@
                         {{ request.create_dtime.strftime('%Y-%m-%d %H:%M') }}
                     </div>
                     {% endif %}
-                    {% if request.submit_dtime %}
+                    {% if request.request_date %}
                     <div>
                         <small class="text-muted">Submitted:</small><br>
-                        {{ request.submit_dtime.strftime('%Y-%m-%d %H:%M') }}
+                        {{ request.request_date.strftime('%Y-%m-%d %H:%M') if request.request_date.hour is defined else request.request_date.strftime('%Y-%m-%d') }}
                     </div>
                     {% endif %}
                 </div>
