@@ -3,8 +3,9 @@ from flask_login import login_required
 from sqlalchemy import func, desc
 from app.db.models import (
     db, Inventory, Item, Warehouse, 
-    Event, Donor, Agency, User
+    Event, Donor, Agency, User, ReliefRqst, ReliefRequestFulfillmentLock
 )
+from app.services import relief_request_service as rr_service
 from datetime import datetime, timedelta
 
 dashboard_bp = Blueprint('dashboard', __name__)
@@ -66,6 +67,24 @@ def index():
         Inventory.usable_qty > 0
     ).group_by(ItemCateg.catg_desc).all()
     
+    from sqlalchemy.orm import joinedload
+    from app.db.models import ReliefRqstStatus
+    
+    pending_fulfillment_requests = ReliefRqst.query.options(
+        joinedload(ReliefRqst.agency),
+        joinedload(ReliefRqst.items),
+        joinedload(ReliefRqst.status),
+        joinedload(ReliefRqst.fulfillment_lock).joinedload(ReliefRequestFulfillmentLock.fulfiller)
+    ).filter(
+        ReliefRqst.status_code.in_([rr_service.STATUS_SUBMITTED, rr_service.STATUS_PART_FILLED])
+    ).all()
+    
+    packaging_counts = {
+        'awaiting': len([r for r in pending_fulfillment_requests if r.status_code == rr_service.STATUS_SUBMITTED and not r.fulfillment_lock]),
+        'in_progress': len([r for r in pending_fulfillment_requests if r.fulfillment_lock]),
+        'ready': len([r for r in pending_fulfillment_requests if r.status_code == rr_service.STATUS_PART_FILLED])
+    }
+    
     context = {
         'now': datetime.now(),
         'total_items': total_items,
@@ -76,7 +95,11 @@ def index():
         'low_stock_items': low_stock_items,
         'warehouse_stock': warehouse_stock,
         'active_events': active_events,
-        'category_distribution': category_distribution
+        'category_distribution': category_distribution,
+        'packaging_counts': packaging_counts,
+        'pending_fulfillment_requests': pending_fulfillment_requests[:5],
+        'STATUS_SUBMITTED': rr_service.STATUS_SUBMITTED,
+        'STATUS_PART_FILLED': rr_service.STATUS_PART_FILLED
     }
     
     if 'Logistics Manager' in user_role_names or 'LOG_MGR' in user_role_codes:

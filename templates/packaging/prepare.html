@@ -1,0 +1,484 @@
+{% extends 'base.html' %}
+{% from 'relief_requests/_status_badge.html' import status_badge %}
+{% from 'relief_requests/_workflow_sidebar.html' import render_workflow_sidebar %}
+
+{% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css') }}">
+<style>
+.packaging-form-table {
+    width: 100%;
+    background: #fff;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    margin-bottom: 1.5rem;
+}
+
+.packaging-form-table thead {
+    background: #f8f9fa;
+}
+
+.packaging-form-table th {
+    padding: 0.875rem 1rem;
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.packaging-form-table td {
+    padding: 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f3f5;
+}
+
+.packaging-form-table tbody tr:nth-child(even) {
+    background: #fafbfc;
+}
+
+.warehouse-allocation {
+    background: #f8f9fa;
+    border-radius: 0.375rem;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.warehouse-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.375rem 0;
+}
+
+.warehouse-label {
+    min-width: 120px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #495057;
+}
+
+.warehouse-input {
+    width: 100px;
+}
+
+.warehouse-stock {
+    font-size: 0.8125rem;
+    color: #6c757d;
+}
+
+.item-status-select {
+    width: 100%;
+    max-width: 150px;
+}
+
+.quantity-cell {
+    min-width: 100px;
+}
+
+.request-header-card {
+    background: #fff;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    margin-bottom: 1.5rem;
+}
+
+.request-header-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.request-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.request-detail-label {
+    font-size: 0.8125rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.request-detail-value {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #212529;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.inventory-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.8125rem;
+    padding: 0.25rem 0.5rem;
+    background: #e7f3ff;
+    border-radius: 0.25rem;
+    margin-top: 0.25rem;
+}
+
+.inventory-info i {
+    color: #007bff;
+}
+
+.error-text {
+    color: #dc3545;
+    font-size: 0.8125rem;
+    margin-top: 0.25rem;
+}
+</style>
+{% endblock %}
+
+{% block title %}Prepare Package - RR-{{ '%06d'|format(relief_request.reliefrqst_id) }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Back Button -->
+    <div class="mb-3">
+        <a href="{{ url_for('packaging.pending_fulfillment') }}" class="btn-back">
+            <i class="bi bi-arrow-left"></i>
+            Back to Fulfillment Queue
+        </a>
+    </div>
+
+    <!-- Lock Banner (if locked by current user) -->
+    {% if is_locked_by_me %}
+    <div class="lock-banner">
+        <div class="lock-banner-content">
+            <i class="bi bi-lock-fill"></i>
+            <div class="lock-banner-message">
+                <h6>You are preparing this package</h6>
+                <p>This request is locked to you until you submit or leave the page</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-9">
+            <!-- Request Header -->
+            <div class="request-header-card">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h2 class="mb-1">
+                            <i class="bi bi-box-seam" style="color: #009639;"></i>
+                            Relief Package Preparation
+                        </h2>
+                        <p class="text-muted mb-0">Request RR-{{ '%06d'|format(relief_request.reliefrqst_id) }}</p>
+                    </div>
+                    {% if relief_request.urgency_ind %}
+                    <div>
+                        {% if relief_request.urgency_ind == 'H' %}
+                        {{ status_badge('high', 'High Priority') }}
+                        {% elif relief_request.urgency_ind == 'M' %}
+                        {{ status_badge('medium', 'Medium Priority') }}
+                        {% elif relief_request.urgency_ind == 'L' %}
+                        {{ status_badge('low', 'Low Priority') }}
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="request-header-row">
+                    <div class="request-detail">
+                        <span class="request-detail-label">Requesting Agency</span>
+                        <span class="request-detail-value">
+                            {{ relief_request.agency.agency_name if relief_request.agency else 'Unknown' }}
+                        </span>
+                    </div>
+                    <div class="request-detail">
+                        <span class="request-detail-label">Contact Person</span>
+                        <span class="request-detail-value">
+                            {{ relief_request.agency.contact_name if relief_request.agency and relief_request.agency.contact_name else 'N/A' }}
+                        </span>
+                    </div>
+                    <div class="request-detail">
+                        <span class="request-detail-label">Request Date</span>
+                        <span class="request-detail-value">
+                            {{ relief_request.request_date.strftime('%Y-%m-%d') if relief_request.request_date else 'N/A' }}
+                        </span>
+                    </div>
+                    <div class="request-detail">
+                        <span class="request-detail-label">Total Items</span>
+                        <span class="request-detail-value">
+                            {{ relief_request.items|length if relief_request.items else 0 }} items
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Packaging Form -->
+            <form method="POST" id="packagingForm">
+                <table class="packaging-form-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Item</th>
+                            <th scope="col" class="quantity-cell">Requested Qty</th>
+                            <th scope="col">Warehouse Allocation</th>
+                            <th scope="col" class="quantity-cell">Total Allocated</th>
+                            <th scope="col">Item Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in relief_request.items %}
+                        <tr data-item-id="{{ item.aiditem_id }}">
+                            <td>
+                                <strong>{{ item.aid_item.item_desc if item.aid_item else 'Unknown Item' }}</strong>
+                                {% if item.aid_item and item.aid_item.sku_code %}
+                                <div class="table-sku">SKU: {{ item.aid_item.sku_code }}</div>
+                                {% endif %}
+                            </td>
+                            <td class="quantity-cell">
+                                <strong>{{ item.request_qty }}</strong>
+                                {% if item.aid_item and item.aid_item.unit_of_measure %}
+                                <div class="table-sku">{{ item.aid_item.unit_of_measure }}</div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="warehouse-allocation">
+                                    {% for warehouse in warehouses %}
+                                    <div class="warehouse-row">
+                                        <label class="warehouse-label" for="allocation_{{ item.aiditem_id }}_{{ warehouse.warehouse_id }}">
+                                            {{ warehouse.warehouse_name }}
+                                        </label>
+                                        <input 
+                                            type="number" 
+                                            class="form-control form-control-sm warehouse-input allocation-input"
+                                            id="allocation_{{ item.aiditem_id }}_{{ warehouse.warehouse_id }}"
+                                            name="allocation[{{ item.aiditem_id }}][{{ warehouse.warehouse_id }}]"
+                                            value="0"
+                                            min="0"
+                                            step="0.0001"
+                                            data-item-id="{{ item.aiditem_id }}"
+                                            data-warehouse-id="{{ warehouse.warehouse_id }}"
+                                            data-requested-qty="{{ item.request_qty }}">
+                                        <span class="warehouse-stock" id="stock_{{ item.aiditem_id }}_{{ warehouse.warehouse_id }}">
+                                            <i class="bi bi-hourglass-split"></i> Loading...
+                                        </span>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                            <td class="quantity-cell">
+                                <strong class="total-allocated" id="total_{{ item.aiditem_id }}">0.0000</strong>
+                                <div class="error-text" id="error_{{ item.aiditem_id }}" style="display: none;"></div>
+                            </td>
+                            <td>
+                                <select class="form-select form-select-sm item-status-select" 
+                                        name="status[{{ item.aiditem_id }}]"
+                                        id="status_{{ item.aiditem_id }}"
+                                        data-item-id="{{ item.aiditem_id }}">
+                                    <option value="P">Partly Filled</option>
+                                    <option value="F">Filled</option>
+                                    <option value="D">Delayed</option>
+                                    <option value="U">Unavailable</option>
+                                    <option value="W">Withdrawn</option>
+                                    <option value="L">Lost/Damaged</option>
+                                </select>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button type="submit" name="action" value="save_draft" class="btn-relief-secondary">
+                        <i class="bi bi-save"></i>
+                        Save Draft
+                    </button>
+                    {% if is_logistics_officer %}
+                    <button type="submit" name="action" value="submit_for_approval" class="btn-relief-primary" id="submitForApprovalBtn">
+                        <i class="bi bi-check-circle"></i>
+                        Submit for LM Approval
+                    </button>
+                    {% endif %}
+                    {% if is_logistics_manager %}
+                    <button type="submit" name="action" value="send_for_dispatch" class="btn-relief-primary" id="sendForDispatchBtn">
+                        <i class="bi bi-truck"></i>
+                        Send for Dispatch
+                    </button>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+
+        <!-- Workflow Sidebar -->
+        <div class="col-lg-3">
+            {% set workflow_steps = [
+                {
+                    'number': 1,
+                    'title': 'Agency Request',
+                    'description': 'Request submitted by agency',
+                    'completed': True
+                },
+                {
+                    'number': 2,
+                    'title': 'Eligibility Review',
+                    'description': 'Reviewed and approved by ODPEM',
+                    'completed': True
+                },
+                {
+                    'number': 3,
+                    'title': 'Package Preparation',
+                    'description': 'Logistics Officer allocates warehouses',
+                    'completed': False
+                },
+                {
+                    'number': 4,
+                    'title': 'Manager Approval',
+                    'description': 'Logistics Manager reviews package',
+                    'completed': False
+                },
+                {
+                    'number': 5,
+                    'title': 'Dispatch & Delivery',
+                    'description': 'Package sent to agency',
+                    'completed': False
+                }
+            ] %}
+            {{ render_workflow_sidebar(3, workflow_steps) }}
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for Live Inventory & Validation -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load inventory levels for all items
+    loadAllInventory();
+    
+    // Add event listeners for allocation inputs
+    document.querySelectorAll('.allocation-input').forEach(input => {
+        input.addEventListener('input', function() {
+            updateTotalAllocated(this.dataset.itemId);
+            updateItemStatus(this.dataset.itemId);
+        });
+    });
+    
+    // Form validation on submit
+    document.getElementById('packagingForm').addEventListener('submit', function(e) {
+        const action = e.submitter.value;
+        if (action === 'submit_for_approval' || action === 'send_for_dispatch') {
+            if (!validateAllAllocations()) {
+                e.preventDefault();
+                alert('Please fix allocation errors before submitting');
+            }
+        }
+    });
+});
+
+function loadAllInventory() {
+    document.querySelectorAll('.allocation-input').forEach(input => {
+        const itemId = input.dataset.itemId;
+        const warehouseId = input.dataset.warehouseId;
+        loadInventory(itemId, warehouseId);
+    });
+}
+
+function loadInventory(itemId, warehouseId) {
+    const stockElement = document.getElementById(`stock_${itemId}_${warehouseId}`);
+    
+    fetch(`/packaging/api/inventory/${itemId}/${warehouseId}`)
+        .then(response => response.json())
+        .then(data => {
+            const usable = parseFloat(data.usable_qty || 0);
+            const reserved = parseFloat(data.reserved_qty || 0);
+            stockElement.innerHTML = `<i class="bi bi-box"></i> Usable: ${usable.toFixed(2)} | Reserved: ${reserved.toFixed(2)}`;
+            stockElement.dataset.usableQty = usable;
+        })
+        .catch(error => {
+            stockElement.innerHTML = `<i class="bi bi-exclamation-triangle"></i> Error`;
+            console.error('Inventory load error:', error);
+        });
+}
+
+function updateTotalAllocated(itemId) {
+    let total = 0;
+    document.querySelectorAll(`.allocation-input[data-item-id="${itemId}"]`).forEach(input => {
+        total += parseFloat(input.value || 0);
+    });
+    
+    const totalElement = document.getElementById(`total_${itemId}`);
+    totalElement.textContent = total.toFixed(4);
+    
+    // Validate against requested quantity
+    const requestedQty = parseFloat(document.querySelector(`.allocation-input[data-item-id="${itemId}"]`).dataset.requestedQty);
+    const errorElement = document.getElementById(`error_${itemId}`);
+    
+    if (total > requestedQty) {
+        errorElement.textContent = `Exceeds requested: ${requestedQty}`;
+        errorElement.style.display = 'block';
+        totalElement.style.color = '#dc3545';
+    } else {
+        errorElement.style.display = 'none';
+        totalElement.style.color = '#212529';
+    }
+}
+
+function updateItemStatus(itemId) {
+    const requestedQty = parseFloat(document.querySelector(`.allocation-input[data-item-id="${itemId}"]`).dataset.requestedQty);
+    let totalAllocated = 0;
+    
+    document.querySelectorAll(`.allocation-input[data-item-id="${itemId}"]`).forEach(input => {
+        totalAllocated += parseFloat(input.value || 0);
+    });
+    
+    const statusSelect = document.getElementById(`status_${itemId}`);
+    
+    // Auto-update status based on allocation
+    if (totalAllocated >= requestedQty) {
+        statusSelect.value = 'F'; // Filled
+    } else if (totalAllocated > 0) {
+        statusSelect.value = 'P'; // Partly Filled
+    }
+}
+
+function validateAllAllocations() {
+    let valid = true;
+    
+    document.querySelectorAll('.allocation-input').forEach(input => {
+        const itemId = input.dataset.itemId;
+        const warehouseId = input.dataset.warehouseId;
+        const allocated = parseFloat(input.value || 0);
+        const stockElement = document.getElementById(`stock_${itemId}_${warehouseId}`);
+        const usableQty = parseFloat(stockElement.dataset.usableQty || 0);
+        
+        if (allocated > usableQty) {
+            valid = false;
+            input.style.borderColor = '#dc3545';
+        } else {
+            input.style.borderColor = '';
+        }
+    });
+    
+    // Check total allocations don't exceed requested
+    const itemIds = [...new Set([...document.querySelectorAll('.allocation-input')].map(i => i.dataset.itemId))];
+    itemIds.forEach(itemId => {
+        const requestedQty = parseFloat(document.querySelector(`.allocation-input[data-item-id="${itemId}"]`).dataset.requestedQty);
+        let totalAllocated = 0;
+        
+        document.querySelectorAll(`.allocation-input[data-item-id="${itemId}"]`).forEach(input => {
+            totalAllocated += parseFloat(input.value || 0);
+        });
+        
+        if (totalAllocated > requestedQty) {
+            valid = false;
+        }
+    });
+    
+    return valid;
+}
+</script>
+{% endblock %}

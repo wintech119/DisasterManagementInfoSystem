@@ -35,25 +35,49 @@ def pending_fulfillment():
     if not (is_logistics_officer() or is_logistics_manager()):
         flash('Access denied. Only Logistics Officers and Managers can view this page.', 'danger')
         abort(403)
-    eligible_requests = ReliefRqst.query.options(
+    
+    filter_type = request.args.get('filter', 'awaiting')
+    
+    base_query = ReliefRqst.query.options(
         joinedload(ReliefRqst.agency),
         joinedload(ReliefRqst.eligible_event),
         joinedload(ReliefRqst.status),
+        joinedload(ReliefRqst.items),
         joinedload(ReliefRqst.fulfillment_lock).joinedload(ReliefRequestFulfillmentLock.fulfiller)
     ).filter(
         ReliefRqst.status_code.in_([rr_service.STATUS_SUBMITTED, rr_service.STATUS_PART_FILLED])
-    ).order_by(ReliefRqst.reliefrqst_id.desc()).all()
+    )
     
-    summary = {
-        'total': len(eligible_requests),
-        'submitted': len([r for r in eligible_requests if r.status_code == rr_service.STATUS_SUBMITTED]),
-        'part_filled': len([r for r in eligible_requests if r.status_code == rr_service.STATUS_PART_FILLED]),
-        'locked': len([r for r in eligible_requests if r.fulfillment_lock])
+    all_requests = base_query.all()
+    
+    if filter_type == 'awaiting':
+        filtered_requests = [r for r in all_requests if r.status_code == rr_service.STATUS_SUBMITTED and not r.fulfillment_lock]
+    elif filter_type == 'in_progress':
+        filtered_requests = [r for r in all_requests if r.fulfillment_lock]
+    elif filter_type == 'ready':
+        filtered_requests = [r for r in all_requests if r.status_code == rr_service.STATUS_PART_FILLED]
+    else:
+        filtered_requests = all_requests
+    
+    global_counts = {
+        'submitted': len([r for r in all_requests if r.status_code == rr_service.STATUS_SUBMITTED and not r.fulfillment_lock]),
+        'locked': len([r for r in all_requests if r.fulfillment_lock]),
+        'part_filled': len([r for r in all_requests if r.status_code == rr_service.STATUS_PART_FILLED])
+    }
+    
+    filtered_counts = {
+        'submitted': len([r for r in filtered_requests if r.status_code == rr_service.STATUS_SUBMITTED and not r.fulfillment_lock]),
+        'locked': len([r for r in filtered_requests if r.fulfillment_lock]),
+        'part_filled': len([r for r in filtered_requests if r.status_code == rr_service.STATUS_PART_FILLED and not r.fulfillment_lock])
     }
     
     return render_template('packaging/pending_fulfillment.html',
-                         requests=eligible_requests,
-                         summary=summary)
+                         requests=filtered_requests,
+                         counts=filtered_counts,
+                         global_counts=global_counts,
+                         current_filter=filter_type,
+                         STATUS_SUBMITTED=rr_service.STATUS_SUBMITTED,
+                         STATUS_PART_FILLED=rr_service.STATUS_PART_FILLED)
 
 
 @packaging_bp.route('/<int:reliefrqst_id>/prepare', methods=['GET', 'POST'])
@@ -106,13 +130,18 @@ def prepare_package(reliefrqst_id):
             
             item_inventory_map[item.item_id] = inventories
         
+        from app.core.rbac import is_logistics_officer, is_logistics_manager
+        
         return render_template('packaging/prepare.html',
-                             request=relief_request,
+                             relief_request=relief_request,
                              warehouses=warehouses,
                              item_inventory_map=item_inventory_map,
                              can_edit=can_edit,
                              blocking_user=blocking_user,
-                             lock=lock)
+                             lock=lock,
+                             is_locked_by_me=(lock and lock.fulfiller_user_id == current_user.user_id),
+                             is_logistics_officer=is_logistics_officer(),
+                             is_logistics_manager=is_logistics_manager())
     
     if not can_edit:
         flash(f'This request is currently being prepared by {blocking_user}', 'warning')
