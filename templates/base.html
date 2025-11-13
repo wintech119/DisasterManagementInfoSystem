@@ -489,7 +489,7 @@
             <i class="bi bi-box"></i>
             <span class="nav-label">Packages</span>
         </a>
-        {% if has_permission('reliefrqst', 'approve_eligibility') %}
+        {% if is_director_level() %}
         <a href="{{ url_for('eligibility.pending_list') }}" class="nav-item-link {% if active_page == 'eligibility' %}active{% endif %}">
             <i class="bi bi-clipboard-check"></i>
             <span class="nav-label">Eligibility Review</span>

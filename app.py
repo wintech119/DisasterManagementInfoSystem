@@ -46,7 +46,7 @@ from app.features.eligibility import eligibility_bp
 from app.core.status import get_status_label, get_status_badge_class
 from app.core.rbac import (
     has_role, has_all_roles, has_warehouse_access,
-    is_admin, is_logistics_manager, is_logistics_officer,
+    is_admin, is_logistics_manager, is_logistics_officer, is_director_level,
     can_manage_users, can_view_reports, has_permission
 )
 
@@ -57,6 +57,7 @@ app.jinja_env.globals.update(
     is_admin=is_admin,
     is_logistics_manager=is_logistics_manager,
     is_logistics_officer=is_logistics_officer,
+    is_director_level=is_director_level,
     can_manage_users=can_manage_users,
     can_view_reports=can_view_reports,
     has_permission=has_permission

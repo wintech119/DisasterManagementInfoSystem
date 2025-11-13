@@ -190,6 +190,17 @@ def is_logistics_officer():
     return has_role('LOGISTICS_OFFICER')
 
 
+def is_director_level():
+    """
+    Check if the current user is a director-level ODPEM executive.
+    Only Director General, Deputy Director General, and Director PEOD.
+    
+    Returns:
+        bool: True if user is director-level
+    """
+    return has_role('ODPEM_DG', 'ODPEM_DDG', 'ODPEM_DIR_PEOD')
+
+
 def can_manage_users():
     """
     Check if the current user can manage users.
