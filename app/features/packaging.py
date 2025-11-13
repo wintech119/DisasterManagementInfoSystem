@@ -12,7 +12,8 @@ from sqlalchemy.orm import joinedload
 from app.db import db
 from app.db.models import (
     ReliefRqst, ReliefRqstItem, Item, Warehouse, Inventory,
-    User, Notification, ReliefRequestFulfillmentLock
+    User, Notification, ReliefRequestFulfillmentLock,
+    ReliefPkg, ReliefPkgItem
 )
 from app.core.rbac import has_permission, permission_required
 from app.services import relief_request_service as rr_service
@@ -130,12 +131,29 @@ def prepare_package(reliefrqst_id):
             
             item_inventory_map[item.item_id] = inventories
         
+        existing_packages = ReliefPkg.query.filter_by(reliefrqst_id=reliefrqst_id).all()
+        
+        existing_allocations = {}
+        for pkg in existing_packages:
+            for pkg_item in pkg.items:
+                item_id = pkg_item.item_id
+                warehouse_id = Inventory.query.get(pkg_item.fr_inventory_id).warehouse_id
+                
+                if item_id not in existing_allocations:
+                    existing_allocations[item_id] = {}
+                
+                if warehouse_id not in existing_allocations[item_id]:
+                    existing_allocations[item_id][warehouse_id] = Decimal('0')
+                
+                existing_allocations[item_id][warehouse_id] += pkg_item.item_qty
+        
         from app.core.rbac import is_logistics_officer, is_logistics_manager
         
         return render_template('packaging/prepare.html',
                              relief_request=relief_request,
                              warehouses=warehouses,
                              item_inventory_map=item_inventory_map,
+                             existing_allocations=existing_allocations,
                              can_edit=can_edit,
                              blocking_user=blocking_user,
                              lock=lock,

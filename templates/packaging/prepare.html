@@ -5,7 +5,202 @@
 {% block extra_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css') }}">
 <style>
-.packaging-form-table {
+.page-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.page-title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: #009639;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.page-subtitle {
+    font-size: 1rem;
+    color: #6c757d;
+    margin: 0;
+}
+
+.lock-info-banner {
+    background: #d1ecf1;
+    border: 1px solid #bee5eb;
+    border-radius: 0.5rem;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.lock-info-content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.lock-info-content i {
+    font-size: 1.25rem;
+    color: #0c5460;
+}
+
+.lock-info-text h6 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #0c5460;
+}
+
+.lock-info-text p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: #0c5460;
+}
+
+.btn-release-lock {
+    background: #fff;
+    border: 1px solid #0c5460;
+    color: #0c5460;
+    padding: 0.375rem 1rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-release-lock:hover {
+    background: #0c5460;
+    color: #fff;
+}
+
+.metric-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.metric-card {
+    background: #fff;
+    border-radius: 0.5rem;
+    padding: 1.25rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.metric-icon {
+    font-size: 2rem;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+}
+
+.metric-icon.total {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.metric-icon.filled {
+    background: #e8f5e9;
+    color: #388e3c;
+}
+
+.metric-icon.partial {
+    background: #fff3e0;
+    color: #f57c00;
+}
+
+.metric-icon.unallocated {
+    background: #fce4ec;
+    color: #c2185b;
+}
+
+.metric-content {
+    flex: 1;
+}
+
+.metric-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #212529;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.metric-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.search-filter-bar {
+    background: #fff;
+    border-radius: 0.5rem;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.search-input-wrapper {
+    flex: 1;
+    min-width: 250px;
+    position: relative;
+}
+
+.search-input-wrapper i {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+}
+
+.search-input-wrapper input {
+    width: 100%;
+    padding: 0.5rem 0.75rem 0.5rem 2.5rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+}
+
+.filter-dropdown {
+    min-width: 150px;
+}
+
+.btn-jump {
+    background: #007bff;
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+}
+
+.btn-jump:hover {
+    background: #0056b3;
+}
+
+.items-table {
     width: 100%;
     background: #fff;
     border-radius: 0.5rem;
@@ -14,127 +209,206 @@
     margin-bottom: 1.5rem;
 }
 
-.packaging-form-table thead {
+.items-table thead {
     background: #f8f9fa;
 }
 
-.packaging-form-table th {
+.items-table th {
     padding: 0.875rem 1rem;
     font-weight: 600;
     color: #495057;
     font-size: 0.875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    text-align: left;
     border-bottom: 2px solid #dee2e6;
 }
 
-.packaging-form-table td {
+.items-table td {
     padding: 1rem;
     vertical-align: middle;
     border-bottom: 1px solid #f1f3f5;
 }
 
-.packaging-form-table tbody tr:nth-child(even) {
-    background: #fafbfc;
-}
-
-.warehouse-allocation {
+.items-table tbody tr:hover {
     background: #f8f9fa;
-    border-radius: 0.375rem;
-    padding: 0.5rem;
-    margin-top: 0.5rem;
 }
 
-.warehouse-row {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.375rem 0;
-}
-
-.warehouse-label {
-    min-width: 120px;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #495057;
-}
-
-.warehouse-input {
-    width: 100px;
-}
-
-.warehouse-stock {
-    font-size: 0.8125rem;
-    color: #6c757d;
-}
-
-.item-status-select {
-    width: 100%;
-    max-width: 150px;
-}
-
-.quantity-cell {
-    min-width: 100px;
-}
-
-.request-header-card {
-    background: #fff;
-    border-radius: 0.5rem;
-    padding: 1.5rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-    margin-bottom: 1.5rem;
-}
-
-.request-header-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.5rem;
-}
-
-.request-detail {
+.item-info {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
 }
 
-.request-detail-label {
-    font-size: 0.8125rem;
-    color: #6c757d;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+.item-name {
+    font-weight: 600;
+    color: #212529;
 }
 
-.request-detail-value {
-    font-size: 1rem;
+.item-sku {
+    font-size: 0.8125rem;
+    color: #6c757d;
+}
+
+.hub-allocation-inline {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.hub-select {
+    min-width: 150px;
+    max-width: 200px;
+}
+
+.qty-input {
+    width: 100px;
+}
+
+.stock-info {
+    font-size: 0.8125rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+.status-badge-inline {
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.8125rem;
     font-weight: 500;
+    display: inline-block;
+}
+
+.status-unallocated {
+    background: #fce4ec;
+    color: #c2185b;
+}
+
+.status-partial {
+    background: #fff3e0;
+    color: #f57c00;
+}
+
+.status-filled {
+    background: #e8f5e9;
+    color: #388e3c;
+}
+
+.workflow-sidebar-modern {
+    background: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    overflow: hidden;
+    position: sticky;
+    top: 1.25rem;
+}
+
+.workflow-header {
+    background: #007bff;
+    color: #fff;
+    padding: 1rem 1.25rem;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.workflow-steps {
+    padding: 1.5rem 1.25rem;
+}
+
+.workflow-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.workflow-step:last-child {
+    margin-bottom: 0;
+}
+
+.workflow-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 12px;
+    top: 30px;
+    width: 2px;
+    height: calc(100% + 1rem);
+    background: #e9ecef;
+}
+
+.step-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    z-index: 1;
+    background: #fff;
+}
+
+.step-icon.completed {
+    background: #28a745;
+    color: #fff;
+}
+
+.step-icon.active {
+    background: #007bff;
+    color: #fff;
+    border: 3px solid #007bff;
+}
+
+.step-icon.pending {
+    border: 2px solid #28a745;
+    color: #6c757d;
+}
+
+.step-content {
+    flex: 1;
+}
+
+.step-title {
+    font-weight: 600;
+    font-size: 0.875rem;
     color: #212529;
+    margin-bottom: 0.125rem;
+}
+
+.step-description {
+    font-size: 0.8125rem;
+    color: #6c757d;
+    margin: 0;
+}
+
+.notes-section {
+    padding: 1.25rem;
+    border-top: 1px solid #dee2e6;
+}
+
+.notes-section h6 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.75rem;
+}
+
+.notes-textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 0.75rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    resize: vertical;
 }
 
 .action-buttons {
     display: flex;
     gap: 0.75rem;
     flex-wrap: wrap;
-}
-
-.inventory-info {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    font-size: 0.8125rem;
-    padding: 0.25rem 0.5rem;
-    background: #e7f3ff;
-    border-radius: 0.25rem;
-    margin-top: 0.25rem;
-}
-
-.inventory-info i {
-    color: #007bff;
-}
-
-.error-text {
-    color: #dc3545;
-    font-size: 0.8125rem;
-    margin-top: 0.25rem;
+    margin-top: 1.5rem;
 }
 </style>
 {% endblock %}
@@ -147,145 +421,169 @@
     <div class="mb-3">
         <a href="{{ url_for('packaging.pending_fulfillment') }}" class="btn-back">
             <i class="bi bi-arrow-left"></i>
-            Back to Fulfillment Queue
+            Back
         </a>
     </div>
-
-    <!-- Lock Banner (if locked by current user) -->
-    {% if is_locked_by_me %}
-    <div class="lock-banner">
-        <div class="lock-banner-content">
-            <i class="bi bi-lock-fill"></i>
-            <div class="lock-banner-message">
-                <h6>You are preparing this package</h6>
-                <p>This request is locked to you until you submit or leave the page</p>
-            </div>
-        </div>
-    </div>
-    {% endif %}
 
     <div class="row">
         <!-- Main Content -->
         <div class="col-lg-9">
-            <!-- Request Header -->
-            <div class="request-header-card">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div>
-                        <h2 class="mb-1">
-                            <i class="bi bi-box-seam" style="color: #009639;"></i>
-                            Relief Package Preparation
-                        </h2>
-                        <p class="text-muted mb-0">Request RR-{{ '%06d'|format(relief_request.reliefrqst_id) }}</p>
-                    </div>
-                    {% if relief_request.urgency_ind %}
-                    <div>
-                        {% if relief_request.urgency_ind == 'H' %}
-                        {{ status_badge('high', 'High Priority') }}
-                        {% elif relief_request.urgency_ind == 'M' %}
-                        {{ status_badge('medium', 'Medium Priority') }}
-                        {% elif relief_request.urgency_ind == 'L' %}
-                        {{ status_badge('low', 'Low Priority') }}
-                        {% endif %}
-                    </div>
-                    {% endif %}
+            <!-- Page Header -->
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">
+                        <i class="bi bi-box-seam"></i>
+                        Prepare Fulfillment
+                    </h1>
+                    <p class="page-subtitle">
+                        NL-{{ '%06d'|format(relief_request.reliefrqst_id) }} • {{ relief_request.agency.agency_name if relief_request.agency else 'Unknown Agency' }}
+                    </p>
                 </div>
+            </div>
 
-                <div class="request-header-row">
-                    <div class="request-detail">
-                        <span class="request-detail-label">Requesting Agency</span>
-                        <span class="request-detail-value">
-                            {{ relief_request.agency.agency_name if relief_request.agency else 'Unknown' }}
-                        </span>
+            <!-- Lock Info Banner -->
+            {% if is_locked_by_me %}
+            <div class="lock-info-banner">
+                <div class="lock-info-content">
+                    <i class="bi bi-lock-fill"></i>
+                    <div class="lock-info-text">
+                        <h6>You are currently editing this Needs List</h6>
+                        <p>Editing session started 0 minutes ago. Your lock will automatically expire after 15 minutes of inactivity.</p>
                     </div>
-                    <div class="request-detail">
-                        <span class="request-detail-label">Contact Person</span>
-                        <span class="request-detail-value">
-                            {{ relief_request.agency.contact_name if relief_request.agency and relief_request.agency.contact_name else 'N/A' }}
-                        </span>
+                </div>
+                <button type="button" class="btn-release-lock" onclick="releaseLock()">
+                    <i class="bi bi-unlock"></i>
+                    Release Lock
+                </button>
+            </div>
+            {% endif %}
+
+            <!-- Metric Cards -->
+            <div class="metric-cards">
+                <div class="metric-card">
+                    <div class="metric-icon total">
+                        <i class="bi bi-box"></i>
                     </div>
-                    <div class="request-detail">
-                        <span class="request-detail-label">Request Date</span>
-                        <span class="request-detail-value">
-                            {{ relief_request.request_date.strftime('%Y-%m-%d') if relief_request.request_date else 'N/A' }}
-                        </span>
+                    <div class="metric-content">
+                        <div class="metric-value" id="metric-total">{{ relief_request.items|length }}</div>
+                        <div class="metric-label">Total Items</div>
                     </div>
-                    <div class="request-detail">
-                        <span class="request-detail-label">Total Items</span>
-                        <span class="request-detail-value">
-                            {{ relief_request.items|length if relief_request.items else 0 }} items
-                        </span>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon filled">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                    <div class="metric-content">
+                        <div class="metric-value" id="metric-filled">0</div>
+                        <div class="metric-label">Fully Allocated</div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon partial">
+                        <i class="bi bi-hourglass-split"></i>
+                    </div>
+                    <div class="metric-content">
+                        <div class="metric-value" id="metric-partial">0</div>
+                        <div class="metric-label">Partial</div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon unallocated">
+                        <i class="bi bi-exclamation-circle"></i>
+                    </div>
+                    <div class="metric-content">
+                        <div class="metric-value" id="metric-unallocated">{{ relief_request.items|length }}</div>
+                        <div class="metric-label">Unallocated</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Packaging Form -->
+            <!-- Search and Filter Bar -->
+            <div class="search-filter-bar">
+                <div class="search-input-wrapper">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="searchInput" placeholder="Search items by name or SKU..." onkeyup="filterItems()">
+                </div>
+                <select class="form-select filter-dropdown" id="filterDropdown" onchange="filterItems()">
+                    <option value="all">All Items</option>
+                    <option value="unallocated">Unallocated</option>
+                    <option value="partial">Partially Allocated</option>
+                    <option value="filled">Fully Allocated</option>
+                </select>
+                <button type="button" class="btn-jump" onclick="jumpToFirstUnallocated()">
+                    <i class="bi bi-arrow-down-circle"></i>
+                    Jump to First Unallocated
+                </button>
+            </div>
+
+            <!-- Items Table -->
             <form method="POST" id="packagingForm">
-                <table class="packaging-form-table">
+                <table class="items-table">
                     <thead>
                         <tr>
                             <th scope="col">Item</th>
-                            <th scope="col" class="quantity-cell">Requested Qty</th>
-                            <th scope="col">Warehouse Allocation</th>
-                            <th scope="col" class="quantity-cell">Total Allocated</th>
-                            <th scope="col">Item Status</th>
+                            <th scope="col">Requested</th>
+                            <th scope="col">Allocate from Hubs</th>
+                            <th scope="col">Allocated</th>
+                            <th scope="col">Remaining</th>
+                            <th scope="col">Status</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="itemsTableBody">
                         {% for item in relief_request.items %}
-                        <tr data-item-id="{{ item.aiditem_id }}">
+                        <tr class="item-row" 
+                            data-item-id="{{ item.aiditem_id }}" 
+                            data-item-name="{{ item.aid_item.item_desc if item.aid_item else 'Unknown' }}"
+                            data-item-sku="{{ item.aid_item.sku_code if item.aid_item and item.aid_item.sku_code else '' }}">
                             <td>
-                                <strong>{{ item.aid_item.item_desc if item.aid_item else 'Unknown Item' }}</strong>
-                                {% if item.aid_item and item.aid_item.sku_code %}
-                                <div class="table-sku">SKU: {{ item.aid_item.sku_code }}</div>
-                                {% endif %}
+                                <div class="item-info">
+                                    <span class="item-name">{{ item.aid_item.item_desc if item.aid_item else 'Unknown Item' }}</span>
+                                    {% if item.aid_item and item.aid_item.sku_code %}
+                                    <span class="item-sku">SKU: {{ item.aid_item.sku_code }}</span>
+                                    {% endif %}
+                                </div>
                             </td>
-                            <td class="quantity-cell">
-                                <strong>{{ item.request_qty }}</strong>
+                            <td>
+                                <strong data-requested-qty="{{ item.request_qty }}">{{ item.request_qty }}</strong>
                                 {% if item.aid_item and item.aid_item.unit_of_measure %}
-                                <div class="table-sku">{{ item.aid_item.unit_of_measure }}</div>
+                                <div class="item-sku">{{ item.aid_item.unit_of_measure }}</div>
                                 {% endif %}
                             </td>
                             <td>
-                                <div class="warehouse-allocation">
+                                <div class="hub-allocation-inline">
                                     {% for warehouse in warehouses %}
-                                    <div class="warehouse-row">
-                                        <label class="warehouse-label" for="allocation_{{ item.aiditem_id }}_{{ warehouse.warehouse_id }}">
-                                            {{ warehouse.warehouse_name }}
-                                        </label>
-                                        <input 
-                                            type="number" 
-                                            class="form-control form-control-sm warehouse-input allocation-input"
-                                            id="allocation_{{ item.aiditem_id }}_{{ warehouse.warehouse_id }}"
-                                            name="allocation[{{ item.aiditem_id }}][{{ warehouse.warehouse_id }}]"
-                                            value="0"
-                                            min="0"
-                                            step="0.0001"
-                                            data-item-id="{{ item.aiditem_id }}"
-                                            data-warehouse-id="{{ warehouse.warehouse_id }}"
-                                            data-requested-qty="{{ item.request_qty }}">
-                                        <span class="warehouse-stock" id="stock_{{ item.aiditem_id }}_{{ warehouse.warehouse_id }}">
-                                            <i class="bi bi-hourglass-split"></i> Loading...
-                                        </span>
+                                    {% set existing_value = existing_allocations.get(item.aiditem_id, {}).get(warehouse.warehouse_id, 0) %}
+                                    <div>
+                                        <label class="form-label mb-1" style="font-size: 0.8125rem; color: #6c757d;">{{ warehouse.warehouse_name }}</label>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <input 
+                                                type="number" 
+                                                class="form-control form-control-sm qty-input allocation-input"
+                                                id="allocation_{{ item.aiditem_id }}_{{ warehouse.warehouse_id }}"
+                                                name="allocation_{{ item.aiditem_id }}_{{ warehouse.warehouse_id }}"
+                                                value="{{ existing_value }}"
+                                                min="0"
+                                                step="0.01"
+                                                data-item-id="{{ item.aiditem_id }}"
+                                                data-warehouse-id="{{ warehouse.warehouse_id }}"
+                                                data-requested-qty="{{ item.request_qty }}">
+                                        </div>
+                                        <div class="stock-info" id="stock_{{ item.aiditem_id }}_{{ warehouse.warehouse_id }}">
+                                            <i class="bi bi-hourglass-split"></i> Loading stock...
+                                        </div>
                                     </div>
                                     {% endfor %}
                                 </div>
                             </td>
-                            <td class="quantity-cell">
-                                <strong class="total-allocated" id="total_{{ item.aiditem_id }}">0.0000</strong>
-                                <div class="error-text" id="error_{{ item.aiditem_id }}" style="display: none;"></div>
+                            <td>
+                                <strong class="total-allocated" id="total_{{ item.aiditem_id }}">0</strong>
                             </td>
                             <td>
-                                <select class="form-select form-select-sm item-status-select" 
-                                        name="status[{{ item.aiditem_id }}]"
-                                        id="status_{{ item.aiditem_id }}"
-                                        data-item-id="{{ item.aiditem_id }}">
-                                    <option value="P">Partly Filled</option>
-                                    <option value="F">Filled</option>
-                                    <option value="D">Delayed</option>
-                                    <option value="U">Unavailable</option>
-                                    <option value="W">Withdrawn</option>
-                                    <option value="L">Lost/Damaged</option>
-                                </select>
+                                <strong class="remaining-qty" id="remaining_{{ item.aiditem_id }}">{{ item.request_qty }}</strong>
+                            </td>
+                            <td>
+                                <span class="status-badge-inline status-unallocated" id="status_badge_{{ item.aiditem_id }}">Unallocated</span>
+                                <input type="hidden" name="status_{{ item.aiditem_id }}" id="status_{{ item.aiditem_id }}" value="U">
                             </td>
                         </tr>
                         {% endfor %}
@@ -316,44 +614,58 @@
 
         <!-- Workflow Sidebar -->
         <div class="col-lg-3">
-            {% set workflow_steps = [
-                {
-                    'number': 1,
-                    'title': 'Agency Request',
-                    'description': 'Request submitted by agency',
-                    'completed': True
-                },
-                {
-                    'number': 2,
-                    'title': 'Eligibility Review',
-                    'description': 'Reviewed and approved by ODPEM',
-                    'completed': True
-                },
-                {
-                    'number': 3,
-                    'title': 'Package Preparation',
-                    'description': 'Logistics Officer allocates warehouses',
-                    'completed': False
-                },
-                {
-                    'number': 4,
-                    'title': 'Manager Approval',
-                    'description': 'Logistics Manager reviews package',
-                    'completed': False
-                },
-                {
-                    'number': 5,
-                    'title': 'Dispatch & Delivery',
-                    'description': 'Package sent to agency',
-                    'completed': False
-                }
-            ] %}
-            {{ render_workflow_sidebar(3, workflow_steps) }}
+            <div class="workflow-sidebar-modern">
+                <div class="workflow-header">
+                    <i class="bi bi-list-check"></i> Workflow
+                </div>
+                <div class="workflow-steps">
+                    <div class="workflow-step">
+                        <div class="step-icon completed">
+                            <i class="bi bi-check"></i>
+                        </div>
+                        <div class="step-content">
+                            <div class="step-title">Submitted</div>
+                            <div class="step-description">{{ relief_request.agency.agency_name if relief_request.agency else 'Agency' }}</div>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-icon active">
+                            <i class="bi bi-circle-fill"></i>
+                        </div>
+                        <div class="step-content">
+                            <div class="step-title">Prepare</div>
+                            <div class="step-description">Allocate stock</div>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-icon pending">
+                            <i class="bi bi-circle"></i>
+                        </div>
+                        <div class="step-content">
+                            <div class="step-title">Approval</div>
+                            <div class="step-description">Manager review</div>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-icon pending">
+                            <i class="bi bi-circle"></i>
+                        </div>
+                        <div class="step-content">
+                            <div class="step-title">Execute</div>
+                            <div class="step-description">Transfer stock</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="notes-section">
+                    <h6>Notes (Optional)</h6>
+                    <textarea class="notes-textarea" name="notes" placeholder="Add notes..."></textarea>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- JavaScript for Live Inventory & Validation -->
+<!-- JavaScript for Modern Packaging UI -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Load inventory levels for all items
@@ -362,8 +674,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add event listeners for allocation inputs
     document.querySelectorAll('.allocation-input').forEach(input => {
         input.addEventListener('input', function() {
-            updateTotalAllocated(this.dataset.itemId);
-            updateItemStatus(this.dataset.itemId);
+            const itemId = this.dataset.itemId;
+            updateItemCalculations(itemId);
+            updateMetrics();
         });
     });
     
@@ -373,10 +686,19 @@ document.addEventListener('DOMContentLoaded', function() {
         if (action === 'submit_for_approval' || action === 'send_for_dispatch') {
             if (!validateAllAllocations()) {
                 e.preventDefault();
-                alert('Please fix allocation errors before submitting');
+                alert('Please fix allocation errors before submitting. Check that:\n- No allocation exceeds available stock\n- No total allocation exceeds requested quantity');
             }
         }
     });
+    
+    // Calculate initial state for pre-populated allocations
+    const itemIds = [...new Set([...document.querySelectorAll('.item-row')].map(row => row.dataset.itemId))];
+    itemIds.forEach(itemId => {
+        updateItemCalculations(itemId);
+    });
+    
+    // Update initial metrics
+    updateMetrics();
 });
 
 function loadAllInventory() {
@@ -394,60 +716,171 @@ function loadInventory(itemId, warehouseId) {
         .then(response => response.json())
         .then(data => {
             const usable = parseFloat(data.usable_qty || 0);
-            const reserved = parseFloat(data.reserved_qty || 0);
-            stockElement.innerHTML = `<i class="bi bi-box"></i> Usable: ${usable.toFixed(2)} | Reserved: ${reserved.toFixed(2)}`;
+            stockElement.innerHTML = `<i class="bi bi-box"></i> Available: ${usable.toFixed(2)}`;
             stockElement.dataset.usableQty = usable;
+            
+            if (usable === 0) {
+                stockElement.innerHTML = `<i class="bi bi-exclamation-triangle text-danger"></i> No stock available`;
+            }
         })
         .catch(error => {
-            stockElement.innerHTML = `<i class="bi bi-exclamation-triangle"></i> Error`;
+            stockElement.innerHTML = `<i class="bi bi-exclamation-triangle text-danger"></i> Error loading`;
             console.error('Inventory load error:', error);
         });
 }
 
-function updateTotalAllocated(itemId) {
-    let total = 0;
-    document.querySelectorAll(`.allocation-input[data-item-id="${itemId}"]`).forEach(input => {
-        total += parseFloat(input.value || 0);
-    });
-    
-    const totalElement = document.getElementById(`total_${itemId}`);
-    totalElement.textContent = total.toFixed(4);
-    
-    // Validate against requested quantity
-    const requestedQty = parseFloat(document.querySelector(`.allocation-input[data-item-id="${itemId}"]`).dataset.requestedQty);
-    const errorElement = document.getElementById(`error_${itemId}`);
-    
-    if (total > requestedQty) {
-        errorElement.textContent = `Exceeds requested: ${requestedQty}`;
-        errorElement.style.display = 'block';
-        totalElement.style.color = '#dc3545';
-    } else {
-        errorElement.style.display = 'none';
-        totalElement.style.color = '#212529';
-    }
-}
-
-function updateItemStatus(itemId) {
-    const requestedQty = parseFloat(document.querySelector(`.allocation-input[data-item-id="${itemId}"]`).dataset.requestedQty);
+function updateItemCalculations(itemId) {
+    // Calculate total allocated
     let totalAllocated = 0;
-    
     document.querySelectorAll(`.allocation-input[data-item-id="${itemId}"]`).forEach(input => {
         totalAllocated += parseFloat(input.value || 0);
     });
     
-    const statusSelect = document.getElementById(`status_${itemId}`);
+    // Get requested quantity
+    const row = document.querySelector(`tr[data-item-id="${itemId}"]`);
+    const requestedQty = parseFloat(row.querySelector('[data-requested-qty]').dataset.requestedQty);
     
-    // Auto-update status based on allocation
-    if (totalAllocated >= requestedQty) {
-        statusSelect.value = 'F'; // Filled
-    } else if (totalAllocated > 0) {
-        statusSelect.value = 'P'; // Partly Filled
+    // Update total allocated
+    const totalElement = document.getElementById(`total_${itemId}`);
+    totalElement.textContent = totalAllocated.toFixed(2);
+    
+    // Update remaining
+    const remaining = requestedQty - totalAllocated;
+    const remainingElement = document.getElementById(`remaining_${itemId}`);
+    remainingElement.textContent = remaining.toFixed(2);
+    
+    // Update status badge
+    updateStatusBadge(itemId, totalAllocated, requestedQty);
+    
+    // Update hidden status input
+    updateHiddenStatus(itemId, totalAllocated, requestedQty);
+}
+
+function updateStatusBadge(itemId, allocated, requested) {
+    const badge = document.getElementById(`status_badge_${itemId}`);
+    
+    if (allocated === 0) {
+        badge.className = 'status-badge-inline status-unallocated';
+        badge.textContent = 'Unallocated';
+    } else if (allocated >= requested) {
+        badge.className = 'status-badge-inline status-filled';
+        badge.textContent = 'Fully Allocated';
+    } else {
+        badge.className = 'status-badge-inline status-partial';
+        badge.textContent = 'Partially Allocated';
     }
+}
+
+function updateHiddenStatus(itemId, allocated, requested) {
+    const statusInput = document.getElementById(`status_${itemId}`);
+    
+    if (allocated === 0) {
+        statusInput.value = 'U';  // Unallocated
+    } else if (allocated >= requested) {
+        statusInput.value = 'F';  // Filled
+    } else {
+        statusInput.value = 'P';  // Partly Filled
+    }
+}
+
+function updateMetrics() {
+    const totalItems = document.querySelectorAll('.item-row').length;
+    let fullyAllocated = 0;
+    let partiallyAllocated = 0;
+    let unallocated = 0;
+    
+    document.querySelectorAll('.item-row').forEach(row => {
+        const itemId = row.dataset.itemId;
+        const requestedQty = parseFloat(row.querySelector('[data-requested-qty]').dataset.requestedQty);
+        
+        let totalAllocated = 0;
+        document.querySelectorAll(`.allocation-input[data-item-id="${itemId}"]`).forEach(input => {
+            totalAllocated += parseFloat(input.value || 0);
+        });
+        
+        if (totalAllocated === 0) {
+            unallocated++;
+        } else if (totalAllocated >= requestedQty) {
+            fullyAllocated++;
+        } else {
+            partiallyAllocated++;
+        }
+    });
+    
+    document.getElementById('metric-total').textContent = totalItems;
+    document.getElementById('metric-filled').textContent = fullyAllocated;
+    document.getElementById('metric-partial').textContent = partiallyAllocated;
+    document.getElementById('metric-unallocated').textContent = unallocated;
+}
+
+function filterItems() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const filterValue = document.getElementById('filterDropdown').value;
+    
+    document.querySelectorAll('.item-row').forEach(row => {
+        const itemName = row.dataset.itemName.toLowerCase();
+        const itemSku = row.dataset.itemSku.toLowerCase();
+        const itemId = row.dataset.itemId;
+        
+        // Check search match
+        const searchMatch = itemName.includes(searchTerm) || itemSku.includes(searchTerm);
+        
+        // Check filter match
+        let filterMatch = true;
+        if (filterValue !== 'all') {
+            const requestedQty = parseFloat(row.querySelector('[data-requested-qty]').dataset.requestedQty);
+            let totalAllocated = 0;
+            document.querySelectorAll(`.allocation-input[data-item-id="${itemId}"]`).forEach(input => {
+                totalAllocated += parseFloat(input.value || 0);
+            });
+            
+            if (filterValue === 'unallocated') {
+                filterMatch = totalAllocated === 0;
+            } else if (filterValue === 'partial') {
+                filterMatch = totalAllocated > 0 && totalAllocated < requestedQty;
+            } else if (filterValue === 'filled') {
+                filterMatch = totalAllocated >= requestedQty;
+            }
+        }
+        
+        // Show or hide row
+        if (searchMatch && filterMatch) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function jumpToFirstUnallocated() {
+    const rows = document.querySelectorAll('.item-row');
+    
+    for (let row of rows) {
+        const itemId = row.dataset.itemId;
+        let totalAllocated = 0;
+        
+        document.querySelectorAll(`.allocation-input[data-item-id="${itemId}"]`).forEach(input => {
+            totalAllocated += parseFloat(input.value || 0);
+        });
+        
+        if (totalAllocated === 0 && row.style.display !== 'none') {
+            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            row.style.backgroundColor = '#fff3cd';
+            setTimeout(() => {
+                row.style.backgroundColor = '';
+            }, 2000);
+            return;
+        }
+    }
+    
+    alert('No unallocated items found.');
 }
 
 function validateAllAllocations() {
     let valid = true;
+    const errors = [];
     
+    // Validate individual allocations against stock
     document.querySelectorAll('.allocation-input').forEach(input => {
         const itemId = input.dataset.itemId;
         const warehouseId = input.dataset.warehouseId;
@@ -458,27 +891,38 @@ function validateAllAllocations() {
         if (allocated > usableQty) {
             valid = false;
             input.style.borderColor = '#dc3545';
+            input.style.boxShadow = '0 0 0 0.2rem rgba(220,53,69,.25)';
         } else {
             input.style.borderColor = '';
+            input.style.boxShadow = '';
         }
     });
     
-    // Check total allocations don't exceed requested
-    const itemIds = [...new Set([...document.querySelectorAll('.allocation-input')].map(i => i.dataset.itemId))];
-    itemIds.forEach(itemId => {
-        const requestedQty = parseFloat(document.querySelector(`.allocation-input[data-item-id="${itemId}"]`).dataset.requestedQty);
-        let totalAllocated = 0;
+    // Validate total allocations don't exceed requested
+    document.querySelectorAll('.item-row').forEach(row => {
+        const itemId = row.dataset.itemId;
+        const requestedQty = parseFloat(row.querySelector('[data-requested-qty]').dataset.requestedQty);
         
+        let totalAllocated = 0;
         document.querySelectorAll(`.allocation-input[data-item-id="${itemId}"]`).forEach(input => {
             totalAllocated += parseFloat(input.value || 0);
         });
         
         if (totalAllocated > requestedQty) {
             valid = false;
+            document.getElementById(`total_${itemId}`).style.color = '#dc3545';
+        } else {
+            document.getElementById(`total_${itemId}`).style.color = '';
         }
     });
     
     return valid;
+}
+
+function releaseLock() {
+    if (confirm('Are you sure you want to release the lock? Any unsaved changes will be lost.')) {
+        window.location.href = '{{ url_for("packaging.pending_fulfillment") }}';
+    }
 }
 </script>
 {% endblock %}
