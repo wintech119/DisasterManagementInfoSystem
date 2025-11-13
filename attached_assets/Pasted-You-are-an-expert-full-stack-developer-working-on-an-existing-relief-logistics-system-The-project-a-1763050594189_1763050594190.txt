@@ -1,0 +1,286 @@
+You are an expert full-stack developer working on an existing relief logistics system.
+The project already has:
+
+A PostgreSQL database with tables like reliefrqst, reliefrqst_item, reliefrqst_status, user, role, permission, user_role, role_permission, etc.
+
+A working backend API and frontend UI for creating and viewing relief requests.
+
+A basic notifications mechanism (for both email and in-app notifications).
+
+Very important constraints:
+
+Do NOT change the database schema.
+
+Do NOT add, drop, or alter any tables, columns, constraints, or indexes.
+
+Only use the existing schema and columns.
+
+Do NOT run database migrations.
+
+All changes must be at the application (backend + frontend) level.
+
+Follow existing project conventions.
+
+Detect whether the backend is Node/Express, Python/Flask, Django, etc., and follow the patterns already in use.
+
+Detect whether the frontend is React, server-rendered templates, etc., and follow existing patterns and styling.
+
+Goal: Implement Eligibility Approval Workflow (Full-Stack)
+
+Implement the following user story entirely in code using the existing database schema and permission model:
+
+As a Senior Director, PEOD, Deputy Director, ODPEM or General Director, ODPEM, I want to receive relief requests and assign eligibility for the request to be filled.
+
+Roles & Permissions (use existing tables)
+
+Assume the following:
+
+These roles already exist in the role table (e.g. via role_code):
+
+Senior Director, PEOD
+
+Deputy Director General (DDG)
+
+Director General (DG)
+
+These roles are mapped to users via user_role.
+
+The permission and role_permission tables already define a permission called:
+
+reliefrqst.approve_eligibility
+
+Use these for authorization:
+
+Only users whose effective permissions include reliefrqst.approve_eligibility may perform eligibility decisions.
+
+Required Backend Functionality
+
+List relief requests pending eligibility
+
+Create an authenticated endpoint (e.g. GET /api/relief-requests/pending-eligibility) that:
+
+Returns relief requests that:
+
+Are in a “submitted/awaiting approval” state based on existing reliefrqst.status_code values and current workflow.
+
+Have not yet had an eligibility decision recorded according to existing schema (you must infer/store eligibility using existing columns such as status_code, status_reason_desc, review_by_id, review_dtime, etc., without changing the schema).
+
+Filters by the current user’s permissions:
+
+Only users with reliefrqst.approve_eligibility see this list.
+
+Includes minimal fields:
+
+reliefrqst_id, tracking_no, agency_id (or agency name via join if available), request_date, urgency_ind, status_code.
+
+View request details for eligibility
+
+Create/extend an endpoint (e.g. GET /api/relief-requests/:id/eligibility) that:
+
+Returns full details of a single request:
+
+Header from reliefrqst
+
+Items from reliefrqst_item
+
+Current status and any existing review/action metadata.
+
+Checks that the current user has reliefrqst.approve_eligibility.
+
+Indicates whether an eligibility decision has already been made (using current columns).
+
+If a decision already exists, mark the response as read-only.
+
+Submit eligibility decision
+
+Create a POST endpoint, e.g.:
+
+POST /api/relief-requests/:id/eligibility-decision
+
+Request body: { decision: "Y" | "N", reason?: string }
+
+Authorization:
+
+Only users with reliefrqst.approve_eligibility can call this.
+
+If a decision has already been recorded for this request, respond with an error and do not overwrite.
+
+Business rules (MUST follow exactly):
+
+Default is “Yes” in the UI (frontend responsibility), but backend must still validate the payload.
+
+If decision = "N" (ineligible):
+
+Require a non-empty reason in the payload.
+
+Use the existing reliefrqst columns to:
+
+Set the status to the value that corresponds to “INELIGIBLE” (use the existing status code mapping; do not add new status values or columns).
+
+Persist the reason in the appropriate text field (e.g. status_reason_desc).
+
+Record who made the decision and when using existing by/when columns (e.g. review_by_id, review_dtime or action_by_id, action_dtime as appropriate).
+
+Ensure that from this point forward:
+
+The request is not returned in any “awaiting fulfillment” lists.
+
+Any existing backend flows that try to fulfill/dispatch this request are blocked based on its status_code, returning a clear error message like:
+
+"This relief request is marked ineligible and cannot be processed."
+
+Notifications (use existing notification/email mechanisms):
+
+Send in-app and email notification to the original requestor (creator of reliefrqst) including:
+
+Tracking number
+
+New status (“Ineligible”)
+
+Reason for ineligibility
+
+If decision = "Y" (eligible):
+
+Do NOT change the main status code to a new value. Keep it in the existing workflow path (e.g. SUBMITTED / AWAITING APPROVAL or as is).
+
+However, you may record who made the decision and when using existing columns (if needed), without introducing new schema.
+
+After successfully recording a “Yes” decision:
+
+Do NOT mark it as ineligible or block processing.
+
+Trigger a notification to Logistics Officer(s) and Logistics Manager(s):
+
+Use existing role/permission tables to find users in roles such as LO and LM.
+
+Send both in-app and email notification that the request is eligible and ready for fulfillment, including a link to the fulfillment view.
+
+Required Frontend Functionality
+
+Eligibility worklist for Directors
+
+Add a new view or section on the appropriate dashboard for users with reliefrqst.approve_eligibility:
+
+Title like: “Relief Requests Pending Eligibility”.
+
+Fetch data from GET /api/relief-requests/pending-eligibility.
+
+Show a table with at least:
+
+Tracking number (clickable to open eligibility detail)
+
+Agency
+
+Urgency
+
+Request date
+
+Current status
+
+Eligibility review screen
+
+Create an eligibility review page/component that:
+
+Loads request details from GET /api/relief-requests/:id/eligibility.
+
+Shows:
+
+Header information (tracking no, agency, status, urgency, requester notes).
+
+Items table (from reliefrqst_item).
+
+Provides controls:
+
+Radio buttons or toggle: Eligible? [Yes] [No]
+
+Default selected value: Yes
+
+Text area “Reason for ineligibility”:
+
+Disabled/hidden when “Yes” is selected.
+
+Required and visibly enforced when “No” is selected.
+
+Buttons:
+
+“Confirm decision”
+
+“Cancel/Back”
+
+If the backend indicates that a decision has already been made:
+
+Render the page in read-only mode, showing the final decision and, if ineligible, the reason.
+
+Form submission and validation
+
+On clicking “Confirm decision”:
+
+Validate on the client:
+
+If “No” is selected and reason is empty → show an error and block submission.
+
+Send POST /api/relief-requests/:id/eligibility-decision with {"decision":"Y"|"N","reason":string?}.
+
+Handle backend validation errors gracefully and show clear messages.
+
+On success:
+
+If decision = “N”:
+
+Show a success message (e.g. “Request marked ineligible and requester notified.”).
+
+Redirect back to the “Pending Eligibility” list and remove this request from the list.
+
+If decision = “Y”:
+
+Show a success message (e.g. “Request marked eligible. Logistics team notified.”).
+
+Redirect or allow the approver to simply close the page, while the request disappears from their pending list.
+
+Notifications (Backend Integration)
+
+In-app notifications
+
+Reuse the existing in-app notification system/DB table.
+
+Add helper functions or services if needed, following project patterns.
+
+For each key event:
+
+‘request ineligible’ → notify requester.
+
+‘request eligible’ → notify all users in LO and LM roles.
+
+Email notifications
+
+Integrate with the project’s existing email sending mechanism.
+
+Ensure email content is simple but clear:
+
+Subject examples:
+
+“Relief Request [tracking_no] Marked Ineligible”
+
+“Relief Request [tracking_no] Ready for Fulfillment”
+
+Body must include tracking number, agency, and reason if ineligible.
+
+Testing & Quality
+
+Add or update tests (if project already has a testing framework):
+
+Unit tests for:
+
+Eligibility decision endpoint (decision = "Y" and decision = "N" cases).
+
+Authorization logic for reliefrqst.approve_eligibility.
+
+Integration/UI tests (where applicable) for:
+
+Directors seeing pending requests.
+
+Submitting “Yes” and “No” decisions.
+
+Blocking fulfillment for ineligible requests.
+
+Perform all the above changes directly in the existing codebase, without altering the database schema or running any migrations.
