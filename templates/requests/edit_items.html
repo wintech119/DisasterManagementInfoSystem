@@ -245,9 +245,9 @@
                         </a>
                         {% if request.status_code == 0 %}
                         <form method="POST" action="{{ url_for('requests.cancel_request', request_id=request.reliefrqst_id) }}" style="display: inline;" id="cancelForm">
-                            <button type="submit" class="btn btn-outline-danger btn-sm">
-                                <i class="bi bi-x-circle"></i>
-                                Cancel & Delete Draft
+                            <button type="submit" class="btn-relief-secondary">
+                                <i class="bi bi-trash"></i>
+                                Delete Draft
                             </button>
                         </form>
                         {% endif %}
