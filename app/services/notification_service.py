@@ -21,7 +21,7 @@ Usage Example:
 
 from flask import url_for
 from app.db.models import Notification, User, ReliefRqst, ReliefPkg, Role
-from app import db
+from app.db import db
 from typing import List, Optional
 from datetime import datetime
 
