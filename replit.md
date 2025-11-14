@@ -111,6 +111,13 @@ Preferred communication style: Simple, everyday language.
     - `compute_allowed_statuses()`: Computes allowed status transitions based on allocation state
     - `validate_status_transition()`: Validates manual status changes against business rules
     - `validate_quantity_limit()`: Validates allocated quantities against request limits
+  - **Inventory Reservation Service** (`app/services/inventory_reservation_service.py`): Transaction-safe inventory reservation system:
+    - `reserve_inventory()`: Updates inventory.reserved_qty based on allocation deltas with row-level locking
+    - `release_all_reservations()`: Releases reservations when package preparation is canceled or abandoned
+    - `commit_inventory()`: Converts reservations to actual deductions on dispatch (decreases usable_qty and reserved_qty)
+    - **Integrated with lock lifecycle**: Reservations automatically released when locks expire via `fulfillment_lock_service`
+    - **Prevents double-allocation**: Concurrent package preparation blocked by reserved quantities
+    - **Transaction coupling**: All allocation updates, reservations, and commits occur in single database transactions
 
 ## External Dependencies
 
