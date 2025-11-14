@@ -435,7 +435,7 @@ class NotificationService:
         ).count()
     
     @staticmethod
-    def get_recent_notifications(user_id: int, limit: int = None) -> List[Notification]:
+    def get_recent_notifications(user_id: int, limit: Optional[int] = None) -> List[Notification]:
         """
         Get recent notifications for a user.
         

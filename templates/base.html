@@ -7,6 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/workflow-sidebar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/notifications-ui.css') }}">
     <style>
         :root {
             --goj-green: #009639;
@@ -637,46 +638,46 @@
         function loadNotificationList() {
             const notificationList = document.getElementById('notificationList');
             const clearAllBtn = document.getElementById('clearAllNotifications');
-            notificationList.innerHTML = '<div class="text-center p-3"><span class="spinner-border spinner-border-sm"></span> Loading...</div>';
+            notificationList.innerHTML = '<div class="text-center p-3"><span class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></span></div>';
             
             fetch('{{ url_for("notifications.notification_list") }}')
                 .then(response => response.json())
                 .then(data => {
                     if (data.notifications && data.notifications.length > 0) {
                         clearAllBtn.style.display = 'block';
-                        let listHtml = '<div class="list-group list-group-flush">';
+                        let listHtml = '<div class="notification-bell-list">';
                         
                         data.notifications.forEach(notif => {
-                            const iconClass = getNotificationIcon(notif.type);
-                            const unreadBadge = notif.is_unread ? '<span class="badge bg-primary ms-2">New</span>' : '';
-                            const boldClass = notif.is_unread ? 'fw-bold' : '';
+                            const iconInfo = getNotificationIconInfo(notif.type);
+                            const unreadBadge = notif.is_unread ? '<span class="badge-new-bell">New</span>' : '';
+                            const unreadClass = notif.is_unread ? 'unread' : '';
                             
                             const safeTitle = escapeHtml(notif.title);
                             const safeMessage = escapeHtml(notif.message);
                             const safeCreatedAt = escapeHtml(notif.created_at);
-                            
                             const safeLink = escapeHtml(notif.link_url);
+                            
                             listHtml += `
-                                <div class="list-group-item d-flex align-items-start ${boldClass}" style="border-left: none; border-right: none; padding: 0;">
-                                    <a href="${safeLink}" class="flex-grow-1 text-decoration-none p-3" style="color: inherit;">
-                                        <div class="d-flex w-100 justify-content-between align-items-start">
-                                            <div class="d-flex align-items-start">
-                                                <div class="me-3">
-                                                    ${iconClass}
-                                                </div>
-                                                <div>
-                                                    <h6 class="mb-1 text-dark">${safeTitle}</h6>
-                                                    <p class="mb-1 text-muted small">${safeMessage}</p>
-                                                    <small class="text-muted">${safeCreatedAt}</small>
-                                                    ${unreadBadge}
-                                                </div>
+                                <div class="notification-bell-item ${unreadClass}" data-notification-id="${notif.id}">
+                                    <a href="${safeLink}" class="notification-bell-link">
+                                        <div class="notification-bell-icon ${iconInfo.variant}">
+                                            <i class="bi ${iconInfo.icon}"></i>
+                                        </div>
+                                        <div class="notification-bell-content">
+                                            <div class="notification-bell-header">
+                                                <h6 class="notification-bell-title">${safeTitle}</h6>
+                                                ${unreadBadge}
                                             </div>
-                                            <div>
-                                                <i class="bi bi-chevron-right text-muted"></i>
-                                            </div>
+                                            <p class="notification-bell-message">${safeMessage}</p>
+                                            <small class="notification-bell-time">
+                                                <i class="bi bi-clock"></i> ${safeCreatedAt}
+                                            </small>
                                         </div>
                                     </a>
-                                    <button class="btn btn-link text-danger p-2" onclick="deleteNotification(${notif.id}, event)" title="Delete notification">
+                                    <button class="btn-notification-bell-delete" 
+                                            onclick="deleteNotification(${notif.id}, event)" 
+                                            title="Delete notification"
+                                            aria-label="Delete notification">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </div>
@@ -684,17 +685,27 @@
                         });
                         
                         listHtml += '</div>';
-                        listHtml += '<a href="{{ url_for("notifications.index") }}" class="btn btn-sm btn-outline-primary w-100 m-3">View All</a>';
+                        listHtml += `<div class="notification-bell-footer">
+                            <a href="{{ url_for("notifications.index") }}" class="btn-view-all">
+                                <i class="bi bi-eye"></i> View All Notifications
+                            </a>
+                        </div>`;
                         notificationList.innerHTML = listHtml;
                     } else {
                         clearAllBtn.style.display = 'none';
-                        notificationList.innerHTML = '<p class="text-muted text-center p-3">No new notifications</p>';
+                        notificationList.innerHTML = `
+                            <div class="notification-bell-empty">
+                                <i class="bi bi-check-circle-fill"></i>
+                                <h6>All Clear!</h6>
+                                <p>No new notifications</p>
+                            </div>
+                        `;
                     }
                 })
                 .catch(error => {
                     console.error('Error loading notification list:', error);
                     clearAllBtn.style.display = 'none';
-                    notificationList.innerHTML = '<p class="text-danger text-center p-3">Failed to load notifications</p>';
+                    notificationList.innerHTML = '<div class="notification-bell-empty text-danger"><i class="bi bi-exclamation-circle"></i><p>Failed to load notifications</p></div>';
                 });
         }
         
@@ -757,17 +768,19 @@
             return div.innerHTML;
         }
         
-        function getNotificationIcon(type) {
+        function getNotificationIconInfo(type) {
             if (type.includes('denied') || type.includes('ineligible')) {
-                return '<i class="bi bi-x-circle text-danger" style="font-size: 2rem;"></i>';
+                return { icon: 'bi-x-circle-fill', variant: 'danger' };
             } else if (type.includes('approved') || type.includes('dispatched')) {
-                return '<i class="bi bi-check-circle text-success" style="font-size: 2rem;"></i>';
+                return { icon: 'bi-check-circle-fill', variant: 'success' };
             } else if (type.includes('submitted') || type.includes('ready')) {
-                return '<i class="bi bi-info-circle text-info" style="font-size: 2rem;"></i>';
+                return { icon: 'bi-info-circle-fill', variant: 'info' };
             } else if (type === 'low_stock') {
-                return '<i class="bi bi-exclamation-triangle text-warning" style="font-size: 2rem;"></i>';
+                return { icon: 'bi-exclamation-triangle-fill', variant: 'warning' };
+            } else if (type.includes('package')) {
+                return { icon: 'bi-box-seam-fill', variant: 'primary' };
             } else {
-                return '<i class="bi bi-bell text-primary" style="font-size: 2rem;"></i>';
+                return { icon: 'bi-bell-fill', variant: 'primary' };
             }
         }
         

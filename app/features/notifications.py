@@ -36,6 +36,8 @@ def notification_list():
 @login_required
 def index():
     """Display all notifications for current user"""
+    from datetime import datetime, timedelta
+    
     # Get actual notifications from database (no limit - show all)
     user_notifications = NotificationService.get_recent_notifications(current_user.user_id, limit=None)
     
@@ -53,9 +55,26 @@ def index():
         func.sum(Inventory.usable_qty) <= Item.reorder_qty
     ).all()
     
+    # Calculate datetime boundaries for filtering
+    now = datetime.utcnow()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    week_start = today_start - timedelta(days=today_start.weekday())
+    
+    # Precompute notification counts for metrics
+    unread_count = sum(1 for n in user_notifications if n.status == 'unread')
+    read_count = sum(1 for n in user_notifications if n.status == 'read')
+    today_count = sum(1 for n in user_notifications if n.created_at and n.created_at >= today_start)
+    week_count = sum(1 for n in user_notifications if n.created_at and n.created_at >= week_start)
+    
     return render_template('notifications/index.html', 
                          notifications=user_notifications,
-                         low_stock_items=low_stock_items)
+                         low_stock_items=low_stock_items,
+                         today=today_start,
+                         this_week=week_start,
+                         unread_count=unread_count,
+                         read_count=read_count,
+                         today_count=today_count,
+                         week_count=week_count)
 
 @notifications_bp.route('/<int:notification_id>/mark-read', methods=['POST'])
 @login_required
