@@ -112,7 +112,7 @@ def logistics_dashboard():
     low_stock_count = db.session.query(Item).join(Inventory).filter(
         Item.status_code == 'A'
     ).group_by(Item.item_id).having(
-        func.sum(Inventory.usable_qty) <= Item.reorder_level
+        func.sum(Inventory.usable_qty) <= Item.reorder_qty
     ).count()
     
     total_inventory_value = db.session.query(
