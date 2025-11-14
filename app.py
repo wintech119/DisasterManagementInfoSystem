@@ -52,6 +52,15 @@ from app.core.rbac import (
 )
 from app.core.feature_registry import FeatureRegistry
 
+def get_feature_details(feature_key):
+    """Get complete feature details from registry for templates."""
+    if feature_key in FeatureRegistry.FEATURES:
+        return {
+            'key': feature_key,
+            **FeatureRegistry.FEATURES[feature_key]
+        }
+    return None
+
 app.jinja_env.globals.update(
     has_role=has_role,
     has_all_roles=has_all_roles,
@@ -67,7 +76,8 @@ app.jinja_env.globals.update(
     get_dashboard_features=lambda: FeatureRegistry.get_dashboard_features(current_user),
     get_navigation_features=lambda group=None: FeatureRegistry.get_navigation_features(current_user, group),
     get_user_primary_role=lambda: FeatureRegistry.get_primary_role(current_user),
-    get_role_display_name=FeatureRegistry.get_role_display_name
+    get_role_display_name=FeatureRegistry.get_role_display_name,
+    get_feature_details=get_feature_details
 )
 
 @app.template_filter('format_date')
@@ -165,6 +175,12 @@ def login():
             flash('Invalid email or password', 'danger')
     
     return render_template('login.html')
+
+@app.route('/test-feature-components')
+@login_required
+def test_feature_components():
+    """Test feature registry components"""
+    return render_template('test_feature_components.html')
 
 @app.route('/logout')
 @login_required
