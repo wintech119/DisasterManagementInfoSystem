@@ -13,6 +13,38 @@ DRIMS (Disaster Relief Inventory Management System) is a web-based platform for 
 
 ## Recent Changes
 
+### November 14, 2025 - Phase 5: User Profile Pages Complete
+**Major Feature:** Implemented comprehensive user profile system with role-specific sections
+
+#### User Profile System
+- **Profile Blueprint** (`app/features/profile.py`): 4 routes for complete profile management
+  - `/profile/` - View profile with role-specific features display
+  - `/profile/edit` - Edit personal information with validation
+  - `/profile/change-password` - Secure password change with guidelines
+  - `/profile/preferences` - Notification settings management
+
+- **Modern UI Templates**: All profile pages match dashboard styling with:
+  - Clean card-based layouts
+  - Role-specific feature sections organized by category
+  - Personal information and account status displays
+  - Security actions and password guidelines
+  - Notification preference toggles
+
+- **FeatureRegistry Integration**: Profile displays user's accessible features organized by category
+- **Security Features**: Current password verification, 8-character minimum, password strength validation
+- **Account Details**: Shows user's primary role, assigned warehouses, agency affiliation
+
+**Technical Implementation:**
+- Clean blueprint architecture with no unnecessary dependencies
+- Uses FeatureRegistry for role-based feature display
+- Form validation with helpful user guidance
+- Modern UI consistent with relief-requests-ui.css styling
+
+**User Testing Note:** 
+- Profile view fully functional (verified in logs)
+- Edit and preferences routes need user testing to verify database schema compatibility
+- Minor clarification needed on notification preferences persistence
+
 ### November 14, 2025 - Phase 3: Role-Based Dashboards Complete
 **Major Feature:** Implemented comprehensive role-based dashboard system with modern UI
 
