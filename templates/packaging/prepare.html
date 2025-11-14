@@ -257,35 +257,24 @@
 .warehouse-allocation-row {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 12px;
     padding: 0.25rem 0;
-}
-
-.warehouse-allocation-row .bi-geo-alt-fill {
-    font-size: 0.875rem;
-    flex-shrink: 0;
-}
-
-.warehouse-allocation-row .warehouse-name {
-    font-size: 0.875rem;
-    color: #495057;
-    flex-shrink: 0;
 }
 
 .warehouse-allocation-row .warehouse-stock {
     font-size: 0.875rem;
     color: #212529;
-    min-width: 50px;
-}
-
-.warehouse-allocation-row .warehouse-stock .bi-hourglass-split {
-    font-size: 0.75rem;
-    color: #6c757d;
+    min-width: 60px;
+    text-align: left;
 }
 
 .allocation-input {
-    width: 90px;
-    margin-left: auto;
+    width: 120px;
+    padding: 6px 8px;
+    box-sizing: border-box;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
 }
 
 .hub-select {
@@ -596,11 +585,7 @@
                                 <div class="hub-allocation-inline">
                                     {% for warehouse in warehouses %}
                                     <div class="warehouse-allocation-row">
-                                        <i class="bi bi-geo-alt-fill" style="color: #6c757d;"></i>
-                                        <span class="warehouse-name">{{ warehouse.warehouse_name }}</span>
-                                        <strong class="warehouse-stock" id="stock_{{ item.item_id }}_{{ warehouse.warehouse_id }}" data-usable-qty="0">
-                                            <i class="bi bi-hourglass-split"></i>
-                                        </strong>
+                                        <strong class="warehouse-stock" id="stock_{{ item.item_id }}_{{ warehouse.warehouse_id }}" data-usable-qty="0">0</strong>
                                         <input 
                                             type="text" 
                                             inputmode="numeric"
