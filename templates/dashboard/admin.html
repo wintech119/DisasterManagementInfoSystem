@@ -19,7 +19,7 @@
             <p class="page-subtitle">Welcome back, {{ current_user.first_name }}! Manage DRIMS system</p>
         </div>
         {% if has_feature('user_management') %}
-        <a href="{{ url_for('user_admin.list_users') }}" class="btn btn-relief-primary">
+        <a href="{{ url_for('user_admin.index') }}" class="btn btn-relief-primary">
             <i class="bi bi-person-gear me-2"></i>
             Manage Users
         </a>
@@ -111,7 +111,7 @@
                     </h5>
                     <div class="d-grid gap-2">
                         {% if has_feature('user_management') %}
-                        <a href="{{ url_for('user_admin.list_users') }}" class="btn btn-relief-secondary btn-sm text-start">
+                        <a href="{{ url_for('user_admin.index') }}" class="btn btn-relief-secondary btn-sm text-start">
                             <i class="bi bi-person-gear me-2"></i> Manage Users
                         </a>
                         {% endif %}
