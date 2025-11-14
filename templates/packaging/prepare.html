@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% from 'relief_requests/_status_badge.html' import status_badge %}
-{% from 'relief_requests/_workflow_sidebar.html' import render_workflow_sidebar %}
+{% from 'components/_workflow_progress.html' import render_workflow_progress %}
 
 {% block extra_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css') }}">
@@ -745,53 +745,12 @@
 
         <!-- Workflow Sidebar -->
         <div class="col-lg-3 col-xl-3">
-            <div class="workflow-sidebar-modern">
-                <div class="workflow-header">
-                    <i class="bi bi-list-check"></i> Workflow
-                </div>
-                <div class="workflow-steps">
-                    <div class="workflow-step">
-                        <div class="step-icon completed">
-                            <i class="bi bi-check"></i>
-                        </div>
-                        <div class="step-content">
-                            <div class="step-title">Submitted</div>
-                            <div class="step-description">{{ relief_request.agency.agency_name if relief_request.agency else 'Agency' }}</div>
-                        </div>
-                    </div>
-                    <div class="workflow-step">
-                        <div class="step-icon active">
-                            <i class="bi bi-circle-fill"></i>
-                        </div>
-                        <div class="step-content">
-                            <div class="step-title">Prepare</div>
-                            <div class="step-description">Allocate stock</div>
-                        </div>
-                    </div>
-                    <div class="workflow-step">
-                        <div class="step-icon pending">
-                            <i class="bi bi-circle"></i>
-                        </div>
-                        <div class="step-content">
-                            <div class="step-title">Approval</div>
-                            <div class="step-description">Manager review</div>
-                        </div>
-                    </div>
-                    <div class="workflow-step">
-                        <div class="step-icon pending">
-                            <i class="bi bi-circle"></i>
-                        </div>
-                        <div class="step-content">
-                            <div class="step-title">Execute</div>
-                            <div class="step-description">Transfer stock</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="notes-section">
-                    <h6>Notes (Optional)</h6>
-                    <textarea class="notes-textarea" name="notes" placeholder="Add notes..."></textarea>
-                </div>
-            </div>
+            {{ render_workflow_progress([
+                {'title': 'Submitted', 'description': relief_request.agency.agency_name if relief_request.agency else 'Agency', 'status': 'completed'},
+                {'title': 'Prepare', 'description': 'Allocate stock', 'status': 'active'},
+                {'title': 'Approval', 'description': 'Manager review', 'status': 'pending'},
+                {'title': 'Execute', 'description': 'Transfer stock', 'status': 'pending'}
+            ], notes_enabled=True) }}
         </div>
     </div>
 </div>

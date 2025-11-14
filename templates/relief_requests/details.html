@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% from 'relief_requests/_status_badge.html' import status_badge %}
 {% from 'relief_requests/_summary_cards.html' import render_summary_cards %}
-{% from 'relief_requests/_workflow_sidebar.html' import render_workflow_sidebar %}
+{% from 'components/_workflow_progress.html' import render_workflow_progress %}
 {% from 'relief_requests/_timeline.html' import render_timeline %}
 
 {% block extra_styles %}
@@ -207,13 +207,12 @@
 
         <!-- Workflow Sidebar -->
         <div class="col-lg-3">
-            {% set workflow_steps = [
-                {'number': 1, 'title': 'Create Request', 'description': 'Add items you need', 'completed': True},
-                {'number': 2, 'title': 'Submit to ODPEM', 'description': 'Send request for review', 'completed': True},
-                {'number': 3, 'title': 'ODPEM Processing', 'description': 'Awaiting review', 'completed': True},
-                {'number': 4, 'title': 'Receive Items', 'description': 'Items received and confirmed', 'completed': request.status_code >= 7}
-            ] %}
-            {{ render_workflow_sidebar(4, workflow_steps, completed=(request.status_code >= 7)) }}
+            {{ render_workflow_progress([
+                {'title': 'Create Request', 'description': 'Add items you need', 'status': 'completed'},
+                {'title': 'Submit to ODPEM', 'description': 'Send request for review', 'status': 'completed'},
+                {'title': 'ODPEM Processing', 'description': 'Awaiting review', 'status': 'completed'},
+                {'title': 'Receive Items', 'description': 'Items received and confirmed', 'status': 'completed' if request.status_code >= 7 else 'active'}
+            ], completion_message='Your items have been received and confirmed. Request is complete!' if request.status_code >= 7 else None) }}
             
             <!-- Info Panel -->
             {% if request.status_code == 7 %}

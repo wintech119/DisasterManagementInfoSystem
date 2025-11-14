@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% from 'relief_requests/_status_badge.html' import status_badge %}
 {% from 'relief_requests/_summary_cards.html' import render_summary_cards %}
-{% from 'relief_requests/_workflow_sidebar.html' import render_workflow_sidebar %}
+{% from 'components/_workflow_progress.html' import render_workflow_progress %}
 
 {% block extra_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css') }}">
@@ -171,13 +171,12 @@
 
         <!-- Workflow Sidebar -->
         <div class="col-lg-3">
-            {% set workflow_steps = [
-                {'number': 1, 'title': 'Create Request', 'description': 'Add items you need', 'completed': True},
-                {'number': 2, 'title': 'Submit to ODPEM', 'description': 'Send request for review', 'completed': request.status_code >= 1},
-                {'number': 3, 'title': 'ODPEM Processing', 'description': 'Awaiting review', 'completed': request.status_code >= 3},
-                {'number': 4, 'title': 'Receive Items', 'description': 'Awaiting dispatch', 'completed': request.status_code >= 7}
-            ] %}
-            {{ render_workflow_sidebar(1 if request.status_code == 0 else 2, workflow_steps) }}
+            {{ render_workflow_progress([
+                {'title': 'Create Request', 'description': 'Add items you need', 'status': 'completed' if request.status_code >= 0 else 'active'},
+                {'title': 'Submit to ODPEM', 'description': 'Send request for review', 'status': 'completed' if request.status_code >= 1 else ('active' if request.status_code == 0 else 'pending')},
+                {'title': 'ODPEM Processing', 'description': 'Awaiting review', 'status': 'completed' if request.status_code >= 3 else 'pending'},
+                {'title': 'Receive Items', 'description': 'Awaiting dispatch', 'status': 'completed' if request.status_code >= 7 else 'pending'}
+            ]) }}
         </div>
     </div>
 </div>
