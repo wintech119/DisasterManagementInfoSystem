@@ -3,125 +3,119 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row mb-4">
-        <div class="col-12">
-            <h1 class="text-goj-green"><i class="bi bi-speedometer2"></i> Dashboard</h1>
-            <p class="text-muted">Disaster Relief Inventory Management System</p>
+<div class="page-container">
+    <!-- Page Header -->
+    <div class="page-header-modern">
+        <div class="page-title-group">
+            <h1>
+                <i class="bi bi-speedometer2"></i>
+                Dashboard
+            </h1>
+            <p class="subtitle">Disaster Relief Inventory Management System</p>
         </div>
     </div>
 
-    <div class="row g-3">
-        <div class="col-md-3">
-            <div class="card border-goj-green">
-                <div class="card-header card-header-goj">
-                    <i class="bi bi-building"></i> Active Warehouses
-                </div>
-                <div class="card-body text-center">
-                    <h2 class="display-4 text-goj-green mb-0">{{ total_warehouses }}</h2>
-                    <p class="text-muted mb-0">Facilities</p>
-                    <a href="{{ url_for('warehouses.list_warehouses') }}" class="btn btn-sm btn-goj mt-2">View All</a>
-                </div>
+    <!-- Metrics Grid -->
+    <div class="metrics-grid">
+        <div class="metric-card metric-card-success">
+            <div class="metric-icon">
+                <i class="bi bi-building"></i>
+            </div>
+            <div class="metric-content">
+                <div class="metric-value">{{ total_warehouses }}</div>
+                <div class="metric-label">Active Warehouses</div>
             </div>
         </div>
 
-        <div class="col-md-3">
-            <div class="card border-primary">
-                <div class="card-header bg-primary text-white">
-                    <i class="bi bi-box-seam"></i> Active Items
-                </div>
-                <div class="card-body text-center">
-                    <h2 class="display-4 text-primary mb-0">{{ total_items }}</h2>
-                    <p class="text-muted mb-0">Relief Items</p>
-                    <a href="{{ url_for('items.list_items') }}" class="btn btn-sm btn-primary mt-2">View All</a>
-                </div>
+        <div class="metric-card metric-card-info">
+            <div class="metric-icon">
+                <i class="bi bi-box-seam"></i>
+            </div>
+            <div class="metric-content">
+                <div class="metric-value">{{ total_items }}</div>
+                <div class="metric-label">Active Items</div>
             </div>
         </div>
 
-        <div class="col-md-3">
-            <div class="card border-warning">
-                <div class="card-header bg-warning">
-                    <i class="bi bi-exclamation-triangle"></i> Active Events
-                </div>
-                <div class="card-body text-center">
-                    <h2 class="display-4 text-warning mb-0">{{ active_events }}</h2>
-                    <p class="text-muted mb-0">Ongoing Disasters</p>
-                    <a href="{{ url_for('events.list_events', status='active') }}" class="btn btn-sm btn-warning mt-2">View All</a>
-                </div>
+        <div class="metric-card metric-card-warning">
+            <div class="metric-icon">
+                <i class="bi bi-exclamation-triangle"></i>
+            </div>
+            <div class="metric-content">
+                <div class="metric-value">{{ active_events }}</div>
+                <div class="metric-label">Active Events</div>
             </div>
         </div>
 
-        <div class="col-md-3">
-            <div class="card border-info">
-                <div class="card-header bg-info text-white">
-                    <i class="bi bi-file-text"></i> Pending Requests
-                </div>
-                <div class="card-body text-center">
-                    <h2 class="display-4 text-info mb-0">{{ pending_requests }}</h2>
-                    <p class="text-muted mb-0">Relief Requests</p>
-                    <a href="{{ url_for('requests.list_requests', status='pending') }}" class="btn btn-sm btn-info mt-2">View All</a>
-                </div>
+        <div class="metric-card metric-card-total">
+            <div class="metric-icon">
+                <i class="bi bi-file-text"></i>
+            </div>
+            <div class="metric-content">
+                <div class="metric-value">{{ pending_requests }}</div>
+                <div class="metric-label">Pending Requests</div>
             </div>
         </div>
     </div>
 
-    <div class="row g-3 mt-3">
+    <!-- Secondary Metrics -->
+    <div class="row g-4 mb-4">
         <div class="col-md-6">
-            <div class="card">
-                <div class="card-header card-header-goj">
-                    <i class="bi bi-boxes"></i> Total Stock Units
+            <div class="metric-card metric-card-success">
+                <div class="metric-icon">
+                    <i class="bi bi-boxes"></i>
                 </div>
-                <div class="card-body text-center">
-                    <h2 class="display-4 text-goj-green mb-0">{{ "%.0f"|format(total_stock_value) }}</h2>
-                    <p class="text-muted mb-0">Units in Inventory</p>
-                    <a href="{{ url_for('inventory.list_inventory') }}" class="btn btn-sm btn-goj mt-2">View Inventory</a>
+                <div class="metric-content">
+                    <div class="metric-value">{{ "%.0f"|format(total_stock_value) }}</div>
+                    <div class="metric-label">Total Stock Units</div>
                 </div>
             </div>
         </div>
 
         <div class="col-md-6">
-            <div class="card">
-                <div class="card-header bg-danger text-white">
-                    <i class="bi bi-exclamation-circle"></i> Low Stock Alert
+            <div class="metric-card metric-card-danger">
+                <div class="metric-icon">
+                    <i class="bi bi-exclamation-circle"></i>
                 </div>
-                <div class="card-body text-center">
-                    <h2 class="display-4 text-danger mb-0">{{ low_stock_items }}</h2>
-                    <p class="text-muted mb-0">Items Below Reorder Level</p>
-                    <a href="{{ url_for('inventory.list_inventory') }}" class="btn btn-sm btn-danger mt-2">View Details</a>
+                <div class="metric-content">
+                    <div class="metric-value">{{ low_stock_items }}</div>
+                    <div class="metric-label">Low Stock Items</div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header card-header-goj">
-                    <i class="bi bi-lightning"></i> Quick Actions
+    <!-- Quick Actions -->
+    <div class="table-container">
+        <div class="p-4">
+            <h5 class="mb-4" style="font-size: 1.125rem; font-weight: 600; color: var(--drims-text-primary);">
+                <i class="bi bi-lightning me-2" style="color: var(--drims-primary-green);"></i>
+                Quick Actions
+            </h5>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <a href="{{ url_for('events.create_event') }}" class="btn btn-modern btn-outline w-100">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        New Event
+                    </a>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3 mb-2">
-                            <a href="{{ url_for('events.create_event') }}" class="btn btn-outline-success w-100">
-                                <i class="bi bi-plus-circle"></i> New Event
-                            </a>
-                        </div>
-                        <div class="col-md-3 mb-2">
-                            <a href="{{ url_for('warehouses.create_warehouse') }}" class="btn btn-outline-primary w-100">
-                                <i class="bi bi-plus-circle"></i> New Warehouse
-                            </a>
-                        </div>
-                        <div class="col-md-3 mb-2">
-                            <a href="{{ url_for('items.create_item') }}" class="btn btn-outline-info w-100">
-                                <i class="bi bi-plus-circle"></i> New Item
-                            </a>
-                        </div>
-                        <div class="col-md-3 mb-2">
-                            <a href="{{ url_for('requests.create_request') }}" class="btn btn-outline-warning w-100">
-                                <i class="bi bi-plus-circle"></i> New Request
-                            </a>
-                        </div>
-                    </div>
+                <div class="col-md-3">
+                    <a href="{{ url_for('warehouses.create_warehouse') }}" class="btn btn-modern btn-outline w-100">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        New Warehouse
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{{ url_for('items.create_item') }}" class="btn btn-modern btn-outline w-100">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        New Item
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{{ url_for('requests.create_request') }}" class="btn btn-modern btn-outline w-100">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        New Request
+                    </a>
                 </div>
             </div>
         </div>
