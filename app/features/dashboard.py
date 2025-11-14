@@ -153,7 +153,7 @@ def agency_dashboard():
     base_query = ReliefRqst.query.options(
         joinedload(ReliefRqst.items),
         joinedload(ReliefRqst.status),
-        joinedload(ReliefRqst.event)
+        joinedload(ReliefRqst.eligible_event)
     ).filter_by(agency_id=current_user.agency_id)
     
     # Apply filters
