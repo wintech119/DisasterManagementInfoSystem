@@ -22,7 +22,7 @@ def view_profile():
     Shows user details, assigned roles, features, and permissions.
     """
     # Get user's features and roles
-    features = FeatureRegistry.get_user_features(current_user)
+    features = FeatureRegistry.get_accessible_features(current_user)
     primary_role = FeatureRegistry.get_primary_role(current_user)
     role_display_name = FeatureRegistry.get_role_display_name(primary_role) if primary_role else "User"
     

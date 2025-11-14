@@ -444,114 +444,17 @@
                     <i class="bi bi-chevron-down ms-2"></i>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="{{ url_for('profile.view_profile') }}"><i class="bi bi-person-circle"></i> My Profile</a></li>
+                    <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
                 </ul>
             </div>
         </div>
     </div>
 
+    {% from 'components/_dynamic_navigation.html' import render_dynamic_nav %}
     <div class="sidebar" id="sidebar">
-        <div class="nav-section-header">Main</div>
-        <a href="{{ url_for('index') }}" class="nav-item-link {% if active_page == 'dashboard' %}active{% endif %}">
-            <i class="bi bi-house-door"></i>
-            <span class="nav-label">Dashboard</span>
-        </a>
-        
-        <div class="nav-section-header">Inventory</div>
-        <a href="{{ url_for('items.list_items') }}" class="nav-item-link {% if active_page == 'items' %}active{% endif %}">
-            <i class="bi bi-box-seam"></i>
-            <span class="nav-label">Items Catalog</span>
-        </a>
-        <a href="{{ url_for('inventory.list_inventory') }}" class="nav-item-link {% if active_page == 'inventory' %}active{% endif %}">
-            <i class="bi bi-boxes"></i>
-            <span class="nav-label">Stock Levels</span>
-        </a>
-        <a href="{{ url_for('donations.list_donations') }}" class="nav-item-link {% if active_page == 'donations' %}active{% endif %}">
-            <i class="bi bi-gift"></i>
-            <span class="nav-label">Receive Stock</span>
-        </a>
-        <a href="{{ url_for('transfers.list_transfers') }}" class="nav-item-link {% if active_page == 'transfers' %}active{% endif %}">
-            <i class="bi bi-arrow-left-right"></i>
-            <span class="nav-label">Transfer Stock</span>
-        </a>
-        
-        <div class="nav-section-header">OPERATIONS</div>
-        {% if current_user.agency_id %}
-        {# Agency users see their own requests #}
-        <a href="{{ url_for('requests.list_requests') }}" class="nav-item-link {% if active_page == 'agency_requests' %}active{% endif %}">
-            <i class="bi bi-file-earmark-person"></i>
-            <span class="nav-label">My Relief Requests</span>
-        </a>
-        {% endif %}
-        {% if is_director_level() %}
-        {# Directors see unified dashboard for all requests, review, and fulfillment #}
-        <a href="{{ url_for('director.dashboard') }}" class="nav-item-link {% if active_page == 'director_dashboard' %}active{% endif %}">
-            <i class="bi bi-speedometer2"></i>
-            <span class="nav-label">Relief Request Management</span>
-        </a>
-        {% endif %}
-        {% if not is_director_level() and not current_user.agency_id %}
-        {# LO/LM and other staff see individual pages #}
-        <a href="{{ url_for('packaging.pending_fulfillment') }}" class="nav-item-link {% if active_page == 'pending_fulfillment' %}active{% endif %}">
-            <i class="bi bi-box-arrow-in-down"></i>
-            <span class="nav-label">Pending Fulfillment</span>
-        </a>
-        {% if is_logistics_manager() %}
-        {# LM-only: Approval queue for LO-submitted packages #}
-        <a href="{{ url_for('packaging.pending_approval') }}" class="nav-item-link {% if active_page == 'pending_approval' %}active{% endif %}">
-            <i class="bi bi-clipboard-check"></i>
-            <span class="nav-label">Pending Approval</span>
-        </a>
-        {% endif %}
-        {% endif %}
-        
-        <div class="nav-section-header">Management</div>
-        <a href="{{ url_for('events.list_events') }}" class="nav-item-link {% if active_page == 'events' %}active{% endif %}">
-            <i class="bi bi-exclamation-triangle"></i>
-            <span class="nav-label">Disaster Events</span>
-        </a>
-        <a href="{{ url_for('warehouses.list_warehouses') }}" class="nav-item-link {% if active_page == 'warehouses' %}active{% endif %}">
-            <i class="bi bi-building"></i>
-            <span class="nav-label">Warehouses</span>
-        </a>
-        <a href="{{ url_for('locations.list_locations') }}" class="nav-item-link {% if active_page == 'locations' %}active{% endif %}">
-            <i class="bi bi-geo-alt-fill"></i>
-            <span class="nav-label">Bin Locations</span>
-        </a>
-        <a href="{{ url_for('donors.list_donors') }}" class="nav-item-link {% if active_page == 'donors' %}active{% endif %}">
-            <i class="bi bi-people"></i>
-            <span class="nav-label">Donors</span>
-        </a>
-        <a href="{{ url_for('agencies.list_agencies') }}" class="nav-item-link {% if active_page == 'agencies' %}active{% endif %}">
-            <i class="bi bi-building-check"></i>
-            <span class="nav-label">Agencies</span>
-        </a>
-        <a href="{{ url_for('custodians.list_custodians') }}" class="nav-item-link {% if active_page == 'custodians' %}active{% endif %}">
-            <i class="bi bi-person-badge"></i>
-            <span class="nav-label">Custodians</span>
-        </a>
-        
-        <div class="nav-section-header">Admin</div>
-        <a href="{{ url_for('user_admin.index') }}" class="nav-item-link {% if active_page == 'users' %}active{% endif %}">
-            <i class="bi bi-people-fill"></i>
-            <span class="nav-label">Users</span>
-        </a>
-        {% if is_admin() %}
-        <a href="{{ url_for('account_requests.list_requests') }}" class="nav-item-link {% if active_page == 'account_requests' %}active{% endif %}">
-            <i class="bi bi-file-earmark-text"></i>
-            <span class="nav-label">Account Requests</span>
-        </a>
-        {% endif %}
-        
-        <div class="nav-section-header">System</div>
-        <a href="{{ url_for('notifications.index') }}" class="nav-item-link {% if active_page == 'notifications' %}active{% endif %}">
-            <i class="bi bi-bell-fill"></i>
-            <span class="nav-label">Notifications</span>
-        </a>
-        <a href="{{ url_for('reports.index') }}" class="nav-item-link {% if active_page == 'reports' %}active{% endif %}">
-            <i class="bi bi-file-earmark-bar-graph"></i>
-            <span class="nav-label">Reports</span>
-        </a>
+        {{ render_dynamic_nav(current_user, active_page) }}
     </div>
 
     <div class="offcanvas offcanvas-end" tabindex="-1" id="notificationPanel">

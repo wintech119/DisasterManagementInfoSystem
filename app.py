@@ -76,6 +76,7 @@ app.jinja_env.globals.update(
     has_feature=lambda feature_key: FeatureRegistry.has_access(current_user, feature_key),
     get_dashboard_features=lambda: FeatureRegistry.get_dashboard_features(current_user),
     get_navigation_features=lambda group=None: FeatureRegistry.get_navigation_features(current_user, group),
+    get_user_features=lambda: FeatureRegistry.get_accessible_features(current_user),
     get_user_primary_role=lambda: FeatureRegistry.get_primary_role(current_user),
     get_role_display_name=FeatureRegistry.get_role_display_name,
     get_feature_details=get_feature_details

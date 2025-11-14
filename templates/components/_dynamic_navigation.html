@@ -1,0 +1,69 @@
+{#
+Dynamic Navigation Macro
+Uses FeatureRegistry to show only features the user has access to
+#}
+
+{% macro render_dynamic_nav(current_user, active_page='') %}
+{# Get user's features organized by category #}
+{% set features = get_user_features() %}
+{% set features_by_category = {} %}
+
+{# Organize features by category #}
+{% for feature in features %}
+    {% set category = feature.category %}
+    {% if category not in features_by_category %}
+        {% set _ = features_by_category.update({category: []}) %}
+    {% endif %}
+    {% set _ = features_by_category[category].append(feature) %}
+{% endfor %}
+
+{# Define category order and display names #}
+{% set category_order = [
+    'Dashboard',
+    'Relief Requests', 
+    'Inventory',
+    'Management',
+    'Administration',
+    'System'
+] %}
+
+{# Render navigation sections by category #}
+{% for category_name in category_order %}
+    {% if category_name in features_by_category %}
+        {% set category_features = features_by_category[category_name] %}
+        
+        {# Category header #}
+        <div class="nav-section-header">{{ category_name }}</div>
+        
+        {# Render features in this category #}
+        {% for feature in category_features %}
+            {% if feature.route %}
+                <a href="{{ url_for(feature.route) }}" 
+                   class="nav-item-link {% if active_page == feature.id %}active{% endif %}"
+                   title="{{ feature.description }}">
+                    <i class="bi bi-{{ feature.icon }}"></i>
+                    <span class="nav-label">{{ feature.name }}</span>
+                </a>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+{% endfor %}
+
+{# Render any uncategorized features #}
+{% for category, category_features in features_by_category.items() %}
+    {% if category not in category_order %}
+        <div class="nav-section-header">{{ category }}</div>
+        {% for feature in category_features %}
+            {% if feature.route %}
+                <a href="{{ url_for(feature.route) }}" 
+                   class="nav-item-link {% if active_page == feature.id %}active{% endif %}"
+                   title="{{ feature.description }}">
+                    <i class="bi bi-{{ feature.icon }}"></i>
+                    <span class="nav-label">{{ feature.name }}</span>
+                </a>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+{% endfor %}
+
+{% endmacro %}
