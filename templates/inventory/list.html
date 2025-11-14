@@ -3,68 +3,108 @@
 {% block title %}Inventory{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row mb-3">
-        <div class="col-md-6">
-            <h2 class="text-goj-green"><i class="bi bi-boxes"></i> Inventory Summary</h2>
+<div class="page-container">
+    <!-- Page Header -->
+    <div class="page-header-modern">
+        <div class="page-title-group">
+            <h1>
+                <i class="bi bi-boxes"></i>
+                Inventory Summary
+            </h1>
+            <p class="subtitle">View and manage inventory across all warehouses</p>
         </div>
-        <div class="col-md-6">
-            <form method="GET" class="d-flex gap-2">
-                <select class="form-select" name="warehouse_id" onchange="this.form.submit()">
-                    <option value="">All Warehouses</option>
-                    {% for warehouse in warehouses %}
-                    <option value="{{ warehouse.warehouse_id }}" {% if selected_warehouse_id == warehouse.warehouse_id %}selected{% endif %}>
-                        {{ warehouse.warehouse_name }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </form>
+        <div class="d-flex gap-2">
+            {% if has_feature('inventory_intake') %}
+            <a href="{{ url_for('intake.list_intakes') }}" class="btn btn-modern btn-primary">
+                <i class="bi bi-arrow-down-circle me-2"></i>
+                Record Intake
+            </a>
+            {% endif %}
         </div>
     </div>
 
-    <div class="card">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Warehouse</th>
-                            <th>Item</th>
-                            <th>SKU</th>
-                            <th>Usable</th>
-                            <th>Reserved</th>
-                            <th>Defective</th>
-                            <th>Expired</th>
-                            <th>UOM</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for inv, item_name, sku_code, warehouse_name in inventory_items %}
-                        <tr>
-                            <td>{{ warehouse_name }}</td>
-                            <td>{{ item_name }}</td>
-                            <td><code>{{ sku_code }}</code></td>
-                            <td><strong>{{ inv.usable_qty }}</strong></td>
-                            <td class="text-warning">{{ inv.reserved_qty }}</td>
-                            <td class="text-danger">{{ inv.defective_qty }}</td>
-                            <td class="text-muted">{{ inv.expired_qty }}</td>
-                            <td>{{ inv.uom_code }}</td>
-                            <td>
-                                <span class="badge bg-{{ inv.status_code|status_badge('inventory') }}">
-                                    {{ inv.status_code|status_label('inventory') }}
-                                </span>
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="9" class="text-center text-muted">No inventory records found</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        <form method="GET" class="d-flex align-items-center gap-3">
+            <label for="warehouse_id" class="form-label mb-0" style="font-weight: 600; white-space: nowrap;">
+                <i class="bi bi-building me-1"></i>
+                Warehouse:
+            </label>
+            <select class="form-control" name="warehouse_id" id="warehouse_id" onchange="this.form.submit()" style="max-width: 300px;">
+                <option value="">All Warehouses</option>
+                {% for warehouse in warehouses %}
+                <option value="{{ warehouse.warehouse_id }}" {% if selected_warehouse_id == warehouse.warehouse_id %}selected{% endif %}>
+                    {{ warehouse.warehouse_name }}
+                </option>
+                {% endfor %}
+            </select>
+        </form>
     </div>
+
+    <!-- Inventory Table -->
+    {% if inventory_items %}
+    <div class="table-container">
+        <table class="modern-table">
+            <thead>
+                <tr>
+                    <th>Warehouse</th>
+                    <th>Item</th>
+                    <th>SKU</th>
+                    <th>Usable</th>
+                    <th>Reserved</th>
+                    <th>Defective</th>
+                    <th>Expired</th>
+                    <th>UOM</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inv, item_name, sku_code, warehouse_name in inventory_items %}
+                <tr>
+                    <td>
+                        <strong>{{ warehouse_name }}</strong>
+                    </td>
+                    <td>{{ item_name }}</td>
+                    <td>
+                        <code style="background: var(--drims-bg-light); padding: 0.25rem 0.5rem; border-radius: var(--drims-radius-sm); font-size: var(--drims-text-sm);">
+                            {{ sku_code }}
+                        </code>
+                    </td>
+                    <td>
+                        <strong style="color: var(--drims-success);">{{ inv.usable_qty }}</strong>
+                    </td>
+                    <td>
+                        <span style="color: var(--drims-warning-darkest);">{{ inv.reserved_qty }}</span>
+                    </td>
+                    <td>
+                        <span style="color: var(--drims-danger);">{{ inv.defective_qty }}</span>
+                    </td>
+                    <td>
+                        <span style="color: var(--drims-text-secondary);">{{ inv.expired_qty }}</span>
+                    </td>
+                    <td>{{ inv.uom_code }}</td>
+                    <td>
+                        <span class="status-badge status-badge-{{ inv.status_code|status_badge('inventory') }}">
+                            {{ inv.status_code|status_label('inventory') }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="bi bi-boxes"></i>
+        <h5>No Inventory Records</h5>
+        <p>No inventory records found for the selected warehouse.</p>
+        {% if has_feature('inventory_intake') %}
+        <a href="{{ url_for('intake.list_intakes') }}" class="btn btn-modern btn-primary">
+            <i class="bi bi-arrow-down-circle me-2"></i>
+            Record Intake
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

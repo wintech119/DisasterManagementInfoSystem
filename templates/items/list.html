@@ -3,70 +3,94 @@
 {% block title %}Items{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row mb-3">
-        <div class="col-md-6">
-            <h2 class="text-goj-green"><i class="bi bi-box-seam"></i> Relief Items</h2>
+<div class="page-container">
+    <!-- Page Header -->
+    <div class="page-header-modern">
+        <div class="page-title-group">
+            <h1>
+                <i class="bi bi-box-seam"></i>
+                Relief Items
+            </h1>
+            <p class="subtitle">Manage relief items and categories</p>
         </div>
-        <div class="col-md-6 text-end">
-            <a href="{{ url_for('items.create_item') }}" class="btn btn-goj">
-                <i class="bi bi-plus-circle"></i> Create Item
+        <a href="{{ url_for('items.create_item') }}" class="btn btn-modern btn-primary">
+            <i class="bi bi-plus-circle me-2"></i>
+            Create Item
+        </a>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="filter-bar">
+        <div class="filter-tabs">
+            <a href="{{ url_for('items.list_items', status='active') }}" 
+               class="filter-tab {% if status_filter == 'active' %}active{% endif %}">
+                Active Items
+            </a>
+            <a href="{{ url_for('items.list_items', status='inactive') }}" 
+               class="filter-tab {% if status_filter == 'inactive' %}active{% endif %}">
+                Inactive Items
+            </a>
+            <a href="{{ url_for('items.list_items', status='all') }}" 
+               class="filter-tab {% if status_filter == 'all' %}active{% endif %}">
+                All Items
             </a>
         </div>
     </div>
 
-    <div class="card">
-        <div class="card-header">
-            <ul class="nav nav-tabs card-header-tabs">
-                <li class="nav-item">
-                    <a class="nav-link {% if status_filter == 'active' %}active{% endif %}" href="{{ url_for('items.list_items', status='active') }}">Active</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if status_filter == 'inactive' %}active{% endif %}" href="{{ url_for('items.list_items', status='inactive') }}">Inactive</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if status_filter == 'all' %}active{% endif %}" href="{{ url_for('items.list_items', status='all') }}">All</a>
-                </li>
-            </ul>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>SKU</th>
-                            <th>Name</th>
-                            <th>Category</th>
-                            <th>Reorder Qty</th>
-                            <th>UOM</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for item in items %}
-                        <tr>
-                            <td>{{ item.item_id }}</td>
-                            <td><code>{{ item.sku_code }}</code></td>
-                            <td>{{ item.item_name }}</td>
-                            <td><span class="badge bg-secondary">{{ item.category_code }}</span></td>
-                            <td>{{ item.reorder_qty }}</td>
-                            <td>{{ item.default_uom_code }}</td>
-                            <td>
-                                <span class="badge bg-{{ item.status_code|status_badge('item') }}">
-                                    {{ item.status_code|status_label('item') }}
-                                </span>
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="7" class="text-center text-muted">No items found</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+    <!-- Items Table -->
+    {% if items %}
+    <div class="table-container">
+        <table class="modern-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>SKU</th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Reorder Qty</th>
+                    <th>UOM</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td>
+                        <span style="color: var(--drims-text-secondary); font-weight: 500;">#{{ item.item_id }}</span>
+                    </td>
+                    <td>
+                        <code style="background: var(--drims-bg-light); padding: 0.25rem 0.5rem; border-radius: var(--drims-radius-sm); font-size: var(--drims-text-sm);">
+                            {{ item.sku_code }}
+                        </code>
+                    </td>
+                    <td>
+                        <strong>{{ item.item_name }}</strong>
+                    </td>
+                    <td>
+                        <span class="status-badge status-badge-secondary">{{ item.category_code }}</span>
+                    </td>
+                    <td>{{ item.reorder_qty }}</td>
+                    <td>{{ item.default_uom_code }}</td>
+                    <td>
+                        <span class="status-badge status-badge-{{ item.status_code|status_badge('item') }}">
+                            {{ item.status_code|status_label('item') }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="bi bi-box-seam"></i>
+        <h5>No Items Found</h5>
+        <p>No relief items found for the selected filter.</p>
+        <a href="{{ url_for('items.create_item') }}" class="btn btn-modern btn-primary">
+            <i class="bi bi-plus-circle me-2"></i>
+            Create Item
+        </a>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

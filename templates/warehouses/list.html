@@ -3,68 +3,88 @@
 {% block title %}Warehouses{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row mb-3">
-        <div class="col-md-6">
-            <h2 class="text-goj-green"><i class="bi bi-building"></i> Warehouses</h2>
+<div class="page-container">
+    <!-- Page Header -->
+    <div class="page-header-modern">
+        <div class="page-title-group">
+            <h1>
+                <i class="bi bi-building"></i>
+                Warehouses
+            </h1>
+            <p class="subtitle">Manage warehouse facilities and locations</p>
         </div>
-        <div class="col-md-6 text-end">
-            <a href="{{ url_for('warehouses.create_warehouse') }}" class="btn btn-goj">
-                <i class="bi bi-plus-circle"></i> Create Warehouse
+        <a href="{{ url_for('warehouses.create_warehouse') }}" class="btn btn-modern btn-primary">
+            <i class="bi bi-plus-circle me-2"></i>
+            Create Warehouse
+        </a>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="filter-bar">
+        <div class="filter-tabs">
+            <a href="{{ url_for('warehouses.list_warehouses', status='active') }}" 
+               class="filter-tab {% if status_filter == 'active' %}active{% endif %}">
+                Active Warehouses
+            </a>
+            <a href="{{ url_for('warehouses.list_warehouses', status='inactive') }}" 
+               class="filter-tab {% if status_filter == 'inactive' %}active{% endif %}">
+                Inactive Warehouses
+            </a>
+            <a href="{{ url_for('warehouses.list_warehouses', status='all') }}" 
+               class="filter-tab {% if status_filter == 'all' %}active{% endif %}">
+                All Warehouses
             </a>
         </div>
     </div>
 
-    <div class="card">
-        <div class="card-header">
-            <ul class="nav nav-tabs card-header-tabs">
-                <li class="nav-item">
-                    <a class="nav-link {% if status_filter == 'active' %}active{% endif %}" href="{{ url_for('warehouses.list_warehouses', status='active') }}">Active</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if status_filter == 'inactive' %}active{% endif %}" href="{{ url_for('warehouses.list_warehouses', status='inactive') }}">Inactive</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if status_filter == 'all' %}active{% endif %}" href="{{ url_for('warehouses.list_warehouses', status='all') }}">All</a>
-                </li>
-            </ul>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Type</th>
-                            <th>Parish</th>
-                            <th>Contact</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for warehouse in warehouses %}
-                        <tr>
-                            <td>{{ warehouse.warehouse_id }}</td>
-                            <td>{{ warehouse.warehouse_name }}</td>
-                            <td><span class="badge bg-info">{{ warehouse.warehouse_type }}</span></td>
-                            <td>{{ warehouse.parish.parish_name if warehouse.parish else warehouse.parish_code }}</td>
-                            <td>{{ warehouse.contact_name }}</td>
-                            <td>
-                                <span class="badge bg-{{ warehouse.status_code|status_badge('warehouse') }}">
-                                    {{ warehouse.status_code|status_label('warehouse') }}
-                                </span>
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="6" class="text-center text-muted">No warehouses found</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+    <!-- Warehouses Table -->
+    {% if warehouses %}
+    <div class="table-container">
+        <table class="modern-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Parish</th>
+                    <th>Contact</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for warehouse in warehouses %}
+                <tr>
+                    <td>
+                        <span style="color: var(--drims-text-secondary); font-weight: 500;">#{{ warehouse.warehouse_id }}</span>
+                    </td>
+                    <td>
+                        <strong>{{ warehouse.warehouse_name }}</strong>
+                    </td>
+                    <td>
+                        <span class="status-badge status-badge-info">{{ warehouse.warehouse_type }}</span>
+                    </td>
+                    <td>{{ warehouse.parish.parish_name if warehouse.parish else warehouse.parish_code }}</td>
+                    <td>{{ warehouse.contact_name }}</td>
+                    <td>
+                        <span class="status-badge status-badge-{{ warehouse.status_code|status_badge('warehouse') }}">
+                            {{ warehouse.status_code|status_label('warehouse') }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="bi bi-building"></i>
+        <h5>No Warehouses Found</h5>
+        <p>No warehouses found for the selected filter.</p>
+        <a href="{{ url_for('warehouses.create_warehouse') }}" class="btn btn-modern btn-primary">
+            <i class="bi bi-plus-circle me-2"></i>
+            Create Warehouse
+        </a>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
