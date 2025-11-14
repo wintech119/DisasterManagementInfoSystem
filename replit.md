@@ -86,9 +86,10 @@ Preferred communication style: Simple, everyday language.
 - **Inventory Management**: Tracks stock by warehouse and item in the `inventory` table, including `usable_qty`, `reserved_qty`, `defective_qty`, `expired_qty`, with bin-level tracking via the `location` table.
 - **Eligibility Approval Workflow**: Integrated role-based access control (RBAC) with `has_permission` and `@permission_required` decorators. Service layer for eligibility decisions, notifications, and workflow enforcement. ODPEM directors access via `/eligibility/pending`.
 - **Package Fulfillment Workflow** (Modern UI): 
-  - **Primary Routes**: `/packaging/pending-fulfillment` (list), `/packaging/<id>/prepare` (modern preparation interface)
+  - **Single Blueprint Architecture**: Unified `packaging` blueprint (`app/features/packaging.py`) - deprecated `packages` blueprint removed for consistency
+  - **Primary Routes**: `/packaging/pending-fulfillment` (list with descending date sort), `/packaging/<id>/prepare` (modern preparation interface)
   - **Friendly Alias**: `/relief-requests/<id>/prepare-package` redirects to packaging workflow
-  - **Legacy Routes**: `/packages/*` blueprint deprecated, redirects to modern `/packaging/*` endpoints
+  - **Unified UI**: All Relief Package pages use consistent modern UI (summary cards, filter tabs, relief-requests-ui.css, status badges, btn-relief-* buttons)
   - **Modern UI Features**:
     - 4 Summary metric cards (Total Items, Fully Allocated, Partial, Unallocated) with live updates
     - Search and filter bar with "Jump to First Unallocated" functionality

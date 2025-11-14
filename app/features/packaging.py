@@ -49,7 +49,7 @@ def pending_fulfillment():
         joinedload(ReliefRqst.fulfillment_lock).joinedload(ReliefRequestFulfillmentLock.fulfiller)
     ).filter(
         ReliefRqst.status_code.in_([rr_service.STATUS_SUBMITTED, rr_service.STATUS_PART_FILLED])
-    )
+    ).order_by(ReliefRqst.create_dtime.desc())
     
     all_requests = base_query.all()
     

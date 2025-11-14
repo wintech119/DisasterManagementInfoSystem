@@ -491,13 +491,9 @@
         {% endif %}
         {% if not is_director_level() and not current_user.agency_id %}
         {# LO/LM and other staff see individual pages #}
-        <a href="{{ url_for('packages.pending_fulfillment') }}" class="nav-item-link {% if active_page == 'pending_fulfillment' %}active{% endif %}">
+        <a href="{{ url_for('packaging.pending_fulfillment') }}" class="nav-item-link {% if active_page == 'pending_fulfillment' %}active{% endif %}">
             <i class="bi bi-box-arrow-in-down"></i>
             <span class="nav-label">Pending Fulfillment</span>
-        </a>
-        <a href="{{ url_for('packages.list_packages') }}" class="nav-item-link {% if active_page == 'relief_packages' %}active{% endif %}">
-            <i class="bi bi-box-seam-fill"></i>
-            <span class="nav-label">Relief Packages</span>
         </a>
         {% endif %}
         

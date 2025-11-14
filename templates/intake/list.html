@@ -34,9 +34,7 @@
                         {% for intake, package, warehouse in intakes %}
                         <tr>
                             <td>
-                                <a href="{{ url_for('packages.view_package', reliefpkg_id=intake.reliefpkg_id) }}">
-                                    #{{ intake.reliefpkg_id }}
-                                </a>
+                                <strong>#{{ intake.reliefpkg_id }}</strong>
                             </td>
                             <td>{{ warehouse.warehouse_name }}</td>
                             <td>{{ intake.intake_date.strftime('%Y-%m-%d') }}</td>

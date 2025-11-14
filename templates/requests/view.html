@@ -220,9 +220,7 @@
                             {% endif %}
                         </td>
                         <td class="text-end">
-                            <a href="{{ url_for('packages.view_package', reliefpkg_id=package.reliefpkg_id) }}" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-eye"></i> View
-                            </a>
+                            <span class="text-muted" title="Package details shown inline"><i class="bi bi-info-circle"></i></span>
                         </td>
                     </tr>
                     {% endfor %}
