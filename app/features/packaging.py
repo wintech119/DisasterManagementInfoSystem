@@ -13,11 +13,12 @@ from app.db import db
 from app.db.models import (
     ReliefRqst, ReliefRqstItem, Item, Warehouse, Inventory,
     User, Notification, ReliefRequestFulfillmentLock,
-    ReliefPkg, ReliefPkgItem
+    ReliefPkg, ReliefPkgItem, ReliefRqstItemStatus
 )
 from app.core.rbac import has_permission, permission_required
 from app.services import relief_request_service as rr_service
 from app.services import fulfillment_lock_service as lock_service
+from app.services import item_status_service
 from app.core.audit import add_audit_fields
 from app.core.exceptions import OptimisticLockError
 
@@ -147,6 +148,31 @@ def prepare_package(reliefrqst_id):
                 
                 existing_allocations[item_id][warehouse_id] += pkg_item.item_qty
         
+        # Load active item statuses
+        status_map = item_status_service.load_status_map()
+        
+        # Compute allowed status options for each item based on allocation state
+        item_status_options = {}
+        for item in relief_request.items:
+            # Calculate total allocated for this item
+            total_allocated = Decimal('0')
+            if item.item_id in existing_allocations:
+                for warehouse_qty in existing_allocations[item.item_id].values():
+                    total_allocated += warehouse_qty
+            
+            # Get auto status and allowed transitions
+            auto_status, allowed_codes = item_status_service.compute_allowed_statuses(
+                item.status_code,
+                total_allocated,
+                item.request_qty
+            )
+            
+            item_status_options[item.item_id] = {
+                'auto_status': auto_status,
+                'allowed_codes': allowed_codes,
+                'total_allocated': float(total_allocated)
+            }
+        
         from app.core.rbac import is_logistics_officer, is_logistics_manager
         
         return render_template('packaging/prepare.html',
@@ -160,7 +186,8 @@ def prepare_package(reliefrqst_id):
                              is_locked_by_me=(lock and lock.fulfiller_user_id == current_user.user_id),
                              is_logistics_officer=is_logistics_officer(),
                              is_logistics_manager=is_logistics_manager(),
-                             item_status_labels=rr_service.ITEM_STATUS_LABELS)
+                             status_map=status_map,
+                             item_status_options=item_status_options)
     
     if not can_edit:
         flash(f'This request is currently being prepared by {blocking_user}', 'warning')
@@ -288,27 +315,33 @@ def _process_allocations(relief_request, validate_complete=False):
                     total_allocated += allocated_qty
                     warehouse_allocations.append((inventory, allocated_qty))
         
-        if total_allocated > request_qty:
-            raise ValueError(f'Total allocated quantity ({total_allocated}) exceeds requested quantity ({request_qty}) for item {item.item.item_name}')
+        # Validate quantity limit using service
+        is_valid, error_msg = item_status_service.validate_quantity_limit(
+            item_id, total_allocated, request_qty
+        )
+        if not is_valid:
+            raise ValueError(error_msg)
         
         if validate_complete and total_allocated < request_qty:
             raise ValueError(f'Item {item.item.item_name} is not fully allocated ({total_allocated} of {request_qty})')
         
-        item.issue_qty = total_allocated
+        # Get requested status from form
+        requested_status = request.form.get(f'status_{item_id}', item.status_code)
         
-        if total_allocated == Decimal('0'):
-            status_code = request.form.get(f'status_{item_id}', 'U')
-            if status_code not in ['D', 'U', 'W']:
-                raise ValueError(f'Items with zero allocation must have status D, U, or W')
-            item.status_code = status_code
-        elif total_allocated >= request_qty:
-            item.status_code = 'F'
-        else:
-            manual_status = request.form.get(f'status_{item_id}')
-            if manual_status == 'L':
-                item.status_code = 'L'
-            else:
-                item.status_code = 'P'
+        # Validate status transition using service
+        is_valid, error_msg = item_status_service.validate_status_transition(
+            item_id,
+            item.status_code,
+            requested_status,
+            total_allocated,
+            request_qty
+        )
+        if not is_valid:
+            raise ValueError(error_msg)
+        
+        # Update item fields
+        item.issue_qty = total_allocated
+        item.status_code = requested_status
         
         item.action_by_id = current_user.email[:20]
         item.action_dtime = datetime.now()

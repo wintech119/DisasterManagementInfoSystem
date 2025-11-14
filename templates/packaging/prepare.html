@@ -456,6 +456,24 @@
     flex-wrap: wrap;
     margin-top: 1.5rem;
 }
+
+.status-dropdown {
+    min-width: 150px;
+    font-size: 0.875rem;
+}
+
+.status-dropdown.is-invalid {
+    border-color: #dc3545;
+}
+
+.violation-alert {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1050;
+    max-width: 400px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
 </style>
 {% endblock %}
 
@@ -625,20 +643,23 @@
                                 <strong class="remaining-qty" id="remaining_{{ item.item_id }}">{{ item.request_qty }}</strong>
                             </td>
                             <td>
-                                {% set status_label = item_status_labels.get(item.status_code, 'Unknown') %}
-                                {% if item.status_code == 'F' %}
-                                    {% set badge_class = 'status-filled' %}
-                                {% elif item.status_code in ['P', 'L'] %}
-                                    {% set badge_class = 'status-partial' %}
-                                {% elif item.status_code in ['D', 'U'] %}
-                                    {% set badge_class = 'status-unallocated' %}
-                                {% elif item.status_code == 'W' %}
-                                    {% set badge_class = 'status-waiting' %}
-                                {% else %}
-                                    {% set badge_class = 'status-requested' %}
-                                {% endif %}
-                                <span class="status-badge-inline {{ badge_class }}" id="status_badge_{{ item.item_id }}" data-status-code="{{ item.status_code }}">{{ status_label }}</span>
-                                <input type="hidden" name="status_{{ item.item_id }}" id="status_{{ item.item_id }}" value="{{ item.status_code }}">
+                                {% set status_opts = item_status_options.get(item.item_id, {}) %}
+                                {% set allowed = status_opts.get('allowed_codes', [item.status_code]) %}
+                                {% set auto = status_opts.get('auto_status', item.status_code) %}
+                                <select 
+                                    class="form-select form-select-sm status-dropdown" 
+                                    name="status_{{ item.item_id }}" 
+                                    id="status_{{ item.item_id }}"
+                                    data-item-id="{{ item.item_id }}"
+                                    data-requested-qty="{{ item.request_qty }}"
+                                    data-auto-status="{{ auto }}"
+                                    data-allowed-codes="{{ allowed|join(',') }}">
+                                    {% for code in allowed %}
+                                    {% set label = status_map.get(code, {}).get('desc', code) %}
+                                    <option value="{{ code }}" {% if code == item.status_code %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="invalid-feedback" id="status_error_{{ item.item_id }}" style="display: none;"></div>
                             </td>
                         </tr>
                         {% endfor %}
@@ -647,6 +668,10 @@
 
                 <!-- Action Buttons -->
                 <div class="action-buttons">
+                    <a href="{{ url_for('packaging.pending_fulfillment') }}" class="btn btn-secondary btn-sm">
+                        <i class="bi bi-x-circle"></i>
+                        Cancel
+                    </a>
                     <button type="submit" name="action" value="save_draft" class="btn-relief-secondary">
                         <i class="bi bi-save"></i>
                         Save Draft
@@ -833,46 +858,100 @@ function updateItemCalculations(itemId) {
     const remainingElement = document.getElementById(`remaining_${itemId}`);
     remainingElement.textContent = remaining.toFixed(2);
     
-    // Update status badge
-    updateStatusBadge(itemId, totalAllocated, requestedQty);
+    // Update status dropdown based on allocation
+    updateStatusDropdown(itemId, totalAllocated, requestedQty);
     
-    // Update hidden status input
-    updateHiddenStatus(itemId, totalAllocated, requestedQty);
+    // Validate quantity limit
+    validateQuantityLimit(itemId, totalAllocated, requestedQty);
 }
 
-function updateStatusBadge(itemId, allocated, requested) {
-    const badge = document.getElementById(`status_badge_${itemId}`);
+function updateStatusDropdown(itemId, allocated, requested) {
+    const statusDropdown = document.getElementById(`status_${itemId}`);
+    if (!statusDropdown) return;
     
-    // Map allocation status to database status codes
-    const itemStatusLabels = {{ item_status_labels|tojson }};
-    let statusCode, statusClass;
+    const autoStatus = statusDropdown.dataset.autoStatus;
+    const currentValue = statusDropdown.value;
     
+    // Determine auto status based on allocation
+    let newAutoStatus;
     if (allocated === 0) {
-        statusCode = 'R';  // Requested
-        statusClass = 'status-requested';
+        newAutoStatus = 'R';  // Requested
     } else if (allocated >= requested) {
-        statusCode = 'F';  // Filled
-        statusClass = 'status-filled';
+        newAutoStatus = 'F';  // Filled
     } else {
-        statusCode = 'P';  // Partly filled
-        statusClass = 'status-partial';
+        newAutoStatus = 'P';  // Partly filled
     }
     
-    badge.className = 'status-badge-inline ' + statusClass;
-    badge.textContent = itemStatusLabels[statusCode] || statusCode;
-    badge.dataset.statusCode = statusCode;
+    // Update data attribute
+    statusDropdown.dataset.autoStatus = newAutoStatus;
+    
+    // Auto-select if current status doesn't match the new allocation state
+    // Only auto-change for automatic statuses (R, P, F), not manual ones (D, U, W, L)
+    const autoStatuses = ['R', 'P', 'F'];
+    if (autoStatuses.includes(currentValue)) {
+        statusDropdown.value = newAutoStatus;
+    }
+    
+    // Update allowed options based on allocation state
+    updateAllowedStatusOptions(itemId, allocated, requested);
 }
 
-function updateHiddenStatus(itemId, allocated, requested) {
-    const statusInput = document.getElementById(`status_${itemId}`);
+function updateAllowedStatusOptions(itemId, allocated, requested) {
+    const statusDropdown = document.getElementById(`status_${itemId}`);
+    if (!statusDropdown) return;
     
-    // Use database status codes: R=Requested, P=Partly filled, F=Filled
+    // Determine allowed status codes based on allocation
+    let allowedCodes;
     if (allocated === 0) {
-        statusInput.value = 'R';  // Requested
+        allowedCodes = ['R', 'D', 'U', 'W'];
     } else if (allocated >= requested) {
-        statusInput.value = 'F';  // Filled
+        allowedCodes = ['F'];
     } else {
-        statusInput.value = 'P';  // Partly filled
+        allowedCodes = ['P', 'L'];
+    }
+    
+    // Get current value before updating options
+    const currentValue = statusDropdown.value;
+    
+    // CRITICAL: Preserve current selection even if outside allowed codes
+    // This prevents discarding legitimate manual statuses (e.g., Denied after partial allocation)
+    const finalAllowedCodes = [...allowedCodes];
+    if (currentValue && !allowedCodes.includes(currentValue)) {
+        finalAllowedCodes.push(currentValue);
+    }
+    
+    // Store status map from template
+    const statusMap = {{ status_map|tojson }};
+    
+    // Rebuild dropdown options
+    statusDropdown.innerHTML = '';
+    finalAllowedCodes.forEach(code => {
+        const option = document.createElement('option');
+        option.value = code;
+        option.textContent = statusMap[code]?.desc || code;
+        if (code === currentValue) {
+            option.selected = true;
+        }
+        statusDropdown.appendChild(option);
+    });
+    
+    // Update data attribute with allowed codes
+    statusDropdown.dataset.allowedCodes = allowedCodes.join(',');
+}
+
+function validateQuantityLimit(itemId, allocated, requested) {
+    const errorDiv = document.getElementById(`status_error_${itemId}`);
+    const statusDropdown = document.getElementById(`status_${itemId}`);
+    
+    if (allocated > requested) {
+        statusDropdown.classList.add('is-invalid');
+        errorDiv.textContent = `Total allocated (${allocated.toFixed(2)}) exceeds requested (${requested.toFixed(2)})`;
+        errorDiv.style.display = 'block';
+        return false;
+    } else {
+        statusDropdown.classList.remove('is-invalid');
+        errorDiv.style.display = 'none';
+        return true;
     }
 }
 

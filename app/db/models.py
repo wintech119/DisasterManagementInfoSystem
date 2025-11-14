@@ -349,6 +349,20 @@ class ReliefRqstStatus(db.Model):
     reason_rqrd_flag = db.Column(db.Boolean, nullable=False, default=False)
     is_active_flag = db.Column(db.Boolean, nullable=False, default=True)
 
+class ReliefRqstItemStatus(db.Model):
+    """Relief Request Item Status Lookup Table"""
+    __tablename__ = 'reliefrqstitem_status'
+    
+    status_code = db.Column(db.CHAR(1), primary_key=True)
+    status_desc = db.Column(db.String(30), nullable=False)
+    item_qty_rule = db.Column(db.CHAR(2), nullable=False)
+    active_flag = db.Column(db.Boolean, nullable=False, default=True)
+    create_by_id = db.Column(db.String(20), nullable=False)
+    create_dtime = db.Column(db.DateTime, nullable=False)
+    update_by_id = db.Column(db.String(20), nullable=False)
+    update_dtime = db.Column(db.DateTime, nullable=False)
+    version_nbr = db.Column(db.Integer, nullable=False, default=1)
+
 class ReliefRqst(db.Model):
     """Relief Request / Needs List (AIDMGMT workflow)"""
     __tablename__ = 'reliefrqst'
