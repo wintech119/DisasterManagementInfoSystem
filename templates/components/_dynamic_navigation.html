@@ -31,13 +31,18 @@ Renders clean sidebar with MAIN, INVENTORY, OPERATIONS, MANAGEMENT sections
 
 {% for feature in features %}
     {% if feature.route %}
-        {% set nav_group = feature.get('navigation_group', 'other') %}
-        {% set display_category = category_map.get(nav_group, None) %}
-        
-        {% if display_category %}
-            {% set _ = features_by_display_category[display_category].append(feature) %}
+        {# Check if it's a dashboard feature #}
+        {% if feature.get('is_dashboard', False) %}
+            {% set _ = features_by_display_category['MAIN'].append(feature) %}
         {% else %}
-            {% set _ = uncategorized_features.append(feature) %}
+            {% set nav_group = feature.get('navigation_group', 'other') %}
+            {% set display_category = category_map.get(nav_group, None) %}
+            
+            {% if display_category %}
+                {% set _ = features_by_display_category[display_category].append(feature) %}
+            {% else %}
+                {% set _ = uncategorized_features.append(feature) %}
+            {% endif %}
         {% endif %}
     {% endif %}
 {% endfor %}
