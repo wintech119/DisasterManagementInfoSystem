@@ -404,6 +404,7 @@ class FeatureRegistry:
             'url': '/dashboard',
             'icon': 'bi-speedometer2',
             'category': 'dashboard',
+            'navigation_group': 'dashboard',
             'is_dashboard': True,
             'priority': 100
         },
@@ -415,6 +416,7 @@ class FeatureRegistry:
             'url': '/dashboard',
             'icon': 'bi-speedometer2',
             'category': 'dashboard',
+            'navigation_group': 'dashboard',
             'is_dashboard': True,
             'priority': 100
         },
@@ -426,6 +428,7 @@ class FeatureRegistry:
             'url': '/dashboard',
             'icon': 'bi-speedometer2',
             'category': 'dashboard',
+            'navigation_group': 'dashboard',
             'is_dashboard': True,
             'priority': 100
         },
