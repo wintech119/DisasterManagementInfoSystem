@@ -79,7 +79,8 @@
 
     <!-- Requests Table -->
     {% if requests %}
-    <table class="relief-requests-table" role="table" aria-label="Pending fulfillment requests">
+    <div class="table-responsive-mobile">
+        <table class="relief-requests-table" role="table" aria-label="Pending fulfillment requests">
         <thead>
             <tr>
                 <th scope="col">Request Number</th>
@@ -164,6 +165,7 @@
             {% endfor %}
         </tbody>
     </table>
+    </div>
     {% else %}
     <div class="text-center py-5">
         <i class="bi bi-inbox" style="font-size: 3rem; color: #6c757d;"></i>

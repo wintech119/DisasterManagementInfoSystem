@@ -105,7 +105,8 @@
                 </div>
                 <div class="card-body p-0">
                     {% if items %}
-                    <table class="relief-requests-table mb-0" role="table" aria-label="Requested relief items">
+                    <div class="table-responsive-mobile">
+                        <table class="relief-requests-table mb-0" role="table" aria-label="Requested relief items">
                         <thead>
                             <tr>
                                 <th scope="col">Item</th>
@@ -145,6 +146,7 @@
                             {% endfor %}
                         </tbody>
                     </table>
+                    </div>
                     {% endif %}
                 </div>
             </div>
