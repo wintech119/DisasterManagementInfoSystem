@@ -1,0 +1,162 @@
+You are working on the Disaster Relief Inventory Management System (DRIMS) web application.
+
+Your task is to make the entire application fully responsive for all screen sizes (desktop, tablet, and mobile phones), following modern best practices and international standards (including WCAG 2.1).
+
+1. General Requirements
+
+The UI must adapt gracefully to:
+
+Small phones (< 480px)
+
+Regular phones (480–767px)
+
+Tablets (768–1024px, portrait & landscape)
+
+Desktop / large screens (> 1024px)
+
+Do not break or significantly change the current desktop layout. Desktop remains the primary reference; smaller breakpoints should adapt from it.
+
+Use responsive CSS (Bootstrap grid / flexbox / CSS Grid + media queries) instead of fixed pixel layouts.
+
+2. Layout & Navigation
+
+Sidebar / Left Menu
+
+On desktop: keep the current vertical sidebar.
+
+On tablet/phone:
+
+Collapse the sidebar into a hamburger menu at the top-left.
+
+The menu opens as an overlay or slide-out panel.
+
+Ensure it is keyboard accessible and closable (Esc / close button).
+
+Avoid horizontal scrolling caused by the sidebar on small screens.
+
+Top bar / headers
+
+Ensure titles and actions (e.g., Back button, user profile) reflow nicely:
+
+Stack vertically on small screens if necessary.
+
+Buttons should wrap instead of being cut off.
+
+Content area
+
+Use responsive containers:
+
+Cards and panels should stack vertically on small screens.
+
+Avoid fixed widths; use percentage or max-width where possible.
+
+3. Key Screens to Make Responsive
+
+Apply proper responsive behaviour to all major DRIMS screens, including but not limited to:
+
+Dashboards (Admin, Logistics, Agency, etc.)
+
+Needs Lists screens (list, prepare fulfilment, review, completed)
+
+Relief Requests & Relief Packages (list, create/edit, prepare package)
+
+Inventory pages (view, receive, transfer)
+
+Management pages (warehouses, items, locations, agencies, events, donors, custodians)
+
+User/profile/settings screens.
+
+For each page:
+
+Cards: stack into a single column on narrow screens.
+
+Two-column layouts (main + right workflow/notes panel):
+
+On desktop: side-by-side.
+
+On tablet/phone: stack main content first, then workflow/notes below.
+
+Tables:
+
+Allow horizontal scrolling on small screens instead of squashing columns.
+
+Optionally use a responsive pattern (e.g., table-responsive wrapper) so columns don’t break.
+
+4. Forms & Inputs
+
+All forms must:
+
+Use responsive grid or full-width inputs on small screens.
+
+Prevent labels and inputs from being truncated.
+
+Keep a minimum tappable size of ~44x44px for buttons and important controls (WCAG).
+
+For numeric inputs (e.g., allocations):
+
+Ensure they fit on small screens without clipping spinner arrows or overlapping text.
+
+5. Accessibility & International Standards
+
+Follow WCAG 2.1 AA where practical:
+
+Text must remain readable on small screens:
+
+Avoid font sizes smaller than ~14px on mobile.
+
+Maintain sufficient contrast for text and icons.
+
+All interactive elements must:
+
+Be reachable via keyboard (Tab order preserved).
+
+Have visible focus outlines.
+
+Ensure that:
+
+No critical content requires horizontal scrolling on mobile (except wide tables in a scroll container).
+
+Zooming is not disabled (meta viewport should allow zoom).
+
+6. Technical Implementation Details
+
+Use or extend existing CSS framework (e.g., Bootstrap) and utilities:
+
+Prefer responsive classes like col-md-6, col-lg-4, etc.
+
+Add media queries for breakpoints:
+
+e.g., @media (max-width: 767.98px) { ... } for phones.
+
+e.g., @media (max-width: 991.98px) { ... } for tablets.
+
+Refactor any fixed-width elements (e.g., width: 1200px) into fluid or max-widths.
+
+Wrap tables in a responsive container:
+class="table-responsive" or equivalent custom CSS.
+
+7. Testing & Verification
+
+Test the application in the browser dev tools using:
+
+iPhone SE / iPhone 13
+
+Small Android phone
+
+iPad (portrait & landscape)
+
+Standard laptop/desktop widths.
+
+Fix any layout issues like:
+
+Clipped text.
+
+Overlapping controls.
+
+Menus or dialogs going off-screen.
+
+Horizontal scrollbars caused by layout, not tables.
+
+8. Deliverable
+
+Produce the necessary CSS/SCSS updates, layout tweaks, and component adjustments so that all DRIMS pages are mobile-friendly and responsive across phones and tablets, while preserving the existing desktop design and WCAG-aligned usability.
