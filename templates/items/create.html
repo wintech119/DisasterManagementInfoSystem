@@ -37,13 +37,25 @@
                         </select>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label for="default_uom_code" class="form-label">Unit of Measure *</label>
-                        <select class="form-select" id="default_uom_code" name="default_uom_code" required>
-                            <option value="">Select UOM...</option>
+                        <label for="default_uom_code" class="form-label">Unit of Measure (choose or type your own) *</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="default_uom_code" 
+                               name="default_uom_code" 
+                               list="uom_list"
+                               maxlength="20"
+                               pattern="^[A-Za-z0-9\s\-\.\/]{2,20}$"
+                               autocomplete="off"
+                               required>
+                        <datalist id="uom_list">
                             {% for uom in uoms %}
                             <option value="{{ uom.uom_code }}">{{ uom.uom_desc }}</option>
                             {% endfor %}
-                        </select>
+                        </datalist>
+                        <small class="text-muted">Select from list or type a custom UOM (2-20 characters). Will be converted to UPPERCASE.</small>
+                        <div class="invalid-feedback">
+                            Please enter a valid UOM (2-20 characters, letters, numbers, spaces, hyphens, dots, or slashes only).
+                        </div>
                     </div>
                 </div>
 
@@ -90,4 +102,49 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Client-side validation for UOM field
+document.addEventListener('DOMContentLoaded', function() {
+    const uomInput = document.getElementById('default_uom_code');
+    const form = uomInput.closest('form');
+    
+    // Real-time validation feedback
+    uomInput.addEventListener('input', function() {
+        const value = this.value.trim();
+        const isValid = /^[A-Za-z0-9\s\-\.\/]{2,20}$/.test(value);
+        
+        if (value.length === 0) {
+            this.classList.remove('is-invalid', 'is-valid');
+        } else if (isValid) {
+            this.classList.remove('is-invalid');
+            this.classList.add('is-valid');
+        } else {
+            this.classList.remove('is-valid');
+            this.classList.add('is-invalid');
+        }
+    });
+    
+    // Form submission validation
+    form.addEventListener('submit', function(e) {
+        const value = uomInput.value.trim();
+        
+        if (!value) {
+            e.preventDefault();
+            uomInput.classList.add('is-invalid');
+            uomInput.focus();
+            return false;
+        }
+        
+        if (!/^[A-Za-z0-9\s\-\.\/]{2,20}$/.test(value)) {
+            e.preventDefault();
+            uomInput.classList.add('is-invalid');
+            uomInput.focus();
+            return false;
+        }
+    });
+});
+</script>
 {% endblock %}
