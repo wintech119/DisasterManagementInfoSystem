@@ -9,7 +9,7 @@ Permission-Based Access Control:
 
 Validation Rules:
 - warehouse_name: Mandatory, unique per organization, max TEXT length
-- warehouse_type: Must be one of: MAIN, HUB, SUB-HUB, AGENCY
+- warehouse_type: Must be one of: MAIN-HUB, SUB-HUB
 - address1_text: Mandatory, max 255 characters
 - address2_text: Optional, max 255 characters
 - parish_code: Mandatory, must exist in Parish table
@@ -37,7 +37,7 @@ from app.core.audit import add_audit_fields
 warehouses_bp = Blueprint('warehouses', __name__, url_prefix='/warehouses')
 
 # Constants for validation
-WAREHOUSE_TYPES = ['MAIN', 'HUB', 'SUB-HUB', 'AGENCY']
+WAREHOUSE_TYPES = ['MAIN-HUB', 'SUB-HUB']
 STATUS_CODES = ['A', 'I']  # Active, Inactive
 
 def validate_email(email):
