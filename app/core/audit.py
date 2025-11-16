@@ -14,7 +14,8 @@ def add_audit_fields(obj, user_id, is_new=True):
         is_new: True if creating new record, False if updating
     """
     now = datetime.now()
-    user_id_upper = user_id.upper()
+    # Truncate user_id to 20 characters to match database constraint (varchar(20))
+    user_id_upper = user_id.upper()[:20]
     
     if is_new:
         if hasattr(obj, 'create_by_id'):
@@ -36,7 +37,8 @@ def add_audit_fields(obj, user_id, is_new=True):
 def add_verify_fields(obj, user_id):
     """Add verification audit fields - UPPERCASE enforced per schema"""
     now = datetime.now()
-    user_id_upper = user_id.upper()
+    # Truncate user_id to 20 characters to match database constraint (varchar(20))
+    user_id_upper = user_id.upper()[:20]
     
     if hasattr(obj, 'verify_by_id'):
         obj.verify_by_id = user_id_upper
