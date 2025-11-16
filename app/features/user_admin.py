@@ -42,6 +42,7 @@ def create():
     
     if request.method == 'POST':
         email = request.form.get('email', '').strip().lower()
+        user_name = request.form.get('user_name', '').strip().upper()
         password = request.form.get('password', '')
         first_name = request.form.get('first_name', '').strip()
         last_name = request.form.get('last_name', '').strip()
@@ -50,8 +51,8 @@ def create():
         phone = request.form.get('phone', '').strip()
         is_active = request.form.get('is_active') == 'on'
         
-        if not email or not password:
-            flash('Email and password are required.', 'danger')
+        if not email or not password or not user_name:
+            flash('Email, user name, and password are required.', 'danger')
             agencies = Agency.query.filter_by(status_code='A').order_by(Agency.agency_name).all()
             custodians = Custodian.query.order_by(Custodian.custodian_name).all()
             return render_template('user_admin/create.html', 
@@ -141,6 +142,7 @@ def create():
         try:
             new_user = User(
                 email=email,
+                user_name=user_name,
                 password_hash=generate_password_hash(password),
                 first_name=first_name,
                 last_name=last_name,
@@ -232,6 +234,7 @@ def edit(user_id):
                                  user_warehouse_ids=user_warehouse_ids,
                                  current_org_value=current_org_value)
         
+        user_name = request.form.get('user_name', '').strip().upper()
         first_name = request.form.get('first_name', '').strip()
         last_name = request.form.get('last_name', '').strip()
         organization_value = request.form.get('organization', '').strip()
@@ -239,6 +242,31 @@ def edit(user_id):
         phone = request.form.get('phone', '').strip() or None
         is_active = request.form.get('is_active') == 'on'
         password = request.form.get('password', '').strip()
+        
+        if not user_name:
+            flash('User name is required.', 'danger')
+            agencies = Agency.query.filter_by(status_code='A').order_by(Agency.agency_name).all()
+            custodians = Custodian.query.order_by(Custodian.custodian_name).all()
+            roles = Role.query.all()
+            warehouses = Warehouse.query.filter_by(status_code='A').all()
+            user_role_ids = [r.id for r in user.roles]
+            user_warehouse_ids = [w.warehouse_id for w in user.warehouses]
+            current_org_value = ''
+            if user.agency_id:
+                current_org_value = f'AGENCY:{user.agency_id}'
+            elif user.organization:
+                custodian = Custodian.query.filter_by(custodian_name=user.organization).first()
+                if custodian:
+                    current_org_value = f'CUSTODIAN:{custodian.custodian_id}'
+            return render_template('user_admin/edit.html',
+                                 user=user,
+                                 roles=roles,
+                                 warehouses=warehouses,
+                                 agencies=agencies,
+                                 custodians=custodians,
+                                 user_role_ids=user_role_ids,
+                                 user_warehouse_ids=user_warehouse_ids,
+                                 current_org_value=current_org_value)
         
         organization_name = None
         agency_id = None
@@ -382,6 +410,7 @@ def edit(user_id):
                                          current_org_value=current_org_value)
         
         try:
+            user.user_name = user_name
             user.first_name = first_name
             user.last_name = last_name
             user.organization = organization_name

@@ -63,13 +63,37 @@
                                        class="form-control" 
                                        required
                                        placeholder="user@example.com"
-                                       aria-describedby="emailHelp">
+                                       aria-describedby="emailHelp"
+                                       oninput="generateUserName()">
                             </div>
                             <small id="emailHelp" class="form-text text-muted">
                                 <i class="bi bi-info-circle"></i> Used for login and system notifications
                             </small>
                         </div>
                         
+                        <div class="col-md-6">
+                            <label for="user_name" class="form-label">
+                                User Name <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+                                <input type="text" 
+                                       name="user_name" 
+                                       id="user_name" 
+                                       class="form-control" 
+                                       required
+                                       maxlength="20"
+                                       placeholder="Auto-generated from email"
+                                       aria-describedby="userNameHelp"
+                                       oninput="updateUserNameCount()">
+                            </div>
+                            <small id="userNameHelp" class="form-text text-muted">
+                                <i class="bi bi-info-circle"></i> <span id="userNameCount">0</span>/20 characters - Used for audit tracking
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-3">
                         <div class="col-md-6">
                             <label for="password" class="form-label">
                                 Password <span class="text-danger">*</span>
@@ -300,6 +324,36 @@
 
 {% block extra_scripts %}
 <script>
+// Auto-generate user_name from email
+function generateUserName() {
+    const emailInput = document.getElementById('email');
+    const userNameInput = document.getElementById('user_name');
+    
+    if (emailInput.value) {
+        // Take first 20 characters and convert to uppercase
+        const generatedName = emailInput.value.substring(0, 20).toUpperCase();
+        userNameInput.value = generatedName;
+        updateUserNameCount();
+    }
+}
+
+// Update user_name character count
+function updateUserNameCount() {
+    const userNameInput = document.getElementById('user_name');
+    const countSpan = document.getElementById('userNameCount');
+    const currentLength = userNameInput.value.length;
+    countSpan.textContent = currentLength;
+    
+    // Color coding
+    if (currentLength > 18) {
+        countSpan.style.color = '#dc3545'; // Red
+    } else if (currentLength > 15) {
+        countSpan.style.color = '#ffc107'; // Yellow
+    } else {
+        countSpan.style.color = '#6c757d'; // Gray
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('createUserForm');
     const passwordInput = document.getElementById('password');
