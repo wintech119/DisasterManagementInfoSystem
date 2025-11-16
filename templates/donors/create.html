@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Add Donor - DRIMS{% endblock %}
 
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/phone-mask.js') }}"></script>
+{% endblock %}
+
 {% block content %}
 <h2><i class="bi bi-plus-circle"></i> Add New Donor</h2>
 <a href="{{ url_for('donors.list_donors') }}" class="btn btn-secondary mb-3">
@@ -63,7 +67,8 @@
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label for="phone_no" class="form-label">Phone Number *</label>
-                    <input type="text" name="phone_no" id="phone_no" class="form-control" required>
+                    <input type="tel" name="phone_no" id="phone_no" class="form-control phone-mask" required>
+                    <small class="text-muted">Format: +1 (XXX) XXX-XXXX</small>
                 </div>
                 <div class="col-md-6">
                     <label for="email_text" class="form-label">Email</label>

@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from datetime import datetime
 from app.db.models import db, Donor, Donation
 from app.core.audit import add_audit_fields
+from app.core.phone_utils import validate_phone_format, get_phone_validation_error
 
 donors_bp = Blueprint('donors', __name__)
 
@@ -27,6 +28,12 @@ def create():
         
         if not donor_name or not donor_type or not address1_text or not phone_no:
             flash('Please fill in all required fields.', 'danger')
+            countries = db.session.execute(db.text("SELECT country_id, country_name FROM country ORDER BY country_name")).fetchall()
+            return render_template('donors/create.html', countries=countries)
+        
+        # Validate phone number format
+        if not validate_phone_format(phone_no):
+            flash(get_phone_validation_error('Phone number'), 'danger')
             countries = db.session.execute(db.text("SELECT country_id, country_name FROM country ORDER BY country_name")).fetchall()
             return render_template('donors/create.html', countries=countries)
         
@@ -70,12 +77,20 @@ def edit(donor_id):
     donor = Donor.query.get_or_404(donor_id)
     
     if request.method == 'POST':
+        phone_no = request.form.get('phone_no', '').strip()
+        
+        # Validate phone number format
+        if phone_no and not validate_phone_format(phone_no):
+            flash(get_phone_validation_error('Phone number'), 'danger')
+            countries = db.session.execute(db.text("SELECT country_id, country_name FROM country ORDER BY country_name")).fetchall()
+            return render_template('donors/edit.html', donor=donor, countries=countries)
+        
         donor.donor_type = request.form.get('donor_type')
         donor.org_type_desc = request.form.get('org_type_desc', '').strip() or None
         donor.address1_text = request.form.get('address1_text', '').strip()
         donor.address2_text = request.form.get('address2_text', '').strip() or None
         donor.country_id = int(request.form.get('country_id', 388))
-        donor.phone_no = request.form.get('phone_no', '').strip()
+        donor.phone_no = phone_no
         donor.email_text = request.form.get('email_text', '').strip().lower() or None
         
         add_audit_fields(donor, current_user, is_new=False)

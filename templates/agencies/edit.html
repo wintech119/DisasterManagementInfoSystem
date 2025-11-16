@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Edit Agency - DRIMS{% endblock %}
 
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/phone-mask.js') }}"></script>
+{% endblock %}
+
 {% block content %}
 <h2><i class="bi bi-pencil"></i> Edit Agency: {{ agency.agency_name }}</h2>
 <a href="{{ url_for('agencies.view', agency_id=agency.agency_id) }}" class="btn btn-secondary mb-3">
@@ -90,7 +94,8 @@
                 </div>
                 <div class="col-md-4">
                     <label for="phone_no" class="form-label">Phone Number *</label>
-                    <input type="text" name="phone_no" id="phone_no" class="form-control" value="{{ agency.phone_no }}" required>
+                    <input type="tel" name="phone_no" id="phone_no" class="form-control phone-mask" value="{{ agency.phone_no }}" required>
+                    <small class="text-muted">Format: +1 (XXX) XXX-XXXX</small>
                 </div>
                 <div class="col-md-4">
                     <label for="email_text" class="form-label">Email</label>
