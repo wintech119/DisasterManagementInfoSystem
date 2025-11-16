@@ -72,20 +72,23 @@
                 </div>
 
                 <!-- Row 2: Event Name -->
-                <div class="mb-4">
-                    <label for="event_name" class="form-label">Event Name *</label>
-                    <input type="text" 
-                           class="form-control" 
-                           id="event_name" 
-                           name="event_name" 
-                           maxlength="60" 
-                           value="{{ form_data.get('event_name') if form_data else '' }}"
-                           required 
-                           placeholder="e.g., Hurricane Gilbert 1988">
-                    <small class="text-muted">Maximum 60 characters (will be converted to UPPERCASE)</small>
-                    {% if errors and errors.get('event_name') %}
-                    <div class="text-danger small mt-1">{{ errors.get('event_name') }}</div>
-                    {% endif %}
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <label for="event_name" class="form-label">Event Name *</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="event_name" 
+                               name="event_name" 
+                               maxlength="60" 
+                               value="{{ form_data.get('event_name') if form_data else '' }}"
+                               required 
+                               placeholder="e.g., Hurricane Gilbert 1988"
+                               oninput="updateCharCount('event_name', 'event_name_count', 60)">
+                        <small class="text-muted"><span id="event_name_count">0</span>/60 characters (will be converted to UPPERCASE)</small>
+                        {% if errors and errors.get('event_name') %}
+                        <div class="text-danger small mt-1">{{ errors.get('event_name') }}</div>
+                        {% endif %}
+                    </div>
                 </div>
 
                 <!-- Row 3: Event Description -->
@@ -97,8 +100,9 @@
                               rows="3" 
                               maxlength="255" 
                               required 
-                              placeholder="Brief description of the event">{{ form_data.get('event_desc') if form_data else '' }}</textarea>
-                    <small class="text-muted">Maximum 255 characters</small>
+                              placeholder="Brief description of the event"
+                              oninput="updateCharCount('event_desc', 'event_desc_count', 255)">{{ form_data.get('event_desc') if form_data else '' }}</textarea>
+                    <small class="text-muted"><span id="event_desc_count">0</span>/255 characters</small>
                     {% if errors and errors.get('event_desc') %}
                     <div class="text-danger small mt-1">{{ errors.get('event_desc') }}</div>
                     {% endif %}
@@ -135,6 +139,23 @@
 
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
+// Character counter function
+function updateCharCount(fieldId, counterId, maxLength) {
+    const field = document.getElementById(fieldId);
+    const counter = document.getElementById(counterId);
+    const currentLength = field.value.length;
+    counter.textContent = currentLength;
+    
+    // Change color when approaching limit
+    if (currentLength > maxLength * 0.9) {
+        counter.style.color = '#dc3545'; // Red
+    } else if (currentLength > maxLength * 0.75) {
+        counter.style.color = '#ffc107'; // Yellow
+    } else {
+        counter.style.color = '#6c757d'; // Gray
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const datePicker = flatpickr("#start_date", {
         dateFormat: "Y-m-d",
@@ -147,6 +168,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('calendar-icon').addEventListener('click', function() {
         datePicker.open();
     });
+    
+    // Initialize character counters
+    updateCharCount('event_name', 'event_name_count', 60);
+    updateCharCount('event_desc', 'event_desc_count', 255);
 });
 </script>
 {% endblock %}

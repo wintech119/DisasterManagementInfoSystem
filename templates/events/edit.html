@@ -74,17 +74,20 @@
                 </div>
 
                 <!-- Row 2: Event Name -->
-                <div class="mb-4">
-                    <label for="event_name" class="form-label">Event Name *</label>
-                    <input type="text" 
-                           class="form-control" 
-                           id="event_name" 
-                           name="event_name" 
-                           value="{{ event.event_name }}" 
-                           maxlength="60" 
-                           required 
-                           {% if event.status_code == 'C' %}disabled{% endif %}>
-                    <small class="text-muted">Maximum 60 characters (will be converted to UPPERCASE)</small>
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <label for="event_name" class="form-label">Event Name *</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="event_name" 
+                               name="event_name" 
+                               value="{{ event.event_name }}" 
+                               maxlength="60" 
+                               required 
+                               oninput="updateCharCount('event_name', 'event_name_count', 60)"
+                               {% if event.status_code == 'C' %}disabled{% endif %}>
+                        <small class="text-muted"><span id="event_name_count">0</span>/60 characters (will be converted to UPPERCASE)</small>
+                    </div>
                 </div>
 
                 <!-- Row 3: Event Description -->
@@ -96,8 +99,9 @@
                               rows="3" 
                               maxlength="255" 
                               required 
+                              oninput="updateCharCount('event_desc', 'event_desc_count', 255)"
                               {% if event.status_code == 'C' %}disabled{% endif %}>{{ event.event_desc }}</textarea>
-                    <small class="text-muted">Maximum 255 characters</small>
+                    <small class="text-muted"><span id="event_desc_count">0</span>/255 characters</small>
                 </div>
 
                 <!-- Row 4: Impact Description -->
@@ -145,6 +149,23 @@
 
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
+// Character counter function
+function updateCharCount(fieldId, counterId, maxLength) {
+    const field = document.getElementById(fieldId);
+    const counter = document.getElementById(counterId);
+    const currentLength = field.value.length;
+    counter.textContent = currentLength;
+    
+    // Change color when approaching limit
+    if (currentLength > maxLength * 0.9) {
+        counter.style.color = '#dc3545'; // Red
+    } else if (currentLength > maxLength * 0.75) {
+        counter.style.color = '#ffc107'; // Yellow
+    } else {
+        counter.style.color = '#6c757d'; // Gray
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     {% if event.status_code != 'C' %}
     const datePicker = flatpickr("#start_date", {
@@ -159,6 +180,10 @@ document.addEventListener('DOMContentLoaded', function() {
         datePicker.open();
     });
     {% endif %}
+    
+    // Initialize character counters
+    updateCharCount('event_name', 'event_name_count', 60);
+    updateCharCount('event_desc', 'event_desc_count', 255);
 });
 </script>
 {% endblock %}
