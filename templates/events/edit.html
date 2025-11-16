@@ -54,15 +54,16 @@
                     </div>
                     <div class="col-md-6">
                         <label for="start_date" class="form-label">Start Date (YYYY-MM-DD) *</label>
-                        <input type="date" 
+                        <input type="text" 
                                class="form-control" 
                                id="start_date" 
                                name="start_date" 
+                               pattern="\d{4}-\d{2}-\d{2}"
+                               placeholder="YYYY-MM-DD"
                                value="{{ event.start_date.strftime('%Y-%m-%d') }}" 
-                               max="{{ today }}" 
                                required 
                                {% if event.status_code == 'C' %}disabled{% endif %}>
-                        <small class="text-muted">Format: YYYY-MM-DD (Cannot be in the future)</small>
+                        <small class="text-muted">Format: YYYY-MM-DD (e.g., 2025-11-16, cannot be in the future)</small>
                     </div>
                 </div>
 
