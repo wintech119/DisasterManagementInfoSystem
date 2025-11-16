@@ -64,14 +64,14 @@
                         </div>
                         <div class="col-md-6">
                             <label class="text-muted small">Start Date</label>
-                            <p class="mb-0">{{ event.start_date.strftime('%Y/%m/%d') if event.start_date else 'N/A' }}</p>
+                            <p class="mb-0">{{ event.start_date.strftime('%Y-%m-%d') if event.start_date else 'N/A' }}</p>
                         </div>
                     </div>
                     {% if event.closed_date %}
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="text-muted small">Closed Date</label>
-                            <p class="mb-0">{{ event.closed_date.strftime('%Y/%m/%d') }}</p>
+                            <p class="mb-0">{{ event.closed_date.strftime('%Y-%m-%d') }}</p>
                         </div>
                         {% if event.reason_desc %}
                         <div class="col-md-6">
@@ -113,7 +113,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="text-muted small">Created Date</label>
-                        <p class="mb-0">{{ event.create_dtime.strftime('%Y/%m/%d %I:%M %p') if event.create_dtime else 'N/A' }}</p>
+                        <p class="mb-0">{{ event.create_dtime.strftime('%Y-%m-%d %I:%M %p') if event.create_dtime else 'N/A' }}</p>
                     </div>
                     {% if event.modified_by %}
                     <div class="mb-3">
@@ -122,7 +122,7 @@
                     </div>
                     <div>
                         <label class="text-muted small">Last Modified Date</label>
-                        <p class="mb-0">{{ event.modify_dtime.strftime('%Y/%m/%d %I:%M %p') }}</p>
+                        <p class="mb-0">{{ event.modify_dtime.strftime('%Y-%m-%d %I:%M %p') }}</p>
                     </div>
                     {% endif %}
                 </div>

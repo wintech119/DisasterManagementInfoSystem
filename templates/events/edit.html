@@ -110,12 +110,12 @@
                 <div class="row mb-4">
                     <div class="col-md-6">
                         <label class="text-muted small">Created By</label>
-                        <p class="mb-0">{{ event.created_by.fullname if event.created_by else 'System' }} on {{ event.create_dtime.strftime('%Y/%m/%d') if event.create_dtime else 'N/A' }}</p>
+                        <p class="mb-0">{{ event.created_by.fullname if event.created_by else 'System' }} on {{ event.create_dtime.strftime('%Y-%m-%d') if event.create_dtime else 'N/A' }}</p>
                     </div>
                     {% if event.modified_by %}
                     <div class="col-md-6">
                         <label class="text-muted small">Last Modified By</label>
-                        <p class="mb-0">{{ event.modified_by.fullname }} on {{ event.modify_dtime.strftime('%Y/%m/%d') }}</p>
+                        <p class="mb-0">{{ event.modified_by.fullname }} on {{ event.modify_dtime.strftime('%Y-%m-%d') }}</p>
                     </div>
                     {% endif %}
                 </div>

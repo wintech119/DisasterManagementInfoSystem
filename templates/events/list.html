@@ -132,7 +132,7 @@
                     <span class="badge bg-secondary">{{ event.event_type }}</span>
                 </td>
                 <td>
-                    {{ event.start_date.strftime('%Y/%m/%d') if event.start_date else 'N/A' }}
+                    {{ event.start_date.strftime('%Y-%m-%d') if event.start_date else 'N/A' }}
                 </td>
                 <td>
                     {% if event.status_code == 'A' %}
@@ -147,7 +147,7 @@
                 </td>
                 <td>
                     {% if event.closed_date %}
-                    {{ event.closed_date.strftime('%Y/%m/%d') }}
+                    {{ event.closed_date.strftime('%Y-%m-%d') }}
                     {% else %}
                     <span class="text-muted">—</span>
                     {% endif %}
