@@ -1,0 +1,377 @@
+You are working in the existing DRIMS codebase and PostgreSQL database.
+Do not modify any existing table schemas. Implement everything using the existing tables:
+
+role(id, code, name, description, created_at, …)
+
+permission(perm_id, resource, action, create_by_id, create_dtime, update_by_id, update_dtime, version_nbr)
+
+role_permission(role_id, perm_id, scope_json, create_by_id, create_dtime, update_by_id, update_dtime, version_nbr)
+
+user_role(user_id, role_id, assigned_at, assigned_by, create_by_id, create_dtime, update_by_id, update_dtime, version_nbr)
+
+event table as already defined in the database.
+
+Your tasks:
+
+Seed role + permission + role_permission (and optional user_role) for the Custodian and Event module.
+
+Implement Event CRUD (UI + backend) restricted to the Custodian’s permissions.
+
+Implement all validation and lifecycle rules described below.
+
+0. ROLE & PERMISSIONS SEEDING (SQL MIGRATION / SEED SCRIPT)
+
+Generate a SQL script (idempotent, safe to run multiple times) that:
+
+0.1 Create the Custodian role
+INSERT INTO role (code, name, description)
+VALUES (
+    'CUSTODIAN',
+    'Custodian',
+    'Role responsible for managing disaster events and event lifecycle in DRIMS.'
+)
+ON CONFLICT (code) DO NOTHING;
+
+0.2 Create Event permissions
+
+Use the existing permission table:
+
+perm_id – identity PK
+
+resource – UNIQUE, NOT NULL
+
+action – UNIQUE, NOT NULL
+
+UNIQUE(resource, action)
+
+Create these permissions:
+
+EVENT_VIEW / VIEW_EVENT
+
+EVENT_CREATE / CREATE_EVENT
+
+EVENT_UPDATE / UPDATE_EVENT
+
+EVENT_CLOSE / CLOSE_EVENT
+
+EVENT_DELETE / DELETE_EVENT
+
+INSERT INTO permission (resource, action)
+VALUES
+    ('EVENT_VIEW',   'VIEW_EVENT'),
+    ('EVENT_CREATE', 'CREATE_EVENT'),
+    ('EVENT_UPDATE', 'UPDATE_EVENT'),
+    ('EVENT_CLOSE',  'CLOSE_EVENT'),
+    ('EVENT_DELETE', 'DELETE_EVENT')
+ON CONFLICT (resource, action) DO NOTHING;
+
+0.3 Map Custodian → Event permissions in role_permission
+
+Use:
+
+role_permission(role_id, perm_id, scope_json, create_by_id, create_dtime, update_by_id, update_dtime, version_nbr)
+
+PK: (role_id, perm_id)
+
+Create mappings for all Event permissions with a global/default scope:
+
+WITH custodian_role AS (
+    SELECT id AS role_id
+    FROM role
+    WHERE code = 'CUSTODIAN'
+),
+event_perms AS (
+    SELECT perm_id
+    FROM permission
+    WHERE resource IN (
+        'EVENT_VIEW',
+        'EVENT_CREATE',
+        'EVENT_UPDATE',
+        'EVENT_CLOSE',
+        'EVENT_DELETE'
+    )
+)
+INSERT INTO role_permission (role_id, perm_id, scope_json)
+SELECT
+    r.role_id,
+    p.perm_id,
+    '{}'::jsonb      -- global/default scope
+FROM custodian_role r
+CROSS JOIN event_perms p
+ON CONFLICT (role_id, perm_id) DO NOTHING;
+
+0.4 (Optional) Assign Custodian role to a test user in user_role
+
+Use actual IDs in your environment:
+
+WITH custodian_role AS (
+    SELECT id AS role_id
+    FROM role
+    WHERE code = 'CUSTODIAN'
+)
+INSERT INTO user_role (user_id, role_id, assigned_by)
+SELECT
+    999 AS user_id,   -- TODO: replace with real user_id
+    role_id,
+    1   AS assigned_by -- TODO: replace with admin user_id
+FROM custodian_role
+ON CONFLICT (user_id, role_id) DO NOTHING;
+
+1. GENERAL SYSTEM RULES (GLOBAL)
+
+Implement or enforce these globally:
+
+Any field referencing a master table must use a dropdown populated from that master table.
+
+If the master table has > 10 items, the dropdown must be searchable/filterable:
+
+With no search term → show all.
+
+With search text → filter by that text.
+
+Mandatory fields must be validated before saving (both UI and backend).
+
+All DB constraints (NOT NULL, CHECKs, length, ranges, enums) must be validated in the application before attempting to save.
+
+Deactivated master records:
+
+Must not appear in selection lists for new records.
+
+Must remain visible in historical records and reports.
+
+Numeric fields (cost, weight, dimensions, etc.) must:
+
+Enforce correct numeric type.
+
+Enforce reasonable ranges and DB constraints.
+
+2. EVENT MODULE (CUSTODIAN ROLE / PERMISSIONS)
+
+All Event actions (UI + API) must:
+
+Require the user to have the relevant Event permission:
+
+View → EVENT_VIEW
+
+Create → EVENT_CREATE
+
+Update → EVENT_UPDATE
+
+Close → EVENT_CLOSE
+
+Delete → EVENT_DELETE
+
+Practically, this will mean only users with the Custodian role (mapped to those permissions) can access these features.
+
+3. GENERAL CRUD FOR EVENTS
+
+Implement:
+
+Create Event
+
+View Event
+
+Update Event
+
+Delete Event (with restrictions below)
+
+3.1 Required fields
+
+Do not allow saving an event unless these are present and valid:
+
+event_type
+
+start_date
+
+event_name
+
+event_desc
+
+impact_desc
+
+status_code
+
+create_by_id
+
+create_dtime
+
+update_by_id
+
+update_dtime
+
+version_nbr
+
+3.2 Delete restrictions
+
+Only allow deletion if the event is not referenced in any other transaction/table.
+
+If referenced, block deletion and show a clear error:
+
+“This event cannot be deleted because it is referenced by other records.”
+
+3.3 Text fields hygiene
+
+Trim leading/trailing spaces for all character fields.
+
+Reject:
+
+Empty strings.
+
+Whitespace-only values for mandatory fields.
+
+Values exceeding DB length.
+
+3.4 Rich-text input
+
+For note/description-style fields (e.g. impact_desc and any long comments):
+
+Use a rich-text editor (bold, italic, bullet lists).
+
+Store content fully (no truncation beyond DB limits).
+
+Fields should expand to show all content (no small scroll boxes).
+
+4. EVENT TYPE & STATUS CONTROLS
+4.1 Event Type
+
+Allowed values: STORM, TORNADO, FLOOD, TSUNAMI, FIRE, EARTHQUAKE, WAR, EPIDEMIC.
+
+UI: dropdown/picklist with only these values.
+
+Backend/API: reject any value outside this list.
+
+4.2 Status Code
+
+Allowed values:
+
+A = Active
+
+C = Closed
+
+UI: dropdown (no arbitrary text input).
+
+Reject any other status.
+
+5. DATES & LIFECYCLE RULES
+5.1 Start Date
+
+start_date is mandatory.
+
+Must not be in the future.
+
+If future → block save and show error.
+
+5.2 Closed Date
+
+When status_code = 'A' → closed_date must be null.
+
+When status_code = 'C' → closed_date must be NOT null.
+
+closed_date must not be earlier than start_date.
+
+Block saves that violate these rules.
+
+5.3 Reason Description
+
+When closed_date is null → reason_desc must be null.
+
+When closed_date is not null → reason_desc is required:
+
+Not null.
+
+Not empty/whitespace.
+
+When closing (status_code = 'C') without reason_desc → block save with a clear error.
+
+6. NAME & DESCRIPTION FIELDS
+
+event_name:
+
+Mandatory.
+
+Max 60 characters.
+
+event_desc:
+
+Mandatory.
+
+Max 255 characters.
+
+Block save if empty or >255.
+
+impact_desc:
+
+Mandatory.
+
+Not null.
+
+Use rich-text editor.
+
+7. AUDIT FIELDS & VERSIONING (OPTIMISTIC LOCKING)
+7.1 Create Audit
+
+On creation:
+
+create_by_id = current user identifier.
+
+create_dtime = current system timestamp.
+
+Users must not be able to edit these afterwards.
+
+7.2 Update Audit
+
+On each update:
+
+update_by_id = current user identifier.
+
+update_dtime = current timestamp.
+
+7.3 Versioning
+
+version_nbr:
+
+Starts at 1 on creation.
+
+Increments by 1 on each successful update.
+
+Implement optimistic locking:
+
+Compare submitted version_nbr to DB value.
+
+If DB version is higher → reject update:
+
+“This record has been modified by another user. Please reload before updating.”
+
+8. QUERYING & DISPLAY
+
+Provide UI and API to search/filter events by:
+
+event_type
+
+status_code
+
+start_date range
+
+closed_date range
+
+event_name (full or partial, case-insensitive)
+
+List/detail views must show:
+
+event_type
+
+event_name
+
+start_date
+
+status_code
+
+If closed:
+
+closed_date
+
+reason_desc
+
+Clearly distinguish Active vs Closed events visually (labels, colours, icons) consistent with DRIMS UI patterns.
+
+Implement all of the above using the existing DRIMS stack and conventions, without modifying table schemas.

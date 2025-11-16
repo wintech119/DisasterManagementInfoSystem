@@ -260,8 +260,8 @@ class FeatureRegistry:
         },
         'event_management': {
             'name': 'Manage Events',
-            'description': 'Manage disaster events',
-            'roles': ['SYSTEM_ADMINISTRATOR', 'ODPEM_DG', 'ODPEM_DDG', 'ODPEM_DIR_PEOD'],
+            'description': 'Manage disaster events and their lifecycle',
+            'roles': ['SYSTEM_ADMINISTRATOR', 'CUSTODIAN', 'ODPEM_DG', 'ODPEM_DDG', 'ODPEM_DIR_PEOD'],
             'route': 'events.list_events',
             'url': '/events',
             'icon': 'bi-calendar-event',
@@ -575,6 +575,7 @@ class FeatureRegistry:
             'ODPEM_DG',
             'ODPEM_DDG',
             'ODPEM_DIR_PEOD',
+            'CUSTODIAN',
             'LOGISTICS_MANAGER',
             'LOGISTICS_OFFICER',
             'INVENTORY_CLERK',
