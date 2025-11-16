@@ -55,15 +55,20 @@
                     </div>
                     <div class="col-md-6">
                         <label for="start_date" class="form-label">Start Date (YYYY-MM-DD) *</label>
-                        <input type="text" 
-                               class="form-control datepicker" 
-                               id="start_date" 
-                               name="start_date" 
-                               placeholder="YYYY-MM-DD"
-                               value="{{ event.start_date.strftime('%Y-%m-%d') }}" 
-                               required 
-                               readonly
-                               {% if event.status_code == 'C' %}disabled{% endif %}>
+                        <div class="input-group">
+                            <input type="text" 
+                                   class="form-control datepicker" 
+                                   id="start_date" 
+                                   name="start_date" 
+                                   placeholder="YYYY-MM-DD"
+                                   value="{{ event.start_date.strftime('%Y-%m-%d') }}" 
+                                   required 
+                                   readonly
+                                   {% if event.status_code == 'C' %}disabled{% endif %}>
+                            <span class="input-group-text" id="calendar-icon" style="cursor: pointer; {% if event.status_code == 'C' %}opacity: 0.5; cursor: not-allowed;{% endif %}">
+                                <i class="bi bi-calendar3"></i>
+                            </span>
+                        </div>
                         <small class="text-muted">Click to select date (cannot be in the future)</small>
                     </div>
                 </div>
@@ -142,11 +147,16 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     {% if event.status_code != 'C' %}
-    flatpickr("#start_date", {
+    const datePicker = flatpickr("#start_date", {
         dateFormat: "Y-m-d",
         maxDate: "{{ today }}",
         allowInput: false,
         clickOpens: true
+    });
+    
+    // Make calendar icon clickable
+    document.getElementById('calendar-icon').addEventListener('click', function() {
+        datePicker.open();
     });
     {% endif %}
 });
