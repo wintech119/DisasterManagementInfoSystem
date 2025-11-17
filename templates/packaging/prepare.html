@@ -724,8 +724,8 @@
             </form>
             
             <!-- Cancel Button (separate form) -->
-            <form method="POST" action="{{ url_for('packaging.cancel_preparation', reliefrqst_id=relief_request.reliefrqst_id) }}" style="margin-top: 1rem;" onsubmit="return confirm('Cancel package preparation? All unsaved changes and reservations will be released.');">
-                <button type="submit" class="btn btn-secondary">
+            <form method="POST" action="{{ url_for('packaging.cancel_preparation', reliefrqst_id=relief_request.reliefrqst_id) }}" style="margin-top: 1rem; position: relative; z-index: 1;" id="cancelPackageForm">
+                <button type="submit" class="btn btn-secondary" id="cancelPackageBtn">
                     <i class="bi bi-x-circle"></i>
                     Cancel Package Preparation
                 </button>
@@ -1133,6 +1133,19 @@ function releaseLock() {
         window.location.href = '{{ url_for("packaging.pending_fulfillment") }}';
     }
 }
+
+// Cancel button handler with confirmation
+document.addEventListener('DOMContentLoaded', function() {
+    const cancelForm = document.getElementById('cancelPackageForm');
+    if (cancelForm) {
+        cancelForm.addEventListener('submit', function(e) {
+            if (!confirm('Cancel package preparation? All unsaved changes and reservations will be released.')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    }
+});
 </script>
 
 {# Batch Allocation Module #}
