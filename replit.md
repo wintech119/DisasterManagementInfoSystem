@@ -68,7 +68,7 @@ All pages maintain a modern, consistent UI with a comprehensive design system:
 - **Smart Routing**: Automatic dashboard routing based on user's primary role.
 - **Role Priority**: SYSTEM_ADMINISTRATOR > ODPEM_DG/DDG/DIR_PEOD > CUSTODIAN > LOGISTICS_MANAGER > LOGISTICS_OFFICER > INVENTORY_CLERK > AGENCY_DISTRIBUTOR/SHELTER.
 - **Verified Database Roles**: SYSTEM_ADMINISTRATOR, LOGISTICS_MANAGER, LOGISTICS_OFFICER, ODPEM_DG, ODPEM_DDG, ODPEM_DIR_PEOD, INVENTORY_CLERK, AGENCY_DISTRIBUTOR, AGENCY_SHELTER, AUDITOR, CUSTODIAN.
-- **Master Data RBAC Restrictions**: Event, Warehouse, and ItemCategory table CRUD operations restricted to CUSTODIAN role only, with similar restrictions planned for other master data tables (unitofmeasure, item, custodian).
+- **Master Data RBAC Restrictions**: Event, Warehouse, ItemCategory, and UnitOfMeasure table CRUD operations restricted to CUSTODIAN role only, with similar restrictions planned for other master data tables (item, custodian).
 
 ## External Dependencies
 
