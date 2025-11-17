@@ -4,146 +4,130 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css') }}">
 {% endblock %}
 
-{% block title %}Edit Unit of Measure{% endblock %}
+{% block title %}Edit UOM - {{ uom.uom_code }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
-    <!-- Back Button -->
-    <div class="mb-3">
-        <a href="{{ url_for('uom.view_uom', uom_code=uom.uom_code) }}" class="btn-back">
-            <i class="bi bi-arrow-left"></i>
-            Back to Details
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="page-header mb-0">
+            <div class="page-title">
+                <i class="bi bi-pencil page-title-icon"></i>
+                <h1 class="page-title-text">Edit UOM: {{ uom.uom_code }}</h1>
+            </div>
+        </div>
+        <a href="{{ url_for('uom.view_uom', uom_code=uom.uom_code) }}" class="btn-relief-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Details
         </a>
     </div>
 
-    <!-- Page Header -->
-    <div class="page-header mb-4">
-        <div class="page-title">
-            <i class="bi bi-pencil page-title-icon"></i>
-            <h1 class="page-title-text">Edit UOM: <span class="code-pill">{{ uom.uom_code }}</span></h1>
-        </div>
-        <p class="page-subtitle">Modify unit of measure information and settings</p>
-    </div>
-
     <!-- Form Card -->
-    <div class="card">
-        <div class="card-header bg-light">
-            <h5 class="mb-0">Unit of Measure Information</h5>
-        </div>
-        <div class="card-body">
-            <form method="POST" id="uomForm">
-                <!-- Hidden field for optimistic locking -->
-                <input type="hidden" name="version_nbr" value="{{ uom.version_nbr }}">
-                
-                <!-- Row 1: UOM Code and Description -->
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <label for="uom_code" class="form-label">UOM Code *</label>
-                        <input type="text" 
-                               class="form-control" 
-                               id="uom_code" 
-                               name="uom_code" 
-                               maxlength="25"
-                               value="{{ form_data.get('uom_code') if form_data else uom.uom_code }}"
-                               required 
-                               placeholder="e.g., KG"
-                               style="text-transform: uppercase;">
-                        <small class="text-muted">Maximum 25 characters. Will be converted to UPPERCASE</small>
-                        {% if errors and errors.get('uom_code') %}
-                        <div class="text-danger small mt-1">{{ errors.get('uom_code') }}</div>
-                        {% endif %}
-                    </div>
-                    <div class="col-md-6">
-                        <label for="uom_desc" class="form-label">Description *</label>
-                        <input type="text" 
-                               class="form-control" 
-                               id="uom_desc" 
-                               name="uom_desc" 
-                               maxlength="60"
-                               value="{{ form_data.get('uom_desc') if form_data else uom.uom_desc }}"
-                               required 
-                               placeholder="e.g., Kilograms">
-                        <small class="text-muted">Maximum 60 characters</small>
-                        {% if errors and errors.get('uom_desc') %}
-                        <div class="text-danger small mt-1">{{ errors.get('uom_desc') }}</div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <!-- Row 2: Status -->
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <label for="status_code" class="form-label">Status *</label>
-                        <select class="form-select" id="status_code" name="status_code" required>
-                            <option value="">Select status...</option>
-                            <option value="A" {% if (form_data and form_data.get('status_code') == 'A') or (not form_data and uom.status_code == 'A') %}selected{% endif %}>Active</option>
-                            <option value="I" {% if (form_data and form_data.get('status_code') == 'I') or (not form_data and uom.status_code == 'I') %}selected{% endif %}>Inactive</option>
-                        </select>
-                        {% if errors and errors.get('status_code') %}
-                        <div class="text-danger small mt-1">{{ errors.get('status_code') }}</div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <!-- Row 3: Comments -->
-                <div class="row mb-4">
-                    <div class="col-md-12">
-                        <label for="comments_text" class="form-label">Comments</label>
-                        <textarea class="form-control" 
-                                  id="comments_text" 
-                                  name="comments_text" 
-                                  rows="3" 
-                                  maxlength="300"
-                                  placeholder="Optional notes or details about this unit of measure">{{ form_data.get('comments_text') if form_data else (uom.comments_text or '') }}</textarea>
-                        <small class="text-muted">Optional. Maximum 300 characters. <span id="comment-count">0</span>/300</small>
-                        {% if errors and errors.get('comments_text') %}
-                        <div class="text-danger small mt-1">{{ errors.get('comments_text') }}</div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <!-- Audit Information -->
-                <div class="card mb-4 bg-light">
-                    <div class="card-body">
-                        <h6 class="mb-3">Audit Information</h6>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <small class="text-muted d-block">Created By</small>
-                                <strong>{{ uom.create_by_id }}</strong>
-                                <br>
-                                <small class="text-muted">{{ uom.create_dtime.strftime('%B %d, %Y at %I:%M %p') if uom.create_dtime else 'N/A' }}</small>
-                            </div>
-                            <div class="col-md-6">
-                                <small class="text-muted d-block">Last Updated By</small>
-                                <strong>{{ uom.update_by_id }}</strong>
-                                <br>
-                                <small class="text-muted">{{ uom.update_dtime.strftime('%B %d, %Y at %I:%M %p') if uom.update_dtime else 'N/A' }}</small>
+    <div class="row">
+        <div class="col-lg-10 col-xl-8">
+            <div class="card">
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('uom.edit_uom', uom_code=uom.uom_code) }}" novalidate>
+                        <!-- Hidden field for optimistic locking -->
+                        <input type="hidden" name="version_nbr" value="{{ uom.version_nbr }}">
+                        
+                        <!-- UOM Information Section -->
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-tag"></i> Unit of Measure Information
+                            </h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="uom_code" class="form-label">
+                                        UOM Code <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="uom_code" 
+                                           name="uom_code" 
+                                           maxlength="25"
+                                           value="{{ uom.uom_code }}"
+                                           required 
+                                           style="text-transform: uppercase;">
+                                    <small class="form-text text-muted">Max 25 characters, auto-converted to uppercase</small>
+                                    {% if errors and errors.get('uom_code') %}
+                                    <div class="text-danger small mt-1">{{ errors.get('uom_code') }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="status_code" class="form-label">
+                                        Status <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select" id="status_code" name="status_code" required>
+                                        <option value="A" {% if uom.status_code == 'A' %}selected{% endif %}>Active</option>
+                                        <option value="I" {% if uom.status_code == 'I' %}selected{% endif %}>Inactive</option>
+                                    </select>
+                                    {% if errors and errors.get('status_code') %}
+                                    <div class="text-danger small mt-1">{{ errors.get('status_code') }}</div>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
-                        <div class="mt-2">
-                            <small class="text-muted">Version: {{ uom.version_nbr }}</small>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Form Actions -->
-                <div class="border-top pt-3 mt-4">
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn-relief-primary">
-                            <i class="bi bi-check-circle"></i>
-                            Save Changes
-                        </button>
-                        <a href="{{ url_for('uom.view_uom', uom_code=uom.uom_code) }}" class="btn-relief-secondary">
-                            <i class="bi bi-x-circle"></i>
-                            Cancel
-                        </a>
-                    </div>
-                    <div class="text-muted small mt-2">
-                        <i class="bi bi-info-circle"></i>
-                        Fields marked with * are required
-                    </div>
+                        <!-- Description Section -->
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-text-left"></i> Description
+                            </h5>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label for="uom_desc" class="form-label">
+                                        UOM Description <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="uom_desc" 
+                                           name="uom_desc" 
+                                           maxlength="60"
+                                           value="{{ uom.uom_desc }}"
+                                           required>
+                                    <small class="form-text text-muted">Max 60 characters</small>
+                                    {% if errors and errors.get('uom_desc') %}
+                                    <div class="text-danger small mt-1">{{ errors.get('uom_desc') }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Information Section -->
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-chat-square-text"></i> Additional Information
+                            </h5>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label for="comments_text" class="form-label">
+                                        Comments
+                                    </label>
+                                    <textarea class="form-control" 
+                                              id="comments_text" 
+                                              name="comments_text" 
+                                              rows="3" 
+                                              maxlength="300">{{ uom.comments_text or '' }}</textarea>
+                                    <small class="form-text text-muted">Optional. Max 300 characters. <span id="comment-count">0</span>/300</small>
+                                    {% if errors and errors.get('comments_text') %}
+                                    <div class="text-danger small mt-1">{{ errors.get('comments_text') }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex gap-2 justify-content-end border-top pt-3">
+                            <a href="{{ url_for('uom.view_uom', uom_code=uom.uom_code) }}" class="btn-relief-secondary">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn-relief-primary">
+                                <i class="bi bi-check-circle"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
