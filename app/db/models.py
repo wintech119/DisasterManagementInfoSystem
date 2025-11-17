@@ -314,20 +314,29 @@ class ItemCategory(db.Model):
     }
 
 class Item(db.Model):
-    """Relief Item (from aidmgmt-3.sql)"""
+    """Relief Item (from aidmgmt-3.sql)
+    
+    Updated schema with new columns: item_code, units_size_vary_flag, 
+    is_batched_flag, can_expire_flag, issuance_order.
+    Removed obsolete columns: category_code, expiration_apply_flag.
+    """
     __tablename__ = 'item'
+    __table_args__ = {'extend_existing': True}
     
     item_id = db.Column(db.Integer, primary_key=True)
+    item_code = db.Column(db.String(16), nullable=False, unique=True)
     item_name = db.Column(db.String(60), nullable=False, unique=True)
     sku_code = db.Column(db.String(30), nullable=False, unique=True)
-    category_id = db.Column(db.Integer, db.ForeignKey('itemcatg.category_id'))
-    category_code = db.Column(db.String(30))  # Legacy column, kept for compatibility
+    category_id = db.Column(db.Integer, db.ForeignKey('itemcatg.category_id'), nullable=False)
     item_desc = db.Column(db.Text, nullable=False)
     reorder_qty = db.Column(db.Numeric(12, 2), nullable=False)
     default_uom_code = db.Column(db.String(25), db.ForeignKey('unitofmeasure.uom_code'), nullable=False)
+    units_size_vary_flag = db.Column(db.Boolean, nullable=False, default=False)
     usage_desc = db.Column(db.Text)
     storage_desc = db.Column(db.Text)
-    expiration_apply_flag = db.Column(db.Boolean, nullable=False)
+    is_batched_flag = db.Column(db.Boolean, nullable=False, default=True)
+    can_expire_flag = db.Column(db.Boolean, nullable=False, default=False)
+    issuance_order = db.Column(db.String(20), nullable=False, default='FIFO')
     comments_text = db.Column(db.Text)
     status_code = db.Column(db.CHAR(1), nullable=False)
     create_by_id = db.Column(db.String(20), nullable=False)
@@ -338,6 +347,10 @@ class Item(db.Model):
     
     category = db.relationship('ItemCategory', foreign_keys=[category_id], backref='items')
     default_uom = db.relationship('UnitOfMeasure', backref='items')
+    
+    __mapper_args__ = {
+        'version_id_col': version_nbr
+    }
 
 class Inventory(db.Model):
     """Inventory (from aidmgmt-3.sql)"""
