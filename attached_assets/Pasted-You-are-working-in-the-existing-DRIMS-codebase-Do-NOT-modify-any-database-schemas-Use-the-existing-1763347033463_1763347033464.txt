@@ -1,0 +1,258 @@
+You are working in the existing DRIMS codebase.
+Do NOT modify any database schemas. Use the existing custodian table exactly as defined.
+
+The Custodian role already exists and must control access to Custodian Management.
+
+Your task is to implement full Custodian Management (CRUD, master-data usage, audit, and concurrency) as described below.
+
+0. Authorization
+
+Only users with the Custodian role (or permissions mapped to that role) must be able to:
+
+Create custodian records
+
+View custodian lists and details
+
+Update custodian records
+
+Deletion must respect referential integrity rules in section 1.
+
+1. General CRUD for Custodians
+
+Implement:
+
+Create Custodian
+
+View Custodian
+
+Update Custodian
+
+(Conditional) Delete Custodian
+
+A custodian record must not be saved unless all mandatory fields are valid:
+
+custodian_name
+
+address1_text
+
+parish_code
+
+contact_name
+
+phone_no
+
+create_by_id
+
+create_dtime
+
+update_by_id
+
+update_dtime
+
+version_nbr
+
+Deletion rules:
+
+The system must prevent deleting a custodian that is referenced by warehouses or any other records.
+
+If a delete is attempted in such a case:
+
+Block the operation.
+
+Return a clear error message (e.g., “This custodian cannot be deleted because it is referenced by other records.”).
+
+2. Custodian Name Rules
+
+custodian_name is mandatory and must not be blank or whitespace.
+
+custodian_name must always be stored in UPPERCASE:
+
+The system must automatically convert the value to uppercase before saving.
+
+custodian_name must be unique across all custodians:
+
+If a duplicate name is entered, reject the save and show a clear error.
+
+Enforce maximum length of 120 characters:
+
+Reject values longer than 120 characters.
+
+If no explicit name is entered:
+
+The system may default custodian_name to
+"OFFICE OF DISASTER PREPAREDNESS AND EMERGENCY MANAGEMENT (ODPEM)"
+as per the table definition, while still enforcing uppercase and uniqueness.
+
+3. Address & Parish
+3.1 Address Fields
+
+address1_text is mandatory; address2_text is optional.
+
+Both fields must be limited to 255 characters:
+
+Reject values exceeding 255 characters.
+
+Trim leading and trailing spaces before validation and saving.
+
+3.2 Parish Code
+
+parish_code is mandatory and must reference a valid record in the parish master table.
+
+In the UI:
+
+Present parish_code as a dropdown list populated from the parish table.
+
+In the backend/API:
+
+If an invalid or non-existent parish code is submitted, reject the save with a clear error.
+
+4. Contact Information & Format Rules
+4.1 Contact Name
+
+contact_name is mandatory and limited to 50 characters.
+
+contact_name must be stored in UPPERCASE:
+
+The system must automatically convert to uppercase before saving.
+
+Reject values longer than 50 characters.
+
+4.2 Phone Number
+
+phone_no is mandatory and limited to 20 characters.
+
+The system must:
+
+Ensure phone_no is not blank.
+
+Validate that it conforms to allowed formatting rules (e.g., digits plus permitted symbols such as +, -, spaces).
+
+4.3 Email
+
+email_text is optional and limited to 100 characters.
+
+If provided:
+
+Validate that email_text is in a valid email format.
+
+Reject values longer than 100 characters.
+
+5. Use as Master Data (References)
+
+Wherever a custodian is required (e.g., Warehouse maintenance), the system must present a dropdown or searchable list of valid custodians sourced from the custodian table.
+
+Only valid custodians must be available for new selections.
+
+Changes to custodian_name must not break existing references:
+
+Warehouses and other records must continue referencing the same custodian_id.
+
+6. Audit Fields
+6.1 Create Audit
+
+On custodian creation:
+
+create_by_id must be automatically set to the current user’s identifier.
+
+create_dtime must be automatically set to the current system timestamp.
+
+Users must not be able to edit create_by_id or create_dtime after creation (both UI and backend protection).
+
+6.2 Update Audit
+
+On every update:
+
+update_by_id must be automatically set to the current user’s identifier.
+
+update_dtime must be automatically set to the current system timestamp.
+
+These fields must always reflect the last successful update.
+
+7. Version Number & Concurrency (Optimistic Locking)
+
+version_nbr must be initialized (e.g., to 1) when the custodian is first created.
+
+Each successful update must increment version_nbr by 1.
+
+Implement optimistic locking using version_nbr:
+
+When loading the record for editing, read the current version_nbr.
+
+On update, compare the submitted version_nbr to the current DB value.
+
+If the submitted value is stale (less than the DB value), reject the update and inform the user:
+
+“This custodian record has been modified by another user. Please reload and try again.”
+
+8. Querying & Display
+8.1 Search & Filter
+
+The system must allow users to search and filter custodians by:
+
+custodian_name (full or partial match, case-insensitive search)
+
+parish_code
+
+contact_name
+
+8.2 List Views
+
+Custodian list views must display at least:
+
+custodian_name
+
+parish_code
+
+contact_name
+
+phone_no
+
+email_text (if present)
+
+8.3 Detail Views
+
+Detail views must display all fields, including:
+
+Address information (address1_text, address2_text)
+
+parish_code
+
+Contact details (contact_name, phone_no, email_text)
+
+Audit fields:
+
+create_by_id
+
+create_dtime
+
+update_by_id
+
+update_dtime
+
+version_nbr
+
+9. UI & UX Consistency
+
+All Custodian management screens (list, create, edit, detail) must follow the same UI patterns and layouts as:
+
+Warehouse management
+
+UOM management
+
+Item category management
+
+Event management
+
+This includes:
+
+Form layout & spacing
+
+Validation message style
+
+Button placement (“Save”, “Cancel”)
+
+Use of DRIMS-standard toasts/alerts
+
+Responsive design and accessibility (WCAG) alignment.
+
+Implement all of the above using the existing custodian table and DRIMS conventions, without altering the database schema.

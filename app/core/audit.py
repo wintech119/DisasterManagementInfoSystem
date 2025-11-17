@@ -15,6 +15,11 @@ def add_audit_fields(obj, user, is_new=True):
     
     Raises:
         ValueError: If user does not have a valid user_name
+        
+    Note:
+        Does NOT manually increment version_nbr on updates when the model
+        has __mapper_args__ = {'version_id_col': version_nbr} configured,
+        as SQLAlchemy handles version increment automatically.
     """
     now = datetime.now()
     
@@ -36,8 +41,10 @@ def add_audit_fields(obj, user, is_new=True):
         obj.update_by_id = audit_id
     if hasattr(obj, 'update_dtime'):
         obj.update_dtime = now
-    if hasattr(obj, 'version_nbr') and not is_new:
-        obj.version_nbr += 1
+    
+    # Do NOT manually increment version_nbr on updates
+    # SQLAlchemy's version_id_col handles this automatically for models
+    # with __mapper_args__ = {'version_id_col': version_nbr}
     
     return obj
 

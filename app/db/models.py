@@ -184,7 +184,7 @@ class Custodian(db.Model):
     __tablename__ = 'custodian'
     
     custodian_id = db.Column(db.Integer, primary_key=True)
-    custodian_name = db.Column(db.String(120), nullable=False)
+    custodian_name = db.Column(db.String(120), nullable=False, unique=True)
     address1_text = db.Column(db.String(255), nullable=False)
     address2_text = db.Column(db.String(255))
     parish_code = db.Column(db.CHAR(2), db.ForeignKey('parish.parish_code'), nullable=False)
@@ -196,6 +196,12 @@ class Custodian(db.Model):
     update_by_id = db.Column(db.String(20), nullable=False)
     update_dtime = db.Column(db.DateTime, nullable=False)
     version_nbr = db.Column(db.Integer, nullable=False, default=1)
+    
+    parish = db.relationship('Parish', backref='custodians')
+    
+    __mapper_args__ = {
+        'version_id_col': version_nbr
+    }
 
 class Warehouse(db.Model):
     """Warehouse/Storage Location (from aidmgmt-3.sql)"""
