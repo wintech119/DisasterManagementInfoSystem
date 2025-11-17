@@ -20,6 +20,7 @@ from app.services import relief_request_service as rr_service
 from app.services import fulfillment_lock_service as lock_service
 from app.services import item_status_service
 from app.services import inventory_reservation_service as reservation_service
+from app.services.batch_allocation_service import BatchAllocationService
 from app.core.audit import add_audit_fields
 from app.core.exceptions import OptimisticLockError
 
@@ -568,7 +569,7 @@ def _send_for_dispatch(relief_request):
 
 def _process_allocations(relief_request, validate_complete=False):
     """
-    Process warehouse allocations from form data.
+    Process batch-level allocations from form data.
     Updates issue_qty and item status codes, and persists allocations to ReliefPkgItem.
     
     Args:
@@ -584,8 +585,6 @@ def _process_allocations(relief_request, validate_complete=False):
     relief_pkg = ReliefPkg.query.filter_by(reliefrqst_id=relief_request.reliefrqst_id).first()
     if not relief_pkg:
         # Create a new relief package for tracking allocations
-        # Note: verify_by_id tracks package creator (LO/LM), updated to LM approver on dispatch
-        # Pending approval distinguished by: status='P' + dispatch_dtime IS NULL
         relief_pkg = ReliefPkg(
             reliefrqst_id=relief_request.reliefrqst_id,
             to_inventory_id=1,  # Placeholder, will be updated on dispatch
@@ -595,8 +594,8 @@ def _process_allocations(relief_request, validate_complete=False):
             create_dtime=datetime.now(),
             update_by_id=current_user.user_name,
             update_dtime=datetime.now(),
-            verify_by_id=current_user.user_name,  # Required (NOT NULL) - tracks creator until LM approval
-            received_by_id=current_user.user_name,  # Required (NOT NULL)
+            verify_by_id=current_user.user_name,
+            received_by_id=current_user.user_name,
             version_nbr=1
         )
         db.session.add(relief_pkg)
@@ -606,10 +605,8 @@ def _process_allocations(relief_request, validate_complete=False):
     existing_pkg_items = ReliefPkgItem.query.filter_by(reliefpkg_id=relief_pkg.reliefpkg_id).all()
     existing_allocations_map = {}
     for pkg_item in existing_pkg_items:
-        # Get warehouse_id from inventory
-        inv = Inventory.query.get(pkg_item.fr_inventory_id)
-        if inv:
-            existing_allocations_map[(pkg_item.item_id, inv.warehouse_id)] = pkg_item.item_qty
+        # Track by (item_id, batch_id) for batch-level reservations
+        existing_allocations_map[(pkg_item.item_id, pkg_item.batch_id)] = pkg_item.item_qty
     
     # Store old allocations on relief_request object for access in save/submit functions
     relief_request._old_allocations = existing_allocations_map
@@ -622,39 +619,44 @@ def _process_allocations(relief_request, validate_complete=False):
         request_qty = item.request_qty
         
         total_allocated = Decimal('0')
-        warehouse_allocations = []
+        batch_allocations = []
         
-        allocation_keys = [k for k in request.form.keys() if k.startswith(f'allocation_{item_id}_')]
+        # Look for batch allocation keys: batch_allocation_{item_id}_{batch_id}
+        allocation_keys = [k for k in request.form.keys() if k.startswith(f'batch_allocation_{item_id}_')]
         
         # Sort keys to ensure deterministic locking order (prevent deadlocks)
         allocation_keys = sorted(allocation_keys)
         
         for key in allocation_keys:
             parts = key.split('_')
-            if len(parts) >= 3:
-                warehouse_id = int(parts[2])
+            if len(parts) >= 4:
+                batch_id = int(parts[3])
                 allocated_qty = Decimal(request.form.get(key) or '0')
                 
                 if allocated_qty > 0:
-                    inventory = Inventory.query.filter_by(
-                        warehouse_id=warehouse_id,
-                        item_id=item_id,
-                        status_code='A'
-                    ).first()
+                    # Validate batch allocation
+                    is_valid, error_msg = BatchAllocationService.validate_batch_allocation(
+                        batch_id, item_id, allocated_qty
+                    )
+                    if not is_valid:
+                        raise ValueError(error_msg)
                     
-                    if not inventory:
-                        raise ValueError(f'No active inventory found for item {item_id} at warehouse {warehouse_id}')
+                    # Get batch details for warehouse tracking
+                    batch = ItemBatch.query.options(
+                        joinedload(ItemBatch.inventory).joinedload(Inventory.warehouse)
+                    ).get(batch_id)
                     
-                    if allocated_qty > inventory.usable_qty:
-                        raise ValueError(f'Allocated quantity ({allocated_qty}) exceeds usable quantity ({inventory.usable_qty}) for item {item.item.item_name} at warehouse {inventory.warehouse.warehouse_name}')
+                    if not batch:
+                        raise ValueError(f'Batch {batch_id} not found')
                     
                     total_allocated += allocated_qty
-                    warehouse_allocations.append((warehouse_id, allocated_qty))
+                    batch_allocations.append((batch_id, batch.inventory_id, allocated_qty, batch.uom_code))
                     
-                    # Collect for reservation service
+                    # Collect for reservation service (track by warehouse for aggregation)
                     new_allocations.append({
                         'item_id': item_id,
-                        'warehouse_id': warehouse_id,
+                        'batch_id': batch_id,
+                        'warehouse_id': batch.inventory.warehouse_id,
                         'allocated_qty': allocated_qty
                     })
         
@@ -706,22 +708,16 @@ def _process_allocations(relief_request, validate_complete=False):
         item.action_dtime = datetime.now()
         item.version_nbr += 1
         
-        # Create ReliefPkgItem records for each warehouse allocation
-        for warehouse_id, allocated_qty in warehouse_allocations:
-            # Get inventory record to get inventory_id
-            inventory = Inventory.query.filter_by(
-                warehouse_id=warehouse_id,
-                item_id=item_id,
-                status_code='A'
-            ).first()
-            
-            if inventory and allocated_qty > 0:
+        # Create ReliefPkgItem records for each batch allocation
+        for batch_id, inventory_id, allocated_qty, uom_code in batch_allocations:
+            if allocated_qty > 0:
                 pkg_item = ReliefPkgItem(
                     reliefpkg_id=relief_pkg.reliefpkg_id,
-                    fr_inventory_id=inventory.inventory_id,
+                    fr_inventory_id=inventory_id,
                     item_id=item_id,
+                    batch_id=batch_id,  # REQUIRED in new schema
                     item_qty=allocated_qty,
-                    uom_code=item.item.default_uom_code if item.item and item.item.default_uom_code else 'EA',
+                    uom_code=uom_code,
                     create_by_id=current_user.user_name,
                     create_dtime=datetime.now(),
                     update_by_id=current_user.user_name,
@@ -780,3 +776,132 @@ def get_inventory(item_id, warehouse_id):
             'reserved_qty': 0,
             'defective_qty': 0
         })
+
+
+@packaging_bp.route('/api/item/<int:item_id>/batches')
+@login_required
+def get_item_batches(item_id):
+    """
+    API endpoint to get available batches for an item grouped by warehouse.
+    Returns batches sorted by FEFO/FIFO rules based on item configuration.
+    """
+    try:
+        warehouse_id = request.args.get('warehouse_id', type=int)
+        
+        # Get item to check if it's batched
+        item = Item.query.get(item_id)
+        if not item:
+            return jsonify({'error': 'Item not found'}), 404
+        
+        # Get batches grouped by warehouse
+        if warehouse_id:
+            batches = BatchAllocationService.get_available_batches(item_id, warehouse_id)
+            batches = BatchAllocationService.sort_batches_by_allocation_rule(batches, item)
+            
+            warehouse_batches = {
+                warehouse_id: batches
+            }
+        else:
+            warehouse_batches = BatchAllocationService.get_batches_by_warehouse(item_id)
+        
+        # Format response
+        result = {}
+        for wh_id, batch_list in warehouse_batches.items():
+            result[wh_id] = []
+            for batch in batch_list:
+                available_qty = batch.usable_qty - batch.reserved_qty
+                result[wh_id].append({
+                    'batch_id': batch.batch_id,
+                    'batch_no': batch.batch_no,
+                    'batch_date': batch.batch_date.isoformat() if batch.batch_date else None,
+                    'expiry_date': batch.expiry_date.isoformat() if batch.expiry_date else None,
+                    'warehouse_id': batch.inventory.warehouse_id,
+                    'warehouse_name': batch.inventory.warehouse.warehouse_name,
+                    'inventory_id': batch.inventory_id,
+                    'usable_qty': float(batch.usable_qty),
+                    'reserved_qty': float(batch.reserved_qty),
+                    'available_qty': float(available_qty),
+                    'defective_qty': float(batch.defective_qty),
+                    'expired_qty': float(batch.expired_qty),
+                    'uom_code': batch.uom_code,
+                    'size_spec': batch.size_spec,
+                    'is_expired': batch.is_expired,
+                    'status_code': batch.status_code
+                })
+        
+        return jsonify({
+            'item_id': item_id,
+            'item_name': item.item_name,
+            'is_batched': item.is_batched_flag,
+            'can_expire': item.can_expire_flag,
+            'issuance_order': item.issuance_order,
+            'batches': result
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@packaging_bp.route('/api/item/<int:item_id>/auto-allocate', methods=['POST'])
+@login_required
+def auto_allocate_item(item_id):
+    """
+    API endpoint to auto-allocate batches for an item using FEFO/FIFO rules.
+    
+    Expected JSON payload:
+    {
+        "requested_qty": 100,
+        "warehouse_id": 1  # optional
+    }
+    """
+    try:
+        data = request.get_json()
+        requested_qty = Decimal(str(data.get('requested_qty', 0)))
+        warehouse_id = data.get('warehouse_id')
+        
+        if requested_qty <= 0:
+            return jsonify({'error': 'Requested quantity must be greater than zero'}), 400
+        
+        # Get auto-allocations
+        allocations = BatchAllocationService.auto_allocate_batches(
+            item_id,
+            requested_qty,
+            warehouse_id
+        )
+        
+        # Calculate totals
+        total_allocated = sum(Decimal(str(a['allocated_qty'])) for a in allocations)
+        shortage = requested_qty - total_allocated if total_allocated < requested_qty else Decimal('0')
+        
+        return jsonify({
+            'item_id': item_id,
+            'requested_qty': float(requested_qty),
+            'total_allocated': float(total_allocated),
+            'shortage': float(shortage),
+            'allocations': allocations
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@packaging_bp.route('/api/batch/<int:batch_id>')
+@login_required
+def get_batch_details(batch_id):
+    """API endpoint to get detailed information about a specific batch"""
+    try:
+        batch_details = BatchAllocationService.get_batch_details(batch_id)
+        
+        if not batch_details:
+            return jsonify({'error': 'Batch not found'}), 404
+        
+        # Convert date objects to ISO format for JSON
+        if batch_details.get('batch_date'):
+            batch_details['batch_date'] = batch_details['batch_date'].isoformat()
+        if batch_details.get('expiry_date'):
+            batch_details['expiry_date'] = batch_details['expiry_date'].isoformat()
+        
+        return jsonify(batch_details)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

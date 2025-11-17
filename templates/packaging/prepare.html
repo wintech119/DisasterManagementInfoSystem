@@ -4,6 +4,7 @@
 
 {% block extra_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/batch-drawer.css') }}">
 <style>
 .page-header {
     display: flex;
@@ -622,7 +623,7 @@
                         <tr>
                             <th scope="col">Item</th>
                             <th scope="col">Requested</th>
-                            <th scope="col">Warehouse Active Items</th>
+                            <th scope="col">Batch Allocation</th>
                             <th scope="col">Allocated</th>
                             <th scope="col">Remaining</th>
                             <th scope="col">Status</th>
@@ -649,35 +650,15 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <div class="hub-allocation-inline">
-                                    {% set inventories = item_inventory_map.get(item.item_id, []) %}
-                                    {% if inventories %}
-                                        {% for inventory in inventories %}
-                                        <div class="warehouse-allocation-row">
-                                            <strong class="warehouse-stock" id="stock_{{ item.item_id }}_{{ inventory.warehouse_id }}" data-usable-qty="{{ inventory.usable_qty }}">{{ inventory.usable_qty }}</strong>
-                                            <span class="warehouse-name" title="{{ inventory.warehouse.warehouse_name }}">{{ inventory.warehouse.warehouse_name }}</span>
-                                            <input 
-                                                type="text" 
-                                                inputmode="numeric"
-                                                pattern="[0-9]*"
-                                                class="allocation-input"
-                                                id="allocation_{{ item.item_id }}_{{ inventory.warehouse_id }}"
-                                                name="allocation_{{ item.item_id }}_{{ inventory.warehouse_id }}"
-                                                value="0"
-                                                autocomplete="off"
-                                                data-item-id="{{ item.item_id }}"
-                                                data-warehouse-id="{{ inventory.warehouse_id }}"
-                                                data-requested-qty="{{ item.request_qty }}"
-                                                aria-label="Allocate from {{ inventory.warehouse.warehouse_name }}">
-                                        </div>
-                                        {% endfor %}
-                                    {% else %}
-                                        <div class="text-muted small">
-                                            <i class="bi bi-exclamation-triangle"></i>
-                                            No warehouses have active stock for this item
-                                        </div>
-                                    {% endif %}
-                                </div>
+                                <button 
+                                    type="button" 
+                                    class="btn btn-outline select-batches-btn"
+                                    onclick="openBatchDrawer({{ item.item_id }}, '{{ item.item.item_desc if item.item else 'Unknown Item' }}', {{ item.request_qty }})"
+                                    data-item-id="{{ item.item_id }}">
+                                    <i class="bi bi-box-seam"></i>
+                                    Select Batches
+                                </button>
+                                {# Hidden inputs for batch allocations will be added here by JavaScript #}
                             </td>
                             <td>
                                 <strong class="total-allocated" id="total_{{ item.item_id }}">0</strong>
@@ -1148,4 +1129,11 @@ function releaseLock() {
     }
 }
 </script>
+
+{# Batch Allocation Module #}
+<script src="{{ url_for('static', filename='js/batch-allocation.js') }}"></script>
+
+{# Batch Selection Drawer #}
+{% include 'packaging/_batch_drawer.html' %}
+
 {% endblock %}
