@@ -153,20 +153,22 @@
                     {% endif %}
                 </td>
                 <td>
-                    <a href="{{ url_for('events.view_event', event_id=event.event_id) }}" 
-                       class="btn-relief-secondary btn-sm"
-                       aria-label="View {{ event.event_name }}">
-                        <i class="bi bi-eye"></i>
-                        View
-                    </a>
-                    {% if event.status_code == 'A' %}
-                    <a href="{{ url_for('events.edit_event', event_id=event.event_id) }}" 
-                       class="btn-relief-secondary btn-sm"
-                       aria-label="Edit {{ event.event_name }}">
-                        <i class="bi bi-pencil"></i>
-                        Edit
-                    </a>
-                    {% endif %}
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('events.view_event', event_id=event.event_id) }}" 
+                           class="btn-relief-secondary btn-sm"
+                           aria-label="View {{ event.event_name }}">
+                            <i class="bi bi-eye"></i>
+                            View
+                        </a>
+                        {% if event.status_code == 'A' %}
+                        <a href="{{ url_for('events.edit_event', event_id=event.event_id) }}" 
+                           class="btn-relief-secondary btn-sm"
+                           aria-label="Edit {{ event.event_name }}">
+                            <i class="bi bi-pencil"></i>
+                            Edit
+                        </a>
+                        {% endif %}
+                    </div>
                 </td>
             </tr>
             {% endfor %}
