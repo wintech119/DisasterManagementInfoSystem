@@ -742,9 +742,18 @@ def _process_allocations(relief_request, validate_complete=False):
 @login_required
 def cancel_preparation(reliefrqst_id):
     """
-    Cancel package preparation - releases inventory reservations and lock.
+    Cancel package preparation - discards all changes, releases inventory reservations and lock.
+    Does NOT save any draft.
     """
     try:
+        # Get the relief package for this request (if it exists)
+        relief_pkg = ReliefPkg.query.filter_by(reliefrqst_id=reliefrqst_id).first()
+        
+        if relief_pkg:
+            # Delete all relief package items (discard any draft allocations)
+            ReliefPkgItem.query.filter_by(reliefpkg_id=relief_pkg.reliefpkg_id).delete()
+            db.session.flush()
+        
         # Release inventory reservations
         success, error_msg = reservation_service.release_all_reservations(reliefrqst_id)
         if not success:
@@ -753,10 +762,14 @@ def cancel_preparation(reliefrqst_id):
         # Release lock
         lock_service.release_lock(reliefrqst_id, current_user.user_id, release_reservations=False)
         
+        # Commit the deletion of package items
+        db.session.commit()
+        
         flash(f'Package preparation for relief request #{reliefrqst_id} has been cancelled', 'info')
         return redirect(url_for('packaging.pending_fulfillment'))
         
     except Exception as e:
+        db.session.rollback()
         flash(f'Error canceling preparation: {str(e)}', 'danger')
         return redirect(url_for('packaging.prepare_package', reliefrqst_id=reliefrqst_id))
 
