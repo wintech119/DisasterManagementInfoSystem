@@ -448,12 +448,16 @@ const BatchAllocation = (function() {
             return;
         }
         
+        console.log(`Applying allocations for item ${currentItemId}:`, currentAllocations);
+        
         // Remove existing allocation inputs for this item
         const existingInputs = document.querySelectorAll(`input[name^="batch_allocation_${currentItemId}_"]`);
+        console.log(`Removing ${existingInputs.length} existing inputs`);
         existingInputs.forEach(input => input.remove());
         
         // Create new hidden inputs for each allocation
         const form = document.querySelector('form');
+        console.log('Form element:', form);
         
         for (const [batchId, qty] of Object.entries(currentAllocations)) {
             if (qty > 0) {
@@ -462,8 +466,16 @@ const BatchAllocation = (function() {
                 input.name = `batch_allocation_${currentItemId}_${batchId}`;
                 input.value = qty;
                 form.appendChild(input);
+                console.log(`  - Created hidden input: ${input.name} = ${input.value}`);
             }
         }
+        
+        // Verify inputs were added
+        const verifyInputs = document.querySelectorAll(`input[name^="batch_allocation_${currentItemId}_"]`);
+        console.log(`Verification: Found ${verifyInputs.length} hidden inputs after adding`);
+        verifyInputs.forEach(input => {
+            console.log(`  - ${input.name} = ${input.value}`);
+        });
         
         // Update the main page display
         updateMainPageDisplay();
