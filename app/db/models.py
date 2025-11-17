@@ -637,8 +637,15 @@ class ReliefPkgItem(db.Model):
     version_nbr = db.Column(db.Integer, nullable=False, default=1)
     
     package = db.relationship('ReliefPkg', backref='items')
-    item = db.relationship('Item', foreign_keys=[item_id], backref='package_items')
-    batch = db.relationship('ItemBatch', foreign_keys=[fr_inventory_id, batch_id, item_id], backref='package_items')
+    item = db.relationship('Item', 
+                          primaryjoin='ReliefPkgItem.item_id==Item.item_id',
+                          foreign_keys=[item_id], 
+                          backref='package_items')
+    batch = db.relationship('ItemBatch',
+                           primaryjoin='and_(ReliefPkgItem.fr_inventory_id==ItemBatch.inventory_id, ReliefPkgItem.batch_id==ItemBatch.batch_id, ReliefPkgItem.item_id==ItemBatch.item_id)',
+                           foreign_keys=[fr_inventory_id, batch_id, item_id],
+                           overlaps="item,package_items",
+                           backref='package_items')
     uom = db.relationship('UnitOfMeasure', backref='package_items')
     
     __mapper_args__ = {
@@ -785,8 +792,14 @@ class TransferItem(db.Model):
     version_nbr = db.Column(db.Integer, nullable=False, default=1)
     
     transfer = db.relationship('Transfer', backref='items')
-    item = db.relationship('Item', backref='transfer_items')
-    batch = db.relationship('ItemBatch', foreign_keys=[inventory_id, batch_id])
+    item = db.relationship('Item',
+                          primaryjoin='TransferItem.item_id==Item.item_id',
+                          foreign_keys=[item_id],
+                          backref='transfer_items')
+    batch = db.relationship('ItemBatch',
+                           primaryjoin='and_(TransferItem.inventory_id==ItemBatch.inventory_id, TransferItem.batch_id==ItemBatch.batch_id)',
+                           foreign_keys=[inventory_id, batch_id],
+                           overlaps="item,transfer_items")
     uom = db.relationship('UnitOfMeasure', backref='transfer_items')
     
     __mapper_args__ = {
