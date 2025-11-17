@@ -236,6 +236,17 @@ class FeatureRegistry:
             'navigation_group': 'master_data',
             'priority': 5
         },
+        'item_category_management': {
+            'name': 'Item Categories',
+            'description': 'Manage item categories for relief supplies',
+            'roles': ['CUSTODIAN'],  # Restricted to CUSTODIAN only - master data table
+            'route': 'item_categories.list_categories',
+            'url': '/item-categories',
+            'icon': 'bi-grid-3x3',
+            'category': 'master_data',
+            'navigation_group': 'master_data',
+            'priority': 4
+        },
         'item_catalog': {
             'name': 'Manage Items',
             'description': 'Manage relief item catalog',
@@ -245,7 +256,7 @@ class FeatureRegistry:
             'icon': 'bi-tag',
             'category': 'master_data',
             'navigation_group': 'master_data',
-            'priority': 4
+            'priority': 3
         },
         'location_management': {
             'name': 'Manage Locations',

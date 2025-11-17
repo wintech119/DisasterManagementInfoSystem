@@ -22,7 +22,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from datetime import datetime
 from sqlalchemy import or_, and_
-from sqlalchemy.exc import IntegrityError, StaleDataError
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm.exc import StaleDataError
 
 from app.db import db
 from app.db.models import ItemCategory, Item
