@@ -643,13 +643,13 @@ class ReliefPkgItem(db.Model):
     package = db.relationship('ReliefPkg', backref='items')
     item = db.relationship('Item', 
                           primaryjoin='ReliefPkgItem.item_id==Item.item_id',
-                          foreign_keys=[item_id], 
+                          foreign_keys=[item_id],
                           backref='package_items')
     batch = db.relationship('ItemBatch',
                            primaryjoin='and_(ReliefPkgItem.fr_inventory_id==ItemBatch.inventory_id, ReliefPkgItem.batch_id==ItemBatch.batch_id, ReliefPkgItem.item_id==ItemBatch.item_id)',
                            foreign_keys=[fr_inventory_id, batch_id, item_id],
                            overlaps="item,package_items",
-                           backref='package_items')
+                           backref=db.backref('package_items', overlaps="item,package_items"))
     uom = db.relationship('UnitOfMeasure', backref='package_items')
     
     __mapper_args__ = {
