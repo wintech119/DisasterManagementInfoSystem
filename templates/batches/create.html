@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+
+{% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css') }}">
+{% endblock %}
+
+{% block title %}Create Batch{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="page-header mb-0">
+            <div class="page-title">
+                <i class="bi bi-layers page-title-icon"></i>
+                <h1 class="page-title-text">Create New Batch</h1>
+            </div>
+        </div>
+        <a href="{{ url_for('batches.list_batches') }}" class="btn-relief-secondary">
+            <i class="bi bi-arrow-left"></i> Back to List
+        </a>
+    </div>
+
+    <!-- Form Card -->
+    <div class="row">
+        <div class="col-lg-10 col-xl-8">
+            <div class="card">
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('batches.create_batch') }}" novalidate>
+                        <!-- Batch Identification Section -->
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-tag"></i> Batch Identification
+                            </h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="batch_no" class="form-label">
+                                        Batch Number <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="batch_no" 
+                                           name="batch_no" 
+                                           maxlength="30" 
+                                           required
+                                           value="{{ form_data.get('batch_no', '') }}"
+                                           style="text-transform: uppercase;">
+                                    <small class="form-text text-muted">Max 30 characters, auto-converted to uppercase</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="batch_date" class="form-label">
+                                        Batch Date <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="date" 
+                                           class="form-control" 
+                                           id="batch_date" 
+                                           name="batch_date" 
+                                           required
+                                           value="{{ form_data.get('batch_date', '') }}">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="expiry_date" class="form-label">
+                                        Expiry Date
+                                    </label>
+                                    <input type="date" 
+                                           class="form-control" 
+                                           id="expiry_date" 
+                                           name="expiry_date"
+                                           value="{{ form_data.get('expiry_date', '') }}">
+                                    <small class="form-text text-muted">Optional</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Location & Item Section -->
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-geo-alt"></i> Location & Item
+                            </h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="inventory_id" class="form-label">
+                                        Warehouse <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select" id="inventory_id" name="inventory_id" required>
+                                        <option value="">-- Select Warehouse --</option>
+                                        {% for warehouse in warehouses %}
+                                        <option value="{{ warehouse.warehouse_id }}" 
+                                                {% if form_data.get('inventory_id')|int == warehouse.warehouse_id %}selected{% endif %}>
+                                            {{ warehouse.warehouse_name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="item_id" class="form-label">
+                                        Item <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select" id="item_id" name="item_id" required>
+                                        <option value="">-- Select Item --</option>
+                                        {% for item in items %}
+                                        <option value="{{ item.item_id }}" 
+                                                {% if form_data.get('item_id')|int == item.item_id %}selected{% endif %}>
+                                            {{ item.item_name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <small class="form-text text-muted">Only items with batch tracking enabled</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quantities Section -->
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-boxes"></i> Quantities & Specifications
+                            </h5>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label for="usable_qty" class="form-label">
+                                        Usable Quantity <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="usable_qty" 
+                                           name="usable_qty" 
+                                           step="0.01" 
+                                           min="0.01" 
+                                           required
+                                           value="{{ form_data.get('usable_qty', '') }}">
+                                    <small class="form-text text-muted">Must be greater than zero</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="uom_code" class="form-label">
+                                        Unit of Measure <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select" id="uom_code" name="uom_code" required>
+                                        <option value="">-- Select UOM --</option>
+                                        {% for uom in uoms %}
+                                        <option value="{{ uom.uom_code }}" 
+                                                {% if form_data.get('uom_code') == uom.uom_code %}selected{% endif %}>
+                                            {{ uom.uom_code }} - {{ uom.uom_desc }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="avg_unit_value" class="form-label">
+                                        Avg Unit Value ($) <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="avg_unit_value" 
+                                           name="avg_unit_value" 
+                                           step="0.01" 
+                                           min="0" 
+                                           required
+                                           value="{{ form_data.get('avg_unit_value', '0') }}">
+                                </div>
+                            </div>
+                            <div class="row g-3 mt-2">
+                                <div class="col-12">
+                                    <label for="size_spec" class="form-label">
+                                        Size Specification
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="size_spec" 
+                                           name="size_spec" 
+                                           maxlength="20"
+                                           value="{{ form_data.get('size_spec', '') }}"
+                                           placeholder="e.g., 25kg sack, 500ml bottle">
+                                    <small class="form-text text-muted">Optional, max 20 characters</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Comments Section -->
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-chat-text"></i> Additional Information
+                            </h5>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label for="comments" class="form-label">
+                                        Comments
+                                    </label>
+                                    <textarea class="form-control" 
+                                              id="comments" 
+                                              name="comments" 
+                                              rows="3"
+                                              placeholder="Optional notes about this batch">{{ form_data.get('comments', '') }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                            <a href="{{ url_for('batches.list_batches') }}" class="btn btn-modern btn-outline">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-modern btn-primary">
+                                <i class="bi bi-check-circle"></i> Create Batch
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

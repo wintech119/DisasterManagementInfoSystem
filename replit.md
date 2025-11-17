@@ -37,7 +37,7 @@ All pages maintain a modern, consistent UI with a comprehensive design system:
 - **Accessibility**: WCAG 2.1 AA compliance with focus-visible states, proper color contrast, ARIA labels, semantic HTML, and screen reader support.
 - **Workflows**: Standardized 5-step workflow patterns for Agency Relief Requests and Eligibility Approval.
 - **Dashboard System**: 6 role-specific dashboards with consistent modern UI, filter tabs, summary cards, and optimized queries. System Administration dashboard features modern tables with status badges, enhanced quick links with modern buttons, and improved recent users display with avatars.
-- **Management Modules**: Comprehensive modules for Event Management, Warehouse Management, User Management, Notification Management, Item Management, Item Category Management, Custodian Management, Unit of Measure Management, and Inventory, all featuring modern UI, CRUD operations, validation, and optimistic locking. All Create forms follow a consistent structure with sectioned layouts, icon headers, proper spacing, and standardized action buttons.
+- **Management Modules**: Comprehensive modules for Event Management, Warehouse Management, User Management, Notification Management, Item Management, Item Category Management, Custodian Management, Unit of Measure Management, Batch Management, and Inventory, all featuring modern UI, CRUD operations, validation, and optimistic locking. All Create forms follow a consistent structure with sectioned layouts, icon headers, proper spacing, and standardized action buttons.
 
 ### Database Architecture
 - **Schema**: Based on the authoritative ODPEM `aidmgmt-3.sql` schema (40 tables).
@@ -63,7 +63,7 @@ All pages maintain a modern, consistent UI with a comprehensive design system:
 - **Inventory Management**: Two-tier tracking system: warehouse-level stock in `inventory` table (usable/reserved/defective/expired quantities) and batch-level tracking in `itembatch` table for items with `is_batched_flag=TRUE`. Batch allocation supports FEFO (First Expired First Out) for expirable items and FIFO (First In First Out) for non-expirable items based on `item.issuance_order` configuration.
 - **Eligibility Approval Workflow**: Role-based access control (RBAC) and service layer for eligibility decisions.
 - **Package Fulfillment Workflow**: Unified `packaging` blueprint with routes for pending fulfillment and package preparation. Includes features like summary metric cards, multi-warehouse allocation, dynamic item status validation, and a 4-step workflow sidebar.
-- **Services**: `ItemStatusService` for status validation and `InventoryReservationService` for transaction-safe inventory reservation.
+- **Services**: `ItemStatusService` for status validation, `InventoryReservationService` for transaction-safe inventory reservation, and `BatchAllocationService` for automatic FEFO/FIFO batch allocation with configurable issuance order rules.
 
 ### Role-Based Access Control (RBAC)
 - **Feature Registry**: Centralized feature-to-role mapping in `app/core/feature_registry.py` with 26 features mapped to 10 verified database role codes.
@@ -74,6 +74,7 @@ All pages maintain a modern, consistent UI with a comprehensive design system:
 - **Verified Database Roles**: SYSTEM_ADMINISTRATOR, LOGISTICS_MANAGER, LOGISTICS_OFFICER, ODPEM_DG, ODPEM_DDG, ODPEM_DIR_PEOD, INVENTORY_CLERK, AGENCY_DISTRIBUTOR, AGENCY_SHELTER, AUDITOR, CUSTODIAN.
 - **Master Data RBAC Restrictions**: Event, Warehouse, Item, ItemCategory, UnitOfMeasure, and Custodian table CRUD operations restricted to CUSTODIAN role only. Master data tables follow consistent naming standards for constraints (pk_, uk_, c_, fk_ prefixes).
 - **Item Management Module**: Full CRUD operations for relief items (`app/features/items.py`) restricted to CUSTODIAN role. Features include search/filter by category, batch tracking, expiration tracking, status tabs (Active/Inactive/Batched/Expirable), summary metrics, validation helpers for item_code/item_name/sku_code/reorder_qty/issuance_order/comments, uniqueness checks, optimistic locking, stock/transaction checks before inactivation, and modern UI templates (list, create, view, edit) following established design patterns.
+- **Batch Management Module**: Full CRUD operations for item batches (`app/features/batches.py`) restricted to CUSTODIAN role via MASTER_DATA_MGMT feature. Features include: list view with filter tabs (Active/Expiring Soon/Expired/Unavailable/All), search by batch number/item name, warehouse and item filters, summary metrics (total batches, active, expiring soon, expired, available qty), batch creation with validation, batch view with audit information, batch editing with optimistic locking, expiry date tracking with visual indicators for expired/expiring soon batches, quantity management (usable/reserved/defective/expired), verification flag, size specification, average unit value tracking, and modern UI templates following established design patterns. API endpoint for batch lookup by item/warehouse for dropdown population.
 
 ## External Dependencies
 

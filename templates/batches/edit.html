@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+
+{% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css') }}">
+{% endblock %}
+
+{% block title %}Edit Batch - {{ batch.batch_no }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="page-header mb-0">
+            <div class="page-title">
+                <i class="bi bi-layers page-title-icon"></i>
+                <h1 class="page-title-text">Edit Batch: {{ batch.batch_no }}</h1>
+            </div>
+        </div>
+        <a href="{{ url_for('batches.view_batch', batch_id=batch.batch_id) }}" class="btn-relief-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Details
+        </a>
+    </div>
+
+    <!-- Form Card -->
+    <div class="row">
+        <div class="col-lg-10 col-xl-8">
+            <div class="card">
+                <div class="card-body p-4">
+                    <div class="alert alert-info mb-4">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Note:</strong> Batch number, item, warehouse, batch date, and UOM cannot be changed after creation.
+                    </div>
+
+                    <form method="POST" action="{{ url_for('batches.edit_batch', batch_id=batch.batch_id) }}" novalidate>
+                        <input type="hidden" name="version_nbr" value="{{ batch.version_nbr }}">
+
+                        <!-- Read-Only Information Section -->
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-tag"></i> Batch Identification (Read-Only)
+                            </h5>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label text-muted">Batch Number</label>
+                                    <div><span class="code-pill">{{ batch.batch_no }}</span></div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label text-muted">Item</label>
+                                    <div class="fw-medium">{{ batch.item.item_name }}</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label text-muted">Warehouse</label>
+                                    <div class="fw-medium">{{ batch.inventory.warehouse.warehouse_name }}</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted">Batch Date</label>
+                                    <div>{{ batch.batch_date.strftime('%Y-%m-%d') if batch.batch_date else '—' }}</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted">Unit of Measure</label>
+                                    <div>{{ batch.uom_code }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Editable Fields Section -->
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-pencil"></i> Editable Information
+                            </h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="expiry_date" class="form-label">
+                                        Expiry Date
+                                    </label>
+                                    <input type="date" 
+                                           class="form-control" 
+                                           id="expiry_date" 
+                                           name="expiry_date"
+                                           value="{{ form_data.get('expiry_date', batch.expiry_date.strftime('%Y-%m-%d') if batch.expiry_date else '') }}">
+                                    <small class="form-text text-muted">Optional, must be after batch date</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="status_code" class="form-label">
+                                        Status <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select" id="status_code" name="status_code" required>
+                                        <option value="A" {% if form_data.get('status_code', batch.status_code) == 'A' %}selected{% endif %}>Active</option>
+                                        <option value="U" {% if form_data.get('status_code', batch.status_code) == 'U' %}selected{% endif %}>Unavailable</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quantities Section -->
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-boxes"></i> Quantities & Value
+                            </h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="usable_qty" class="form-label">
+                                        Usable Quantity <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="usable_qty" 
+                                           name="usable_qty" 
+                                           step="0.01" 
+                                           min="0" 
+                                           required
+                                           value="{{ form_data.get('usable_qty', batch.usable_qty) }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="reserved_qty" class="form-label">
+                                        Reserved Quantity <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="reserved_qty" 
+                                           name="reserved_qty" 
+                                           step="0.01" 
+                                           min="0" 
+                                           required
+                                           value="{{ form_data.get('reserved_qty', batch.reserved_qty) }}">
+                                    <small class="form-text text-muted">Cannot exceed usable quantity</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="defective_qty" class="form-label">
+                                        Defective Quantity <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="defective_qty" 
+                                           name="defective_qty" 
+                                           step="0.01" 
+                                           min="0" 
+                                           required
+                                           value="{{ form_data.get('defective_qty', batch.defective_qty) }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="expired_qty" class="form-label">
+                                        Expired Quantity <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="expired_qty" 
+                                           name="expired_qty" 
+                                           step="0.01" 
+                                           min="0" 
+                                           required
+                                           value="{{ form_data.get('expired_qty', batch.expired_qty) }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="size_spec" class="form-label">
+                                        Size Specification
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="size_spec" 
+                                           name="size_spec" 
+                                           maxlength="20"
+                                           value="{{ form_data.get('size_spec', batch.size_spec if batch.size_spec else '') }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="avg_unit_value" class="form-label">
+                                        Avg Unit Value ($) <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="avg_unit_value" 
+                                           name="avg_unit_value" 
+                                           step="0.01" 
+                                           min="0" 
+                                           required
+                                           value="{{ form_data.get('avg_unit_value', batch.avg_unit_value) }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Information Section -->
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-sliders"></i> Additional Settings
+                            </h5>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <div class="form-check">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               id="verified_flag" 
+                                               name="verified_flag" 
+                                               {% if form_data.get('verified_flag', batch.verified_flag) %}checked{% endif %}>
+                                        <label class="form-check-label" for="verified_flag">
+                                            <strong>Verified</strong>
+                                            <br><small class="text-muted">Mark this batch as physically verified</small>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <label for="comments" class="form-label">
+                                        Comments
+                                    </label>
+                                    <textarea class="form-control" 
+                                              id="comments" 
+                                              name="comments" 
+                                              rows="3">{{ form_data.get('comments', batch.comments if batch.comments else '') }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                            <a href="{{ url_for('batches.view_batch', batch_id=batch.batch_id) }}" class="btn btn-modern btn-outline">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-modern btn-primary">
+                                <i class="bi bi-check-circle"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

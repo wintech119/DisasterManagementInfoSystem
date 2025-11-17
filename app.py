@@ -30,6 +30,7 @@ from app.features.items import items_bp
 from app.features.item_categories import item_categories_bp
 from app.features.uom import uom_bp
 from app.features.inventory import inventory_bp
+from app.features.batches import batches_bp
 from app.features.requests_aidmgmt import requests_bp
 from app.features.packaging import packaging_bp
 from app.features.donations import donations_bp
@@ -100,6 +101,7 @@ app.register_blueprint(items_bp)
 app.register_blueprint(item_categories_bp)
 app.register_blueprint(uom_bp)
 app.register_blueprint(inventory_bp)
+app.register_blueprint(batches_bp)
 app.register_blueprint(requests_bp)
 app.register_blueprint(packaging_bp)
 app.register_blueprint(donations_bp)
