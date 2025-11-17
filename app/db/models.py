@@ -700,7 +700,10 @@ class DBIntakeItem(db.Model):
     update_dtime = db.Column(db.DateTime, nullable=False)
     version_nbr = db.Column(db.Integer, nullable=False, default=1)
     
-    item = db.relationship('Item', backref='intake_items')
+    item = db.relationship('Item',
+                          primaryjoin='DBIntakeItem.item_id==Item.item_id',
+                          foreign_keys=[item_id],
+                          backref='intake_items')
 
 class DistributionPackage(db.Model):
     """DRIMS Distribution Package (Alternative workflow)"""
@@ -917,7 +920,10 @@ class DonationIntakeItem(db.Model):
     version_nbr = db.Column(db.Integer, nullable=False, default=1)
     
     intake = db.relationship('DonationIntake', backref='items')
-    item = db.relationship('Item', backref='donation_intake_items')
+    item = db.relationship('Item',
+                          primaryjoin='DonationIntakeItem.item_id==Item.item_id',
+                          foreign_keys=[item_id],
+                          backref='donation_intake_items')
     uom = db.relationship('UnitOfMeasure', backref='donation_intake_items')
     
     __mapper_args__ = {
@@ -970,7 +976,10 @@ class TransferIntakeItem(db.Model):
         db.ForeignKeyConstraint(['transfer_id', 'inventory_id'], ['xfintake.transfer_id', 'xfintake.inventory_id']),
     )
     
-    item = db.relationship('Item', backref='transfer_intake_items')
+    item = db.relationship('Item',
+                          primaryjoin='TransferIntakeItem.item_id==Item.item_id',
+                          foreign_keys=[item_id],
+                          backref='transfer_intake_items')
     unit_of_measure = db.relationship('UnitOfMeasure')
 
 class TransferReturn(db.Model):
@@ -1066,7 +1075,10 @@ class ReturnIntakeItem(db.Model):
         db.ForeignKeyConstraint(['xfreturn_id', 'inventory_id'], ['rtintake.xfreturn_id', 'rtintake.inventory_id']),
     )
     
-    item = db.relationship('Item', backref='return_intake_items')
+    item = db.relationship('Item',
+                          primaryjoin='ReturnIntakeItem.item_id==Item.item_id',
+                          foreign_keys=[item_id],
+                          backref='return_intake_items')
     unit_of_measure = db.relationship('UnitOfMeasure')
 
 class AgencyAccountRequest(db.Model):
