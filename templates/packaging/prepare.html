@@ -704,12 +704,12 @@
 
                 <!-- Action Buttons -->
                 <div class="action-buttons">
-                    <button type="button" 
-                            class="btn btn-secondary btn-sm" 
-                            onclick="cancelPackagePreparation()">
-                        <i class="bi bi-x-circle"></i>
-                        Cancel
-                    </button>
+                    <form method="POST" action="{{ url_for('packaging.cancel_preparation', reliefrqst_id=relief_request.reliefrqst_id) }}" style="display: inline;" onsubmit="return confirm('Cancel package preparation? All unsaved changes and reservations will be released.');">
+                        <button type="submit" class="btn btn-secondary btn-sm">
+                            <i class="bi bi-x-circle"></i>
+                            Cancel
+                        </button>
+                    </form>
                     <button type="submit" name="action" value="save_draft" class="btn-relief-secondary">
                         <i class="bi bi-save"></i>
                         Save Draft
@@ -745,18 +745,6 @@
 
 <!-- JavaScript for Modern Packaging UI -->
 <script>
-// Cancel package preparation
-function cancelPackagePreparation() {
-    if (confirm('Cancel package preparation? All unsaved changes and reservations will be released.')) {
-        // Create a form and submit it to the cancel endpoint
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '{{ url_for("packaging.cancel_preparation", reliefrqst_id=relief_request.reliefrqst_id) }}';
-        document.body.appendChild(form);
-        form.submit();
-    }
-}
-
 document.addEventListener('DOMContentLoaded', function() {
     // Load inventory levels for all items
     loadAllInventory();
