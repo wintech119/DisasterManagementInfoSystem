@@ -328,7 +328,6 @@ const BatchAllocation = (function() {
             }
             
             updateTotals();
-            validatePickOrder();
         });
         
         // "Use Max" button
@@ -431,13 +430,6 @@ const BatchAllocation = (function() {
      * Apply allocations to the main form
      */
     function applyAllocations() {
-        // Validate pick order before applying
-        const validation = validatePickOrder();
-        if (!validation.isValid) {
-            alert(`Cannot apply allocations:\n\n${validation.error}`);
-            return;
-        }
-        
         // Validate total allocated doesn't exceed requested
         const totalAllocated = getTotalAllocated();
         const remaining = currentItemData.requestedQty - totalAllocated;
