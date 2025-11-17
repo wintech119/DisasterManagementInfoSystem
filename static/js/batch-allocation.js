@@ -150,8 +150,17 @@ const BatchAllocation = (function() {
             currentBatches = {};
             const allBatches = Array.isArray(data.batches) ? data.batches : [];
             
+            console.log(`API returned ${allBatches.length} batches:`, allBatches.map(b => `${b.batch_id} (${b.batch_no})`));
+            
             allBatches.forEach(batch => {
                 currentBatches[batch.batch_id] = batch;
+            });
+            
+            // Check if previously allocated batches are in the list
+            console.log('Previously allocated batch IDs:', Object.keys(currentAllocations));
+            Object.keys(currentAllocations).forEach(batchId => {
+                const found = currentBatches[batchId];
+                console.log(`  - Batch ${batchId}: ${found ? 'FOUND in list' : 'NOT FOUND in list'}`);
             });
             
             // Show shortfall warning if needed
@@ -240,6 +249,7 @@ const BatchAllocation = (function() {
      * @param {Array} batches - Array of batch objects
      */
     function renderBatches(batches) {
+        console.log(`Rendering ${batches.length} batches`);
         elements.batchList.innerHTML = '';
         
         if (batches.length === 0) {
@@ -248,6 +258,7 @@ const BatchAllocation = (function() {
         }
         
         batches.forEach(batch => {
+            console.log(`  - Creating element for batch ${batch.batch_id} (${batch.batch_no})`);
             const batchElement = createBatchElement(batch);
             elements.batchList.appendChild(batchElement);
         });
