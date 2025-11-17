@@ -37,7 +37,7 @@ All pages maintain a modern, consistent UI with a comprehensive design system:
 - **Accessibility**: WCAG 2.1 AA compliance with focus-visible states, proper color contrast, ARIA labels, semantic HTML, and screen reader support.
 - **Workflows**: Standardized 5-step workflow patterns for Agency Relief Requests and Eligibility Approval.
 - **Dashboard System**: 6 role-specific dashboards with consistent modern UI, filter tabs, summary cards, and optimized queries. System Administration dashboard features modern tables with status badges, enhanced quick links with modern buttons, and improved recent users display with avatars.
-- **Management Modules**: Comprehensive modules for Event Management, Warehouse Management, User Management, Notification Management, and Inventory, all featuring modern UI, CRUD operations, validation, and optimistic locking.
+- **Management Modules**: Comprehensive modules for Event Management, Warehouse Management, User Management, Notification Management, Item Management, Item Category Management, Custodian Management, and Inventory, all featuring modern UI, CRUD operations, validation, and optimistic locking.
 
 ### Database Architecture
 - **Schema**: Based on the authoritative ODPEM `aidmgmt-3.sql` schema (40 tables).
@@ -53,6 +53,7 @@ All pages maintain a modern, consistent UI with a comprehensive design system:
     - **Warehouse Types**: Simplified to two types only: `MAIN-HUB` (central/main warehouses) and `SUB-HUB` (sub-warehouses, agency warehouses). Database check constraint enforces these values only.
     - **Item Category Schema**: Updated `itemcatg` table to use `category_id` (integer identity) as primary key instead of `category_code`. The `category_code` remains as a unique business key with uppercase check constraint. Includes `status_code` ('A'/'I') and full optimistic locking support.
     - **Custodian Table**: Migrated to DRIMS naming standards with constraints: `pk_custodian` (primary key), `uk_custodian_1` (unique custodian_name), `c_custodian_1` (uppercase custodian_name check), `c_custodian_3` (uppercase contact_name check), `fk_custodian_parish` (foreign key to parish). Identity column for `custodian_id`, timestamp(0) precision for audit fields.
+    - **Item Table Schema**: Migrated to target specifications with proper constraints and column ordering. Primary key renamed to `pk_item`, unique constraints `uk_item_1` (item_code), `uk_item_2` (item_name), `uk_item_3` (sku_code). Added 5 new columns: `item_code` (position 2, varchar(30) unique), `units_size_vary_flag`, `is_batched_flag`, `can_expire_flag`, `issuance_order` (FIFO/LIFO/FEFO). Removed obsolete columns: `category_code`, `expiration_apply_flag`. All varchar fields enforce uppercase. Full optimistic locking support via `version_nbr`.
 
 ### Data Flow Patterns
 - **AIDMGMT Relief Workflow**: End-to-end process from request creation (agencies) to eligibility review (ODPEM directors), package preparation (logistics), and distribution.
@@ -69,7 +70,8 @@ All pages maintain a modern, consistent UI with a comprehensive design system:
 - **Smart Routing**: Automatic dashboard routing based on user's primary role.
 - **Role Priority**: SYSTEM_ADMINISTRATOR > ODPEM_DG/DDG/DIR_PEOD > CUSTODIAN > LOGISTICS_MANAGER > LOGISTICS_OFFICER > INVENTORY_CLERK > AGENCY_DISTRIBUTOR/SHELTER.
 - **Verified Database Roles**: SYSTEM_ADMINISTRATOR, LOGISTICS_MANAGER, LOGISTICS_OFFICER, ODPEM_DG, ODPEM_DDG, ODPEM_DIR_PEOD, INVENTORY_CLERK, AGENCY_DISTRIBUTOR, AGENCY_SHELTER, AUDITOR, CUSTODIAN.
-- **Master Data RBAC Restrictions**: Event, Warehouse, ItemCategory, UnitOfMeasure, and Custodian table CRUD operations restricted to CUSTODIAN role only. Master data tables follow consistent naming standards for constraints (pk_, uk_, c_, fk_ prefixes).
+- **Master Data RBAC Restrictions**: Event, Warehouse, Item, ItemCategory, UnitOfMeasure, and Custodian table CRUD operations restricted to CUSTODIAN role only. Master data tables follow consistent naming standards for constraints (pk_, uk_, c_, fk_ prefixes).
+- **Item Management Module**: Full CRUD operations for relief items (`app/features/items.py`) restricted to CUSTODIAN role. Features include search/filter by category, batch tracking, expiration tracking, status tabs (Active/Inactive/Batched/Expirable), summary metrics, validation helpers for item_code/item_name/sku_code/reorder_qty/issuance_order/comments, uniqueness checks, optimistic locking, stock/transaction checks before inactivation, and modern UI templates (list, create, view, edit) following established design patterns.
 
 ## External Dependencies
 
