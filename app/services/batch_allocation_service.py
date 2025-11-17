@@ -299,7 +299,7 @@ class BatchAllocationService:
         """
         Get limited batches for the drawer display.
         Shows only ONE batch per warehouse (the top FEFO/FIFO batch).
-        Only includes enough warehouses to fulfill the request.
+        Displays ALL warehouses that have available stock.
         
         Args:
             item_id: Item ID
@@ -308,7 +308,7 @@ class BatchAllocationService:
             
         Returns:
             Tuple of:
-                - List of limited batches (one per warehouse, minimum needed)
+                - List of batches (one per warehouse, all warehouses shown)
                 - Total available from these batches
                 - Shortfall (0 if can fulfill, positive if not)
         """
@@ -321,6 +321,7 @@ class BatchAllocationService:
         sorted_batches = BatchAllocationService.sort_batches_by_allocation_rule(batches, item)
         
         # Group by warehouse, keeping only the first (top priority) batch per warehouse
+        # This shows ALL warehouses, not just minimum needed
         seen_warehouses = set()
         warehouse_batches = []
         
@@ -330,23 +331,16 @@ class BatchAllocationService:
                 warehouse_batches.append(batch)
                 seen_warehouses.add(warehouse_id)
         
-        # Now accumulate warehouses until we can fulfill the request
+        # Calculate total available from all warehouse batches
         cumulative_available = Decimal('0')
-        limited_batches = []
-        
         for batch in warehouse_batches:
             available_qty = batch.usable_qty - batch.reserved_qty
-            limited_batches.append(batch)
             cumulative_available += available_qty
-            
-            # Stop once we have enough to fulfill the request
-            if cumulative_available >= remaining_qty:
-                break
         
         # Calculate shortfall
         shortfall = max(Decimal('0'), remaining_qty - cumulative_available)
         
-        return limited_batches, cumulative_available, shortfall
+        return warehouse_batches, cumulative_available, shortfall
     
     @staticmethod
     def assign_priority_groups(batches: List[ItemBatch], item: Item) -> List[Tuple[ItemBatch, int]]:
