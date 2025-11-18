@@ -535,8 +535,10 @@ class Donation(db.Model):
     comments_text = db.Column(db.Text)
     create_by_id = db.Column(db.String(20), nullable=False)
     create_dtime = db.Column(db.DateTime, nullable=False)
-    verify_by_id = db.Column(db.String(20), nullable=False)
-    verify_dtime = db.Column(db.DateTime, nullable=False)
+    update_by_id = db.Column(db.String(20))
+    update_dtime = db.Column(db.DateTime)
+    verify_by_id = db.Column(db.String(20))
+    verify_dtime = db.Column(db.DateTime)
     version_nbr = db.Column(db.Integer, nullable=False, default=1)
     
     __table_args__ = (
@@ -547,6 +549,9 @@ class Donation(db.Model):
     donor = db.relationship('Donor', backref='donations')
     event = db.relationship('Event', backref='donations')
     custodian = db.relationship('Custodian', backref='donations')
+    created_by = db.relationship('User', foreign_keys=[create_by_id], primaryjoin='Donation.create_by_id == User.user_name', backref='donations_created')
+    verify_by = db.relationship('User', foreign_keys=[verify_by_id], primaryjoin='Donation.verify_by_id == User.user_name', backref='donations_verified')
+    update_by = db.relationship('User', foreign_keys=[update_by_id], primaryjoin='Donation.update_by_id == User.user_name', backref='donations_updated')
     
     __mapper_args__ = {
         'version_id_col': version_nbr
@@ -573,8 +578,8 @@ class DonationItem(db.Model):
     comments_text = db.Column(db.Text)
     create_by_id = db.Column(db.String(20), nullable=False)
     create_dtime = db.Column(db.DateTime, nullable=False)
-    verify_by_id = db.Column(db.String(20), nullable=False)
-    verify_dtime = db.Column(db.DateTime, nullable=False)
+    verify_by_id = db.Column(db.String(20))
+    verify_dtime = db.Column(db.DateTime)
     version_nbr = db.Column(db.Integer, nullable=False, default=1)
     
     __table_args__ = (
