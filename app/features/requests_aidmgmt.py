@@ -10,7 +10,8 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.db import db
 from app.db.models import ReliefRqst, ReliefRqstItem, Agency, Item, Event, UnitOfMeasure
-from app.core.rbac import agency_user_required, is_admin
+from app.core.rbac import agency_user_required, is_admin, is_logistics_manager, is_logistics_officer
+from app.core.decorators import feature_required
 from app.core.exceptions import OptimisticLockError
 from app.services import relief_request_service as rr_service
 
@@ -89,9 +90,19 @@ def list_requests():
 
 @requests_bp.route('/create', methods=['GET', 'POST'])
 @login_required
-@agency_user_required
+@feature_required('relief_request_creation')
 def create_request():
-    """Create new draft relief request for current user's agency"""
+    """Create new draft relief request for current user's agency or redirect Logistics users"""
+    # Redirect Logistics personnel (without agency) to the "create on behalf" route
+    # Allow dual-role users with agency_id to use the normal flow for their own agency
+    if (is_logistics_manager() or is_logistics_officer()) and not current_user.agency_id:
+        return redirect(url_for('packaging.create_request_on_behalf'))
+    
+    # Verify user has agency_id for this route
+    if not current_user.agency_id:
+        flash('You must be associated with an agency to use this form. Use "Create on Behalf" instead.', 'warning')
+        return redirect(url_for('packaging.create_request_on_behalf'))
+    
     if request.method == 'POST':
         try:
             urgency_ind = request.form.get('urgency_ind', 'M')

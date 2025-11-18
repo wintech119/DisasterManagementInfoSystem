@@ -103,7 +103,7 @@ class FeatureRegistry:
         'relief_request_creation': {
             'name': 'Create Relief Requests',
             'description': 'Submit new relief requests for disaster events',
-            'roles': ['AGENCY_DISTRIBUTOR', 'AGENCY_SHELTER'],
+            'roles': ['AGENCY_DISTRIBUTOR', 'AGENCY_SHELTER', 'LOGISTICS_MANAGER', 'LOGISTICS_OFFICER'],
             'route': 'requests.create_request',
             'url': '/relief-requests/create',  # Fallback if route fails
             'icon': 'bi-plus-circle',
