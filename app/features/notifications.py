@@ -146,3 +146,14 @@ def api_delete_notification(notification_id):
         return jsonify({'success': True, 'message': 'Notification deleted successfully'}), 200
     else:
         return jsonify({'success': False, 'message': 'Notification not found or access denied'}), 404
+
+@notifications_bp.route('/api/mark-read/<int:notification_id>', methods=['POST'])
+@login_required
+def api_mark_read(notification_id):
+    """JSON API: Mark a single notification as read"""
+    success = NotificationService.mark_as_read(notification_id, current_user.user_id)
+    
+    if success:
+        return jsonify({'success': True, 'message': 'Notification marked as read'}), 200
+    else:
+        return jsonify({'success': False, 'message': 'Notification not found or access denied'}), 404
