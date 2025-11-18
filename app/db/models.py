@@ -574,7 +574,7 @@ class DonationItem(db.Model):
     item_qty = db.Column(db.Numeric(12, 2), nullable=False)
     uom_code = db.Column(db.String(25), db.ForeignKey('unitofmeasure.uom_code'), nullable=False)
     location_name = db.Column(db.Text, nullable=False)
-    status_code = db.Column(db.CHAR(1), nullable=False)
+    status_code = db.Column(db.CHAR(1), nullable=False, default='V')
     comments_text = db.Column(db.Text)
     create_by_id = db.Column(db.String(20), nullable=False)
     create_dtime = db.Column(db.DateTime, nullable=False)
