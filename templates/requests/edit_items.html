@@ -238,10 +238,9 @@
                 </div>
 
                 <!-- Action Buttons -->
-                {% if request.items %}
                 <div class="card-body border-top">
                     <div class="d-flex gap-2 flex-wrap">
-                        {% if request.status_code == 0 %}
+                        {% if request.items and request.status_code == 0 %}
                         <form method="POST" action="{{ url_for('requests.submit_request', request_id=request.reliefrqst_id) }}" style="display: inline;" id="submitForm">
                             <input type="hidden" name="version_nbr" value="{{ request.version_nbr }}">
                             <button type="submit" class="btn-relief-primary">
@@ -264,7 +263,6 @@
                         {% endif %}
                     </div>
                 </div>
-                {% endif %}
             </div>
         </div>
 
