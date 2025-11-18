@@ -36,6 +36,12 @@
             'variant': 'info'
         },
         {
+            'icon': 'clipboard-check',
+            'label': 'Awaiting Approval',
+            'value': counts.get('pending_approval', 0),
+            'variant': 'primary'
+        },
+        {
             'icon': 'check-circle',
             'label': 'Ready for Dispatch',
             'value': counts.get('part_filled', 0),
@@ -60,6 +66,14 @@
             Being Prepared
             {% if global_counts.get('locked', 0) > 0 %}
             <span class="filter-tab-count" aria-label="{{ global_counts.get('locked', 0) }} in progress">{{ global_counts.get('locked', 0) }}</span>
+            {% endif %}
+        </a>
+        <a href="{{ url_for('packaging.pending_fulfillment', filter='pending_approval') }}" 
+           class="filter-tab {% if current_filter == 'pending_approval' %}active{% endif %}"
+           aria-current="{% if current_filter == 'pending_approval' %}page{% endif %}">
+            Awaiting Approval
+            {% if global_counts.get('pending_approval', 0) > 0 %}
+            <span class="filter-tab-count" aria-label="{{ global_counts.get('pending_approval', 0) }} awaiting approval">{{ global_counts.get('pending_approval', 0) }}</span>
             {% endif %}
         </a>
         <a href="{{ url_for('packaging.pending_fulfillment', filter='ready') }}" 
@@ -133,6 +147,8 @@
                     {% if req.fulfillment_lock %}
                     {{ status_badge('info', 'Being Prepared') }}
                     <div class="table-sku">by {{ req.fulfillment_lock.fulfiller.first_name }} {{ req.fulfillment_lock.fulfiller.last_name }}</div>
+                    {% elif req.packages and req.packages|selectattr('status_code', 'equalto', 'P')|selectattr('dispatch_dtime', 'none')|list %}
+                    {{ status_badge('primary', 'Awaiting Approval') }}
                     {% elif req.status_code == STATUS_SUBMITTED %}
                     {{ status_badge('warning', 'Awaiting to be Filled') }}
                     {% elif req.status_code == STATUS_PART_FILLED %}
