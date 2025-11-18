@@ -3,6 +3,11 @@
 ## Overview
 DRIMS (Disaster Relief Inventory Management System) is a web-based platform for the Government of Jamaica's ODPEM. It is designed to manage the full lifecycle of disaster relief supplies, from inventory tracking and donation management to relief request processing and distribution across multiple warehouses. The system aims to ensure compliance with government processes, support disaster event coordination, supply allocation, and provide robust user administration with RBAC. Its purpose is to deliver a modern, efficient, and user-friendly solution for disaster preparedness and response, emphasizing security and comprehensive management capabilities including inventory transfers, location tracking, analytics, and reporting.
 
+## Recent Changes (2025-11-18)
+- **Status Dropdown Auto-Reset Fix**: Fixed status dropdown not resetting from FILLED to PARTLY FILLED when LM reduces allocation below requested amount. Root cause: Code was trying to set dropdown value BEFORE updating options, so when status was 'F' with only ['F'] option and allocation dropped, it couldn't switch to 'P' because that option didn't exist yet. Fix: Swapped order in updateStatusDropdown() to call updateAllowedStatusOptions() FIRST (rebuilds dropdown with correct options ['P', 'L']), then set value. Now when allocation drops from 20/20 to 19/20, status correctly auto-resets from F→P, and LM can manually select 'L' (Allowed Limit) from dropdown.
+- **Status Code Fix**: Fixed status auto-update logic in batch-allocation.js to use correct backend status codes ('R'=Requested, 'P'=Partly Filled, 'F'=Filled) instead of incorrect 'A' (Approved), matching item_status_service.py logic.
+- **LM Notification Fix**: Fixed Logistics Managers not receiving notifications when Logistics Officers submit packages. Updated role code from 'LOGISTICS_MANAGER' to correct 'LM'.
+
 ## User Preferences
 - **Communication style**: Simple, everyday language.
 - **UI/UX Requirements**:
