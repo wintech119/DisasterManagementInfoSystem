@@ -397,17 +397,24 @@ def _save_draft(relief_request):
         db.session.flush()
         
         # Update inventory reservations (pass old allocations for delta calculation)
+        # For drafts, we attempt reservation but don't block on failure
         old_allocations = relief_request._old_allocations if hasattr(relief_request, '_old_allocations') else {}
         success, error_msg = reservation_service.reserve_inventory(
             relief_request.reliefrqst_id,
             new_allocations,
             old_allocations
         )
-        if not success:
-            raise ValueError(f'Reservation failed: {error_msg}')
         
+        # Commit the draft even if reservation fails
         db.session.commit()
-        flash(f'Draft saved for relief request #{relief_request.reliefrqst_id}', 'success')
+        
+        # Provide appropriate feedback based on reservation result
+        if not success:
+            flash(f'Draft saved for relief request #{relief_request.reliefrqst_id}', 'success')
+            flash(f'Warning: {error_msg}. You can continue editing and submit when inventory becomes available.', 'warning')
+        else:
+            flash(f'Draft saved for relief request #{relief_request.reliefrqst_id}', 'success')
+        
         return redirect(url_for('packaging.prepare_package', reliefrqst_id=relief_request.reliefrqst_id))
         
     except ValueError as e:
