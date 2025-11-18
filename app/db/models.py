@@ -1103,57 +1103,59 @@ class DonationIntakeItem(db.Model):
         'version_id_col': version_nbr
     }
 
-class TransferIntake(db.Model):
-    """Transfer intake - receiving transfers at destination warehouse (AIDMGMT)"""
-    __tablename__ = 'xfintake'
-    
-    transfer_id = db.Column(db.Integer, db.ForeignKey('transfer.transfer_id'), primary_key=True)
-    inventory_id = db.Column(db.Integer, db.ForeignKey('warehouse.warehouse_id'), primary_key=True)
-    intake_date = db.Column(db.Date, nullable=False)
-    comments_text = db.Column(db.String(255))
-    status_code = db.Column(db.CHAR(1), nullable=False)
-    create_by_id = db.Column(db.String(20), nullable=False)
-    create_dtime = db.Column(db.DateTime, nullable=False)
-    update_by_id = db.Column(db.String(20), nullable=False)
-    update_dtime = db.Column(db.DateTime)
-    verify_by_id = db.Column(db.String(20), nullable=False)
-    verify_dtime = db.Column(db.DateTime)
-    version_nbr = db.Column(db.Integer, nullable=False, default=1)
-    
-    transfer = db.relationship('Transfer', backref='intakes')
-    warehouse = db.relationship('Warehouse', foreign_keys=[inventory_id], backref='transfer_intakes')
-
-class TransferIntakeItem(db.Model):
-    """Items in transfer intake (AIDMGMT)"""
-    __tablename__ = 'xfintake_item'
-    
-    transfer_id = db.Column(db.Integer, primary_key=True)
-    inventory_id = db.Column(db.Integer, primary_key=True)
-    item_id = db.Column(db.Integer, db.ForeignKey('item.item_id'), primary_key=True)
-    usable_qty = db.Column(db.DECIMAL(12, 2), nullable=False)
-    location1_id = db.Column(db.Integer, db.ForeignKey('location.location_id'))
-    defective_qty = db.Column(db.DECIMAL(12, 2), nullable=False)
-    location2_id = db.Column(db.Integer, db.ForeignKey('location.location_id'))
-    expired_qty = db.Column(db.DECIMAL(12, 2), nullable=False)
-    location3_id = db.Column(db.Integer, db.ForeignKey('location.location_id'))
-    uom_code = db.Column(db.String(25), db.ForeignKey('unitofmeasure.uom_code'), nullable=False)
-    status_code = db.Column(db.CHAR(1), nullable=False)
-    comments_text = db.Column(db.String(255))
-    create_by_id = db.Column(db.String(20), nullable=False)
-    create_dtime = db.Column(db.DateTime, nullable=False)
-    update_by_id = db.Column(db.String(20), nullable=False)
-    update_dtime = db.Column(db.DateTime, nullable=False)
-    version_nbr = db.Column(db.Integer, nullable=False, default=1)
-    
-    __table_args__ = (
-        db.ForeignKeyConstraint(['transfer_id', 'inventory_id'], ['xfintake.transfer_id', 'xfintake.inventory_id']),
-    )
-    
-    item = db.relationship('Item',
-                          primaryjoin='TransferIntakeItem.item_id==Item.item_id',
-                          foreign_keys=[item_id],
-                          backref='transfer_intake_items')
-    unit_of_measure = db.relationship('UnitOfMeasure')
+# COMMENTED OUT: These tables (xfintake, xfintake_item) don't exist in the database
+# Uncomment when the transfer intake feature is implemented
+# class TransferIntake(db.Model):
+#     """Transfer intake - receiving transfers at destination warehouse (AIDMGMT)"""
+#     __tablename__ = 'xfintake'
+#     
+#     transfer_id = db.Column(db.Integer, db.ForeignKey('transfer.transfer_id'), primary_key=True)
+#     inventory_id = db.Column(db.Integer, db.ForeignKey('warehouse.warehouse_id'), primary_key=True)
+#     intake_date = db.Column(db.Date, nullable=False)
+#     comments_text = db.Column(db.String(255))
+#     status_code = db.Column(db.CHAR(1), nullable=False)
+#     create_by_id = db.Column(db.String(20), nullable=False)
+#     create_dtime = db.Column(db.DateTime, nullable=False)
+#     update_by_id = db.Column(db.String(20), nullable=False)
+#     update_dtime = db.Column(db.DateTime)
+#     verify_by_id = db.Column(db.String(20), nullable=False)
+#     verify_dtime = db.Column(db.DateTime)
+#     version_nbr = db.Column(db.Integer, nullable=False, default=1)
+#     
+#     transfer = db.relationship('Transfer', backref='intakes')
+#     warehouse = db.relationship('Warehouse', foreign_keys=[inventory_id], backref='transfer_intakes')
+# 
+# class TransferIntakeItem(db.Model):
+#     """Items in transfer intake (AIDMGMT)"""
+#     __tablename__ = 'xfintake_item'
+#     
+#     transfer_id = db.Column(db.Integer, primary_key=True)
+#     inventory_id = db.Column(db.Integer, primary_key=True)
+#     item_id = db.Column(db.Integer, db.ForeignKey('item.item_id'), primary_key=True)
+#     usable_qty = db.Column(db.DECIMAL(12, 2), nullable=False)
+#     location1_id = db.Column(db.Integer, db.ForeignKey('location.location_id'))
+#     defective_qty = db.Column(db.DECIMAL(12, 2), nullable=False)
+#     location2_id = db.Column(db.Integer, db.ForeignKey('location.location_id'))
+#     expired_qty = db.Column(db.DECIMAL(12, 2), nullable=False)
+#     location3_id = db.Column(db.Integer, db.ForeignKey('location.location_id'))
+#     uom_code = db.Column(db.String(25), db.ForeignKey('unitofmeasure.uom_code'), nullable=False)
+#     status_code = db.Column(db.CHAR(1), nullable=False)
+#     comments_text = db.Column(db.String(255))
+#     create_by_id = db.Column(db.String(20), nullable=False)
+#     create_dtime = db.Column(db.DateTime, nullable=False)
+#     update_by_id = db.Column(db.String(20), nullable=False)
+#     update_dtime = db.Column(db.DateTime, nullable=False)
+#     version_nbr = db.Column(db.Integer, nullable=False, default=1)
+#     
+#     __table_args__ = (
+#         db.ForeignKeyConstraint(['transfer_id', 'inventory_id'], ['xfintake.transfer_id', 'xfintake.inventory_id']),
+#     )
+#     
+#     item = db.relationship('Item',
+#                           primaryjoin='TransferIntakeItem.item_id==Item.item_id',
+#                           foreign_keys=[item_id],
+#                           backref='transfer_intake_items')
+#     unit_of_measure = db.relationship('UnitOfMeasure')
 
 class TransferReturn(db.Model):
     """Transfer returns - items being returned from destination to source warehouse (AIDMGMT)"""
