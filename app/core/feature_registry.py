@@ -335,6 +335,17 @@ class FeatureRegistry:
             'navigation_group': 'inventory',
             'priority': 3
         },
+        'donation_intake_management': {
+            'name': 'Donation Intake',
+            'description': 'Intake verified donations into warehouse inventory',
+            'roles': ['LOGISTICS_OFFICER', 'LOGISTICS_MANAGER'],
+            'route': 'donation_intake.list_intakes',
+            'url': '/donation-intake',
+            'icon': 'bi-box-arrow-in-down',
+            'category': 'inventory',
+            'navigation_group': 'inventory',
+            'priority': 4
+        },
         
         # =================================================================
         # REPORTING & ANALYTICS

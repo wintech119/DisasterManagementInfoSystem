@@ -1,0 +1,383 @@
+You are a senior full-stack engineer working on the DRIMS web app in Replit.
+
+Your task is to implement the Donation Intake workflow using the existing tables:
+donation, donation_item, dnintake, dnintake_item, itembatch, warehouse, unitofmeasure, and related master tables.
+
+Global Constraints
+
+Do NOT change the database schema (no new columns, no altered types).
+
+Use the existing authentication and role/permission system.
+
+This functionality must be available only to:
+
+Logistics Manager (LM)
+
+Logistics Officer (LO)
+
+Other roles must:
+
+Not see the “Intake Donation” menu entry, and/or
+
+Be blocked with a 403 / “Not authorized” if they hit the routes directly.
+
+Follow existing DRIMS look & feel (same layout, styling, form patterns).
+
+1. Selecting Donation and Target Inventory (Warehouse)
+
+Create an “Intake Donation” screen for LO/LM that allows:
+
+Selecting a donation to intake:
+
+donation_id must be selected from a dropdown/picklist populated from donation where status_code = 'V' (Verified but not yet processed).
+
+No free-text entry of IDs; only valid dropdown values.
+
+Selecting a warehouse/inventory to receive items:
+
+inventory_id must be selected from a dropdown/picklist populated from the warehouse (or inventory) table as appropriate.
+
+Once a donation is selected:
+
+Load and display all related donation_item rows for that donation_id.
+
+Show at least: item (code/name), item_qty, uom_code, and location_name (if applicable).
+
+Only items belonging to this donation_id may be intaken under this intake header.
+
+2. Creating the Intake Header (dnintake)
+
+Implement creation/edit of a dnintake header as follows:
+
+2.1 Required Fields
+
+A dnintake header must have:
+
+donation_id (FK to donation) – required
+
+inventory_id (FK to warehouse / inventory) – required
+
+intake_date – required, and must be ≤ current date
+
+comments_text – optional, max 255 characters
+
+All related master fields must use dropdowns:
+
+donation_id from donation (filtered to status_code = 'V').
+
+inventory_id from warehouse.
+
+If a future intake_date is entered, the system must reject with a clear error.
+
+2.2 Status & Audit Defaults (MVP)
+
+On initial creation via this intake function:
+
+status_code = 'V' (Verified) by default.
+
+create_by_id = current logged-in user (LO/LM).
+
+create_dtime = current timestamp.
+
+update_by_id and update_dtime = same as create_by_id / create_dtime initially.
+
+verify_by_id = same as create_by_id.
+
+verify_dtime = same as create_dtime.
+
+No separate verification screen or workflow in MVP: the record is considered verified on save.
+
+2.3 Primary Key & Uniqueness
+
+(donation_id, inventory_id) is the primary key.
+
+The system must prevent more than one dnintake header for the same (donation_id, inventory_id) pair:
+
+If a record already exists for that pair, load it instead of creating a new one.
+
+2.4 Versioning
+
+version_nbr must be initialized on create (e.g., 1).
+
+Each successful update increments version_nbr by 1.
+
+Use optimistic locking:
+
+When updating, if version_nbr from the UI does not match the DB, reject the update and inform the user that another user modified the intake and they must reload.
+
+3. Loading Donation Items for Intake
+
+For the selected donation_id:
+
+List all donation_item rows on the intake screen.
+
+For each donation_item, show at least:
+
+item_id → item code/name (via item table)
+
+item_qty (total quantity donated)
+
+uom_code
+
+Important:
+
+The donation and its items must be intaken in full, not in partial or incremental intakes.
+
+That means, for each donation_id, item_id, the sum of all intake quantities (usable + defective + expired) over all dnintake_item rows must equal the donation_item.item_qty.
+
+4. Entering Intake Detail per Item (dnintake_item)
+
+For each item under the selected donation, allow the LO/LM to enter at least one intake line in dnintake_item that includes:
+
+donation_id, inventory_id, item_id
+
+batch_no
+
+batch_date
+
+expiry_date
+
+uom_code
+
+avg_unit_value
+
+usable_qty, defective_qty, expired_qty
+
+comments_text (optional)
+
+status_code (default 'V')
+
+4.1 Batch & Dates
+
+Batch number (batch_no):
+
+Mandatory if item.is_batched_flag = TRUE.
+
+Must be stored in UPPERCASE (auto-convert before save).
+
+If item.is_batched_flag = FALSE and the user leaves batch_no blank, default it logically as needed (e.g., to some internal batch identifier rules consistent with existing schema; if batch_id is used elsewhere, ensure you follow current pattern without schema changes).
+
+(donation_id, inventory_id, item_id, batch_no) is part of the PK/unique key. No duplicate rows for the same combination.
+
+If the batch_no already exists for that item in itembatch, display an appropriate message and allow the user to:
+
+Change the batch number, or
+
+(If consistent with your rules) be informed that this will create a new batch record.
+
+Batch date (batch_date):
+
+Required.
+
+Must be ≤ current date.
+
+Future dates must be rejected.
+
+Expiry date (expiry_date):
+
+Mandatory if item.can_expire_flag = TRUE, and must be ≥ current date.
+
+If an expiry earlier than today is entered for an expiring item, reject with an error.
+
+If item.can_expire_flag = FALSE, expiry_date may be null as per existing rules.
+
+4.2 Quantities and Allocation Rules
+
+For each dnintake_item row:
+
+usable_qty ≥ 0.00
+
+defective_qty ≥ 0.00
+
+expired_qty ≥ 0.00
+
+Enforce:
+
+For each (donation_id, item_id):
+
+donation_item.item_qty = Σ (dnintake_item.usable_qty + dnintake_item.defective_qty + dnintake_item.expired_qty)
+across all dnintake_item rows for that donation_id + item_id.
+
+If the sums don’t match the donation quantity, the system must reject the save with a clear message.
+
+4.3 UOM & Unit Value
+
+uom_code:
+
+Required.
+
+Must be selected from a dropdown populated from unitofmeasure.
+
+No free text; invalid UOM codes must be rejected.
+
+avg_unit_value:
+
+Required.
+
+Must be > 0.00.
+
+Values ≤ 0.00 must be rejected.
+
+4.4 Status & Audit (dnintake_item)
+
+status_code allowed values: P (Pending), V (Verified).
+
+For MVP:
+
+New rows created via this intake function must default to status_code = 'V'.
+
+The user does not choose or change this; no separate verification step exists.
+
+Audit fields (dnintake_item):
+
+On creation:
+
+create_by_id = current user (LO/LM).
+
+create_dtime = current timestamp.
+
+update_by_id and update_dtime = same as create initially.
+
+On update:
+
+update_by_id = current user.
+
+update_dtime = current timestamp.
+
+version_nbr:
+
+Initialize on create (e.g. 1).
+
+Increment on each successful update.
+
+If update submitted with stale version_nbr, reject and inform the user.
+
+5. Master Data Dropdown Rules
+
+For this intake functionality, all FK/master references must use dropdowns:
+
+dnintake.donation_id → from donation (filtered to status_code = 'V').
+
+dnintake.inventory_id → from warehouse/inventory.
+
+dnintake_item.uom_code → from unitofmeasure.
+
+Items shown are derived from donation_item + item, so:
+
+Item selection is not free typing; it comes from the donation’s items.
+
+No manual typing of FK IDs; invalid IDs must be rejected server-side.
+
+6. Creating Corresponding itembatch Records on Intake Save
+
+When the user saves/completes the intake (header + all items):
+
+For each dnintake_item row, the system must create an associated itembatch record (assuming one new batch per intake row):
+
+6.1 Mapping
+
+For each intake row:
+
+itembatch.inventory_id = selected inventory_id from dnintake.
+
+itembatch.item_id = dnintake_item.item_id.
+
+itembatch.batch_no = dnintake_item.batch_no (uppercase).
+
+6.2 Insert New itembatch Record
+
+Insert a new itembatch row with:
+
+inventory_id = dnintake.inventory_id
+
+item_id = dnintake_item.item_id
+
+batch_no = uppercase dnintake_item.batch_no
+
+batch_date = dnintake_item.batch_date
+
+expiry_date = dnintake_item.expiry_date (nullable or required based on item.can_expire_flag rules)
+
+uom_code = dnintake_item.uom_code
+
+avg_unit_value = dnintake_item.avg_unit_value
+
+usable_qty = dnintake_item.usable_qty
+
+defective_qty = dnintake_item.defective_qty
+
+expired_qty = dnintake_item.expired_qty
+
+reserved_qty = 0.00 by default
+
+status_code = 'A' (Available)
+
+comments_text = null or any user comments if allowed
+
+create_by_id = intake user (LO/LM)
+
+create_dtime = current timestamp
+
+update_by_id and update_dtime = same as create
+
+version_nbr = initialized (e.g. 1)
+
+Enforce constraints:
+
+usable_qty ≥ 0
+
+defective_qty ≥ 0
+
+expired_qty ≥ 0
+
+avg_unit_value ≥ 0
+
+reserved_qty ≤ usable_qty (true when reserved = 0)
+
+Sum (usable_qty + defective_qty + expired_qty) must equal the donation item quantity for that donation/item combination (as in section 4.2).
+
+7. Completing Intake and User Feedback
+
+When the user clicks Save / Complete Intake:
+
+Validate:
+
+All header fields (donation, inventory, intake_date, comments length).
+
+All item fields (batch_no, dates, UOM, quantities, avg_unit_value).
+
+FK values must come from master tables (no invalid IDs).
+
+For each (donation_id, item_id):
+
+donation_item.item_qty = sum of usable_qty + defective_qty + expired_qty across all dnintake_item rows.
+
+All itembatch insert data complies with constraints.
+
+If validation fails:
+
+No changes to donation, dnintake, dnintake_item, or itembatch are committed.
+
+Treat the entire operation as a single transaction and roll back on any failure.
+
+Show clear, user-friendly error messages.
+
+If validation succeeds:
+
+Save/update dnintake header.
+
+Save/update all dnintake_item rows.
+
+Insert all corresponding itembatch rows.
+
+Update the donation record:
+
+Set donation.status_code = 'P' (Processed).
+
+Update inventory totals:
+
+For each (inventory_id, item_id), increment the inventory’s usable_qty, defective_qty, and expired_qty by the corresponding quantities from the newly created itembatch rows.
+
+Show a success message confirming that intake for that donation and warehouse has been successfully recorded.
+
+Implement all of the above using the existing DRIMS code structure, enforcing that only Logistics Officer (LO) and Logistics Manager (LM) can access this Donation Intake workflow
