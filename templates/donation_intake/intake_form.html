@@ -2,6 +2,7 @@
 
 {% block extra_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css') }}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <style>
 .item-card {
     border-left: 4px solid #009639;
@@ -96,12 +97,13 @@
                         <div class="row">
                             <div class="col-md-4 mb-3">
                                 <label for="intake_date" class="form-label fw-bold required-field">Intake Date</label>
-                                <input type="date" 
-                                       class="form-control" 
+                                <input type="text" 
+                                       class="form-control iso-date-picker" 
                                        name="intake_date" 
                                        id="intake_date" 
-                                       max="{{ today }}"
+                                       data-max-date="{{ today }}"
                                        value="{{ today }}"
+                                       placeholder="YYYY-MM-DD"
                                        required>
                                 <div class="form-text">Cannot be in the future</div>
                             </div>
@@ -180,20 +182,22 @@
                                     </div>
                                     <div class="col-md-3">
                                         <label for="batch_date_{{ di.item_id }}" class="field-label">Batch Date</label>
-                                        <input type="date" 
-                                               class="form-control form-control-sm" 
+                                        <input type="text" 
+                                               class="form-control form-control-sm iso-date-picker batch-date" 
                                                id="batch_date_{{ di.item_id }}"
                                                name="batch_date_{{ di.item_id }}" 
-                                               max="{{ today }}"
+                                               data-max-date="{{ today }}"
+                                               placeholder="YYYY-MM-DD"
                                                required>
                                     </div>
                                     <div class="col-md-4">
                                         <label for="expiry_date_{{ di.item_id }}" class="field-label">Expiry Date</label>
-                                        <input type="date" 
-                                               class="form-control form-control-sm" 
+                                        <input type="text" 
+                                               class="form-control form-control-sm iso-date-picker expiry-date" 
                                                id="expiry_date_{{ di.item_id }}"
                                                name="expiry_date_{{ di.item_id }}" 
-                                               min="{{ today }}"
+                                               data-min-date="{{ today }}"
+                                               placeholder="YYYY-MM-DD"
                                                {% if di.item.can_expire_flag %}required{% endif %}>
                                     </div>
                                 </div>
@@ -412,6 +416,39 @@ document.getElementById('intakeForm').addEventListener('submit', function(e) {
         alert('Error: Total quantities (Usable + Defective + Expired) must equal donated quantities for all items.');
         return false;
     }
+});
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize all date pickers with YYYY-MM-DD format
+    const dateInputs = document.querySelectorAll('.iso-date-picker');
+    
+    dateInputs.forEach(function(input) {
+        const maxDate = input.getAttribute('data-max-date');
+        const minDate = input.getAttribute('data-min-date');
+        
+        const options = {
+            dateFormat: 'Y-m-d',
+            allowInput: true,
+            locale: {
+                firstDayOfWeek: 1
+            }
+        };
+        
+        // Add max date constraint (for past dates like batch date, intake date)
+        if (maxDate) {
+            options.maxDate = maxDate;
+        }
+        
+        // Add min date constraint (for future dates like expiry date)
+        if (minDate) {
+            options.minDate = minDate;
+        }
+        
+        flatpickr(input, options);
+    });
 });
 </script>
 {% endblock %}
