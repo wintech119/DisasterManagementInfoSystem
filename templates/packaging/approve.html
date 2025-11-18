@@ -917,15 +917,16 @@ function updateStatusDropdown(itemId, allocated, requested) {
     // Update data attribute
     statusDropdown.dataset.autoStatus = newAutoStatus;
     
+    // CRITICAL: Update allowed options FIRST (rebuilds dropdown with correct options)
+    // Then set the value (otherwise 'P' option might not exist when trying to select it)
+    updateAllowedStatusOptions(itemId, allocated, requested);
+    
     // Auto-select if current status doesn't match the new allocation state
     // Only auto-change for automatic statuses (R, P, F), not manual ones (D, U, W, L)
     const autoStatuses = ['R', 'P', 'F'];
     if (autoStatuses.includes(currentValue)) {
         statusDropdown.value = newAutoStatus;
     }
-    
-    // Update allowed options based on allocation state
-    updateAllowedStatusOptions(itemId, allocated, requested);
 }
 
 function updateAllowedStatusOptions(itemId, allocated, requested) {
