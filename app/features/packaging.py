@@ -708,7 +708,22 @@ def _process_allocations(relief_request, validate_complete=False):
         # Update relief request item fields - MUST be done atomically
         # Set status first to ensure constraint satisfaction
         item.status_code = requested_status
-        item.issue_qty = total_allocated
+        
+        # Set issue_qty based on status code according to constraint c_reliefrqst_item_2a:
+        # - R, U, W, D: issue_qty must be 0
+        # - P, L: issue_qty must be < request_qty
+        # - F: issue_qty must equal request_qty
+        if requested_status in ['R', 'U', 'W', 'D']:
+            item.issue_qty = 0
+        elif requested_status in ['P', 'L']:
+            # Partial fill - use allocated amount (must be < request_qty)
+            item.issue_qty = min(total_allocated, item.request_qty - Decimal('0.01'))
+        elif requested_status == 'F':
+            # Fully filled - must equal request_qty
+            item.issue_qty = item.request_qty
+        else:
+            # Default: set to allocated amount
+            item.issue_qty = total_allocated
         
         # Set status_reason_desc for statuses that require it (D, L)
         if requested_status in ['D', 'L']:

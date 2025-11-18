@@ -62,6 +62,7 @@ All pages maintain a modern, consistent UI with a comprehensive design system in
     - **Transfer Table**: Tracks inventory transfers between warehouses with eligible_event_id and status workflow (Draft, Completed, Verified, Processed).
     - **Relief Request Status Table**: 10 status codes (0-9) organized into three workflow views (create, action, processed) with reason requirements for DENIED, CLOSED, and INELIGIBLE statuses.
     - **Relief Package Table**: Tracks relief packages with agency_id, tracking_no (7-char), eligible_event_id, and 6 status codes (A=Draft, P=Processing, C=Completed, V=Verified, D=Dispatched, R=Received) with dispatch datetime constraint.
+    - **Relief Request Item Constraint c_reliefrqst_item_2a**: Enforces status-based issue_qty rules - R/U/W/D statuses require issue_qty=0, P/L statuses require issue_qty<request_qty, F status requires issue_qty=request_qty.
 
 ### Data Flow Patterns
 - **AIDMGMT Relief Workflow**: End-to-end process from request creation to distribution.
