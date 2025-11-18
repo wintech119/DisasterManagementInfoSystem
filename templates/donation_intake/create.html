@@ -52,7 +52,7 @@
                                         data-donor="{{ donation.donor.donor_name }}"
                                         data-desc="{{ donation.donation_desc }}"
                                         data-date="{{ donation.received_date|format_date }}"
-                                        data-items="{{ donation.donation_items|length }}">
+                                        data-items="{{ donation.items|length }}">
                                     #{{ donation.donation_id }} - {{ donation.donation_desc|truncate(60) }} ({{ donation.donor.donor_name }})
                                 </option>
                                 {% endfor %}

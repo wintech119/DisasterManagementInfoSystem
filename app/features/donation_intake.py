@@ -112,11 +112,11 @@ def create_intake():
                               inventory_id=inventory_id))
     
     # Get verified donations (status='V') that haven't been processed
-    # Eager load donation_items to get correct count
+    # Eager load items to get correct count
     from sqlalchemy.orm import joinedload
     
     verified_donations = Donation.query.filter_by(status_code='V').options(
-        joinedload(Donation.donation_items)
+        joinedload(Donation.items)
     ).order_by(
         Donation.received_date.desc()
     ).all()
