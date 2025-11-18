@@ -511,7 +511,15 @@ class Donor(db.Model):
     version_nbr = db.Column(db.Integer, nullable=False, default=1)
 
 class Donation(db.Model):
-    """Donation"""
+    """Donation
+    
+    Tracks donations received from donors for specific events.
+    
+    Status Codes:
+        E = Entered (initial entry)
+        V = Verified (verified by custodian)
+        P = Processed (donation intake completed)
+    """
     __tablename__ = 'donation'
     
     donation_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -527,6 +535,11 @@ class Donation(db.Model):
     verify_by_id = db.Column(db.String(20), nullable=False)
     verify_dtime = db.Column(db.DateTime, nullable=False)
     version_nbr = db.Column(db.Integer, nullable=False, default=1)
+    
+    __table_args__ = (
+        db.CheckConstraint("received_date <= CURRENT_DATE", name='c_donation_1'),
+        db.CheckConstraint("status_code IN ('E', 'V', 'P')", name='c_donation_2'),
+    )
     
     donor = db.relationship('Donor', backref='donations')
     event = db.relationship('Event', backref='donations')
