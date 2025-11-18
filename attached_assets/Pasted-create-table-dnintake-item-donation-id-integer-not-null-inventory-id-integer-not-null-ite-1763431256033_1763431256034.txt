@@ -1,0 +1,56 @@
+create table dnintake_item
+(
+	donation_id integer not null,
+	inventory_id integer not null,
+	item_id integer not null,
+
+	--Batch number assigned by manufacturer or by ODPEM (where there is no batch number).
+	--If no batch number is assigned, set value of field to item code.
+	--If batch does not exist, create it with a batch id and zero quantities (i.e. empty).
+	--Update batch amounts with the amounts being taken in.
+	
+	batch_no varchar(20) not null
+		constraint c_dnintake_item_1a check (batch_no = upper(batch_no)),
+	batch_date date not null
+		constraint c_dnintake_item_1b check (batch_date <= CURRENT_DATE),
+	expiry_date date 
+		constraint c_dnintake_item_1c check (expiry_date >= CURRENT_DATE or expiry_date is null),
+
+	--Units in which quantity of item is measured
+	uom_code varchar(25) not null
+		constraint fk_dnintake_item_unitofmeasure references unitofmeasure,
+
+	avg_unit_value decimal(10,2) not null
+		constraint d_dnintake_item_1d check (avg_unit_value > 0.00),
+	
+	--Quantity/amount of usable/good item in inventory
+	usable_qty decimal(12,2) not null
+		constraint c_dnintake_item_2 check (usable_qty >= 0.00),
+	
+	--Quantity/amount of defective item in inventory
+	defective_qty decimal(12,2) not null
+		constraint c_dnintake_item_3 check (defective_qty >= 0.00),
+	
+	--Quantity/amount of expired item in inventory
+	expired_qty decimal(12,2) not null
+		constraint c_dnintake_item_4 check (defective_qty >= 0.00),
+
+	status_code char(1) not null
+		--P=Pending verification, V=Verified
+		constraint c_dnintake_item_5 check (status_code in ('P','V')),
+	comments_text varchar(255),
+
+	create_by_id varchar(20) not null,
+	create_dtime timestamp(0) without time zone not null,
+	update_by_id varchar(20) not null,
+	update_dtime timestamp(0) without time zone not null,
+	version_nbr integer not null,
+
+	constraint fk_dnintake_item_intake foreign key (donation_id,inventory_id) 
+		references dnintake(donation_id,inventory_id),
+	constraint fk_dnintake_item_donation_item foreign key(donation_id,item_id)
+		references donation_item(donation_id,item_id),
+	constraint pk_dnintake_item primary key(donation_id,inventory_id,item_id,batch_no)
+);
+create index dk_dnintake_item_1 on dnintake_item(inventory_id, item_id);
+create index dk_dnintake_item_2 on dnintake_item(item_id);

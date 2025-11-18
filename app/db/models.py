@@ -954,14 +954,14 @@ class DonationIntakeItem(db.Model):
     """Donation Intake Item - Batch-level intake tracking for donations
     
     Tracks each batch of items received in a donation with batch numbers,
-    dates, expiry, and quantities. Supports creation of new batches or
-    updating existing batches in the itembatch table.
+    dates, expiry, and quantities. If batch doesn't exist in itembatch table,
+    create it with batch_id and zero quantities, then update with intake amounts.
+    
+    Status Codes:
+        P = Pending verification
+        V = Verified
     """
     __tablename__ = 'dnintake_item'
-    __table_args__ = (
-        db.ForeignKeyConstraint(['donation_id', 'inventory_id'], ['dnintake.donation_id', 'dnintake.inventory_id']),
-        {'extend_existing': True}
-    )
     
     donation_id = db.Column(db.Integer, primary_key=True)
     inventory_id = db.Column(db.Integer, primary_key=True)
@@ -971,9 +971,9 @@ class DonationIntakeItem(db.Model):
     expiry_date = db.Column(db.Date)
     uom_code = db.Column(db.String(25), db.ForeignKey('unitofmeasure.uom_code'), nullable=False)
     avg_unit_value = db.Column(db.Numeric(10, 2), nullable=False)
-    usable_qty = db.Column(db.Numeric(15, 4), nullable=False)
-    defective_qty = db.Column(db.Numeric(15, 4), nullable=False)
-    expired_qty = db.Column(db.Numeric(15, 4), nullable=False)
+    usable_qty = db.Column(db.Numeric(12, 2), nullable=False)
+    defective_qty = db.Column(db.Numeric(12, 2), nullable=False)
+    expired_qty = db.Column(db.Numeric(12, 2), nullable=False)
     status_code = db.Column(db.CHAR(1), nullable=False)
     comments_text = db.Column(db.String(255))
     create_by_id = db.Column(db.String(20), nullable=False)
@@ -981,6 +981,21 @@ class DonationIntakeItem(db.Model):
     update_by_id = db.Column(db.String(20), nullable=False)
     update_dtime = db.Column(db.DateTime, nullable=False)
     version_nbr = db.Column(db.Integer, nullable=False, default=1)
+    
+    __table_args__ = (
+        db.ForeignKeyConstraint(['donation_id', 'inventory_id'], ['dnintake.donation_id', 'dnintake.inventory_id'], name='fk_dnintake_item_intake'),
+        db.ForeignKeyConstraint(['donation_id', 'item_id'], ['donation_item.donation_id', 'donation_item.item_id'], name='fk_dnintake_item_donation_item'),
+        db.CheckConstraint("batch_no = UPPER(batch_no)", name='c_dnintake_item_1a'),
+        db.CheckConstraint("batch_date <= CURRENT_DATE", name='c_dnintake_item_1b'),
+        db.CheckConstraint("expiry_date >= CURRENT_DATE OR expiry_date IS NULL", name='c_dnintake_item_1c'),
+        db.CheckConstraint("avg_unit_value > 0.00", name='c_dnintake_item_1d'),
+        db.CheckConstraint("usable_qty >= 0.00", name='c_dnintake_item_2'),
+        db.CheckConstraint("defective_qty >= 0.00", name='c_dnintake_item_3'),
+        db.CheckConstraint("expired_qty >= 0.00", name='c_dnintake_item_4'),
+        db.CheckConstraint("status_code IN ('P', 'V')", name='c_dnintake_item_5'),
+        db.Index('dk_dnintake_item_1', 'inventory_id', 'item_id'),
+        db.Index('dk_dnintake_item_2', 'item_id'),
+    )
     
     intake = db.relationship('DonationIntake', backref='items')
     item = db.relationship('Item',
