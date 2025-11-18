@@ -104,3 +104,33 @@ All pages maintain a modern, consistent UI with a comprehensive design system in
 ### Frontend CDN Resources
 - Bootstrap 5.3.3 CSS/JS
 - Bootstrap Icons 1.11.3
+
+## Recent Changes
+
+### November 18, 2025 - Relief Package Workflow Bug Fixes
+**Critical Bug Fixes (Production-Ready)**:
+
+1. **CRITICAL: Fixed Logistics Manager approval crash** (`app/features/packaging.py`)
+   - **Issue**: `review_approval()` crashed with `AttributeError` when trying to load warehouse info using composite primary key lookup
+   - **Root Cause**: Used `Inventory.query.get(pkg_item.fr_inventory_id).warehouse_id` but Inventory has composite PK (inventory_id, item_id), causing None dereference
+   - **Fix**: Direct use of `pkg_item.fr_inventory_id` since `inventory_id` IS `warehouse_id` per schema
+   - **Impact**: Logistics Managers can now review and approve packages without crashes
+
+2. **HIGH: Prevented phantom allocation bug in draft saving** (`app/features/packaging.py`)
+   - **Issue**: Concurrent users could double-allocate inventory, driving `usable_qty` negative
+   - **Root Cause**: Draft save committed `ReliefPkgItem` records even when `reserve_inventory()` failed, creating phantom allocations without matching inventory reservations
+   - **Fix**: Implemented atomic transaction pattern - allocations and reservations committed together or rolled back together
+   - **Lock Retention**: All exception paths (reserve failure, validation errors, database errors) now re-acquire fulfillment lock to preserve user editing session
+   - **Impact**: Database state always matches reserved inventory, preventing concurrent allocation conflicts
+
+**Technical Implementation**:
+- `_save_draft()`: Uses atomic transaction with 3 exception handlers ensuring lock retention on all failure paths
+- `reserve_inventory()`: Called before commit in same transaction with row-level locking (`with_for_update()`)
+- Rollback pattern: `db.session.rollback()` → `lock_service.acquire_lock()` → user feedback → redirect
+
+**Schema Updates**:
+- Donation table: `verify_by_id` and `verify_dtime` made nullable
+- Donation table: Added `update_by_id` and `update_dtime` columns
+- Donation model: Added User relationships for audit trail (`created_by`, `verify_by`, `update_by`)
+
+**Status**: Both fixes architect-reviewed and approved as production-ready
