@@ -305,7 +305,7 @@ class FeatureRegistry:
         'donor_management': {
             'name': 'Manage Donors',
             'description': 'Manage donor information',
-            'roles': ['SYSTEM_ADMINISTRATOR', 'INVENTORY_CLERK', 'LOGISTICS_MANAGER'],
+            'roles': ['CUSTODIAN'],  # Restricted to CUSTODIAN only - master data table
             'route': 'donors.list_donors',
             'url': '/donors',
             'icon': 'bi-people',

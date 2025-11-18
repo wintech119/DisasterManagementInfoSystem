@@ -1,0 +1,268 @@
+You are a senior full-stack engineer working on the DRIMS web app in Replit.
+Implement Donor Management using the existing donor table for the Custodian role only.
+
+Important constraints
+
+Do NOT change the database schema (donor table and related tables stay as-is).
+
+Use the existing role/permission system in the app.
+
+Only users with the Custodian role are allowed to manage Donors (create, update, view list/detail).
+
+Donor deletion must respect foreign key usage rules (no deletes where donors are referenced).
+
+1. Role-based Access: Custodian Only
+
+Create a Donor Management section (menu + routes + pages) that is only visible and accessible to users with the Custodian role.
+
+Other roles should:
+
+Either not see the Donor menu at all, or
+
+Be denied access (e.g. 403 / “Not authorized”) if they try to hit donor URLs directly.
+
+All donor CRUD endpoints must enforce server-side authorization for the Custodian role.
+
+2. General CRUD for Donors (using donor table)
+
+Implement:
+
+Create Donor
+
+View Donor (detail page)
+
+Update Donor
+
+List/Search Donors
+
+Rules:
+
+A donor record must not be saved unless all mandatory fields are valid:
+
+donor_code
+
+donor_name
+
+address1_text
+
+country_id
+
+phone_no
+
+create_by_id
+
+create_dtime
+
+update_by_id
+
+update_dtime
+
+version_nbr
+
+Delete:
+
+Logically support a delete action but do not allow deletion if the donor is referenced by donations or any related transaction tables.
+
+If deletion violates referential integrity, catch the error and show a clear message, e.g.:
+
+“This donor cannot be deleted because it is referenced by existing donation records.”
+
+3. Donor Code Rules (donor_code)
+
+Required; must not be blank.
+
+Always stored in UPPERCASE:
+
+Either auto-convert to uppercase on save, or reject non-uppercase with a validation message.
+
+Maximum length: 16 characters; reject longer inputs.
+
+Trim leading/trailing spaces before validation/storage.
+
+Uniqueness: prevent two different donors with the same donor_code.
+
+If a donor with the same code exists, show a friendly error, e.g.:
+
+“Donor code already exists.”
+
+4. Donor Name Rules (donor_name)
+
+Required; must not be blank.
+
+Automatically converted to UPPERCASE before saving.
+
+Must be unique across all donors.
+
+If a duplicate name is submitted, reject with a clear message.
+
+Maximum length: 255 characters; reject longer values.
+
+Trim leading/trailing spaces before validation/storage.
+
+5. Organization Type Description (org_type_desc)
+
+Optional.
+
+If provided:
+
+Max length: 30 characters; reject longer values.
+
+Users (Custodian only) may:
+
+Add, change, or clear (set to null) this field.
+
+Accept free text (e.g. “CHURCH”, “BANK”, “INTL AID”, “LION’S CLUB”).
+
+6. Address & Country (address1_text, address2_text, country_id)
+
+Address:
+
+address1_text is mandatory and must not be blank.
+
+address2_text is optional.
+
+Both are limited to 255 characters; reject longer values.
+
+Trim leading/trailing spaces before validation and storage.
+
+Country:
+
+country_id is mandatory and must reference a valid record in the country master table.
+
+On create:
+
+If the user does not explicitly choose a country, default country_id to 388 (Jamaica).
+
+In the UI:
+
+Present country_id as a dropdown populated from the country table (id + name).
+
+If an invalid/non-existent country_id is submitted (e.g., via API), reject with a clear error.
+
+7. Contact Details (phone_no, email_text)
+
+Phone:
+
+phone_no is mandatory and must not be blank.
+
+Max length: 20 characters.
+
+Validate allowed characters:
+
+Digits, +, -, spaces, parentheses.
+
+If invalid characters or length, show friendly error.
+
+Email:
+
+email_text is optional.
+
+Max length: 100 characters.
+
+If provided, validate email format (basic pattern like something@domain.tld).
+
+Custodian users must be able to add, update, or clear this field.
+
+8. Audit Fields (create_by_id, create_dtime, update_by_id, update_dtime)
+
+On creation:
+
+create_by_id = current logged-in user id (Custodian).
+
+create_dtime = current system timestamp.
+
+update_by_id and update_dtime should also be set initially to the same user/timestamp as create.
+
+These values must be server-controlled; users must not edit them manually.
+
+On update:
+
+update_by_id must be set to the current logged-in user id.
+
+update_dtime must be set to the current system timestamp.
+
+create_by_id and create_dtime must remain unchanged.
+
+9. Version Number & Concurrency (version_nbr)
+
+On first create: set version_nbr to an initial value (e.g., 1).
+
+On each successful update: increment version_nbr by 1.
+
+Use version_nbr for optimistic locking:
+
+When loading a donor for edit, send the current version_nbr with the form.
+
+On save, if the submitted version_nbr does not match the current one in the database, reject the update and show a message:
+
+“This donor record has been updated by another user. Please reload and try again.”
+
+10. Querying & Display (List + Detail)
+
+Search / Filter (for Custodian):
+
+Implement donor search/filter by:
+
+donor_code (exact or partial match),
+
+donor_name (partial match, case-insensitive for search),
+
+org_type_desc,
+
+country_id.
+
+Implement a simple donor list page with filters at the top and a paginated table.
+
+List View should show at minimum:
+
+donor_code
+
+donor_name
+
+org_type_desc
+
+country_id (or country name)
+
+phone_no
+
+email_text (if available)
+
+Detail View should show:
+
+All fields from the donor table, including:
+
+Address fields (address1_text, address2_text)
+
+Contact (phone_no, email_text)
+
+org_type_desc
+
+country_id (preferably showing country name)
+
+Audit fields (create_by_id, create_dtime, update_by_id, update_dtime)
+
+version_nbr
+
+Custodian users must be able to:
+
+Navigate from list → detail → edit.
+
+Create new donor from list (e.g. “Add Donor” button).
+
+Save changes with full server-side validation.
+
+See clear validation errors inline in the form.
+
+11. UX / UI Expectations
+
+Follow the existing DRIMS UI style and layout.
+
+Keep the interface simple and usable:
+
+Use clear labels and validation messages.
+
+Disable actions for non-Custodian users.
+
+Ensure all inputs are properly trimmed and validated before saving.
+
+Using the existing DRIMS codebase, routes, and security model, implement this Custodian-only Donor Management module exactly as described, without altering the donor table schema.
