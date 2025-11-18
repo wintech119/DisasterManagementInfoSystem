@@ -18,6 +18,7 @@ Date: 2025-11-18
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
+from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import StaleDataError
 from decimal import Decimal
@@ -59,7 +60,7 @@ def list_intakes():
     # Apply search
     if search_query:
         query = query.filter(
-            db.or_(
+            or_(
                 Donation.donation_desc.ilike(f'%{search_query}%'),
                 Warehouse.warehouse_name.ilike(f'%{search_query}%')
             )
@@ -141,15 +142,22 @@ def intake_form(donation_id, inventory_id):
     # Check if intake already exists for this donation/warehouse combination
     existing_intake = DonationIntake.query.get((donation_id, inventory_id))
     
+    # For MVP: Prevent duplicate processing of same donation/warehouse
+    if existing_intake:
+        flash(f'Intake already exists for Donation #{donation_id} at {warehouse.warehouse_name}', 'warning')
+        return redirect(url_for('donation_intake.list_intakes'))
+    
     if request.method == 'POST':
         try:
-            # Validate and process intake
-            result = _process_intake_submission(donation, warehouse, existing_intake)
+            # Validate and process intake (existing_intake=None due to check above)
+            result = _process_intake_submission(donation, warehouse)
             
             if result['success']:
                 flash(result['message'], 'success')
                 return redirect(url_for('donation_intake.list_intakes'))
             else:
+                # Ensure rollback on validation/business logic errors
+                db.session.rollback()
                 for error in result['errors']:
                     flash(error, 'danger')
         
@@ -172,14 +180,15 @@ def intake_form(donation_id, inventory_id):
                          warehouse=warehouse,
                          donation_items=donation_items,
                          uoms=uoms,
-                         existing_intake=existing_intake,
                          today=date.today().isoformat())
 
 
-def _process_intake_submission(donation, warehouse, existing_intake):
+def _process_intake_submission(donation, warehouse):
     """
     Process intake form submission.
-    Validates all data and creates/updates intake records in a single transaction.
+    Validates all data and creates intake records in a single transaction.
+    
+    MVP: Does not support updates to existing intakes (prevented by route check).
     
     Returns dict with 'success', 'message', and 'errors' keys.
     """
@@ -202,117 +211,124 @@ def _process_intake_submission(donation, warehouse, existing_intake):
         errors.append('Comments must be 255 characters or less')
     
     # Collect and validate intake items
+    # Loop over authoritative donation items from database to prevent bypass
     intake_items = []
     donation_items = DonationItem.query.filter_by(donation_id=donation.donation_id).all()
     
     # Track total quantities per item
     item_totals = {}
     
-    for key in request.form.keys():
-        if key.startswith('batch_no_'):
-            item_id = int(key.split('_')[-1])
-            
-            batch_no = request.form.get(f'batch_no_{item_id}', '').strip().upper()
-            batch_date_str = request.form.get(f'batch_date_{item_id}')
-            expiry_date_str = request.form.get(f'expiry_date_{item_id}')
-            uom_code = request.form.get(f'uom_code_{item_id}')
-            avg_unit_value_str = request.form.get(f'avg_unit_value_{item_id}')
-            usable_qty_str = request.form.get(f'usable_qty_{item_id}', '0')
-            defective_qty_str = request.form.get(f'defective_qty_{item_id}', '0')
-            expired_qty_str = request.form.get(f'expired_qty_{item_id}', '0')
-            item_comments = request.form.get(f'item_comments_{item_id}', '').strip()
-            
-            # Get item details
-            item = Item.query.get(item_id)
-            if not item:
-                errors.append(f'Invalid item ID: {item_id}')
-                continue
-            
-            # Validate batch number
-            if item.is_batched_flag and not batch_no:
-                errors.append(f'{item.item_name} requires a batch number')
-                continue
-            
-            if not batch_no:
-                batch_no = f'NOBATCH-{item_id}'
-            
-            # Validate batch date
-            if not batch_date_str:
-                errors.append(f'Batch date is required for {item.item_name}')
-                continue
-            
-            batch_date = datetime.strptime(batch_date_str, '%Y-%m-%d').date()
-            if batch_date > date.today():
-                errors.append(f'Batch date cannot be in the future for {item.item_name}')
-                continue
-            
-            # Validate expiry date
-            expiry_date = None
-            if expiry_date_str:
-                expiry_date = datetime.strptime(expiry_date_str, '%Y-%m-%d').date()
-                if item.can_expire_flag and expiry_date < date.today():
-                    errors.append(f'Expiry date has already passed for {item.item_name}')
-                    continue
-            elif item.can_expire_flag:
-                errors.append(f'Expiry date is required for {item.item_name}')
-                continue
-            
-            # Validate UOM
-            if not uom_code:
-                errors.append(f'UOM is required for {item.item_name}')
-                continue
-            
-            # Validate quantities
-            try:
-                usable_qty = Decimal(usable_qty_str) if usable_qty_str else Decimal('0')
-                defective_qty = Decimal(defective_qty_str) if defective_qty_str else Decimal('0')
-                expired_qty = Decimal(expired_qty_str) if expired_qty_str else Decimal('0')
-                
-                if usable_qty < 0 or defective_qty < 0 or expired_qty < 0:
-                    errors.append(f'Quantities cannot be negative for {item.item_name}')
-                    continue
-                
-                total_qty = usable_qty + defective_qty + expired_qty
-                if total_qty == 0:
-                    errors.append(f'Total quantity cannot be zero for {item.item_name}')
-                    continue
-                
-            except:
-                errors.append(f'Invalid quantities for {item.item_name}')
-                continue
-            
-            # Validate unit value
-            try:
-                avg_unit_value = Decimal(avg_unit_value_str) if avg_unit_value_str else Decimal('0')
-                if avg_unit_value <= 0:
-                    errors.append(f'Unit value must be greater than 0 for {item.item_name}')
-                    continue
-            except:
-                errors.append(f'Invalid unit value for {item.item_name}')
-                continue
-            
-            # Track totals
-            if item_id not in item_totals:
-                item_totals[item_id] = Decimal('0')
-            item_totals[item_id] += total_qty
-            
-            intake_items.append({
-                'item_id': item_id,
-                'item': item,
-                'batch_no': batch_no,
-                'batch_date': batch_date,
-                'expiry_date': expiry_date,
-                'uom_code': uom_code,
-                'avg_unit_value': avg_unit_value,
-                'usable_qty': usable_qty,
-                'defective_qty': defective_qty,
-                'expired_qty': expired_qty,
-                'comments_text': item_comments.upper() if item_comments else None
-            })
-    
-    # Validate total quantities match donation quantities
+    # Validate ALL items BEFORE creating any objects
     for donation_item in donation_items:
-        expected_qty = donation_item.item_qty
+        item_id = donation_item.item_id
+        
+        # Ensure form data exists for this item
+        batch_no_key = f'batch_no_{item_id}'
+        if batch_no_key not in request.form:
+            errors.append(f'{donation_item.item.item_name}: Missing intake data in form submission')
+            continue
+            
+        batch_no = request.form.get(batch_no_key, '').strip().upper()
+        batch_date_str = request.form.get(f'batch_date_{item_id}')
+        expiry_date_str = request.form.get(f'expiry_date_{item_id}')
+        uom_code = request.form.get(f'uom_code_{item_id}')
+        avg_unit_value_str = request.form.get(f'avg_unit_value_{item_id}')
+        usable_qty_str = request.form.get(f'usable_qty_{item_id}', '0')
+        defective_qty_str = request.form.get(f'defective_qty_{item_id}', '0')
+        expired_qty_str = request.form.get(f'expired_qty_{item_id}', '0')
+        item_comments = request.form.get(f'item_comments_{item_id}', '').strip()
+        
+        # Get item details from donation_item (already loaded from DB)
+        item = donation_item.item
+        
+        # Validate batch number
+        if item.is_batched_flag and not batch_no:
+            errors.append(f'{item.item_name} requires a batch number')
+            continue
+        
+        if not batch_no:
+            batch_no = f'NOBATCH-{item_id}'
+        
+        # Validate batch date
+        if not batch_date_str:
+            errors.append(f'Batch date is required for {item.item_name}')
+            continue
+        
+        batch_date = datetime.strptime(batch_date_str, '%Y-%m-%d').date()
+        if batch_date > date.today():
+            errors.append(f'Batch date cannot be in the future for {item.item_name}')
+            continue
+        
+        # Validate expiry date
+        expiry_date = None
+        if expiry_date_str:
+            expiry_date = datetime.strptime(expiry_date_str, '%Y-%m-%d').date()
+            if item.can_expire_flag and expiry_date < date.today():
+                errors.append(f'Expiry date has already passed for {item.item_name}')
+                continue
+        elif item.can_expire_flag:
+            errors.append(f'Expiry date is required for {item.item_name}')
+            continue
+        
+        # Validate UOM
+        if not uom_code:
+            errors.append(f'UOM is required for {item.item_name}')
+            continue
+        
+        # Validate quantities
+        try:
+            usable_qty = Decimal(usable_qty_str) if usable_qty_str else Decimal('0')
+            defective_qty = Decimal(defective_qty_str) if defective_qty_str else Decimal('0')
+            expired_qty = Decimal(expired_qty_str) if expired_qty_str else Decimal('0')
+            
+            if usable_qty < 0 or defective_qty < 0 or expired_qty < 0:
+                errors.append(f'Quantities cannot be negative for {item.item_name}')
+                continue
+            
+            total_qty = usable_qty + defective_qty + expired_qty
+            if total_qty == 0:
+                errors.append(f'Total quantity cannot be zero for {item.item_name}')
+                continue
+            
+        except:
+            errors.append(f'Invalid quantities for {item.item_name}')
+            continue
+        
+        # Validate unit value
+        try:
+            avg_unit_value = Decimal(avg_unit_value_str) if avg_unit_value_str else Decimal('0')
+            if avg_unit_value <= 0:
+                errors.append(f'Unit value must be greater than 0 for {item.item_name}')
+                continue
+        except:
+            errors.append(f'Invalid unit value for {item.item_name}')
+            continue
+        
+        # Track totals
+        if item_id not in item_totals:
+            item_totals[item_id] = Decimal('0')
+        item_totals[item_id] += total_qty
+        
+        intake_items.append({
+            'item_id': item_id,
+            'item': item,
+            'batch_no': batch_no,
+            'batch_date': batch_date,
+            'expiry_date': expiry_date,
+            'uom_code': uom_code,
+            'avg_unit_value': avg_unit_value,
+            'usable_qty': usable_qty,
+            'defective_qty': defective_qty,
+            'expired_qty': expired_qty,
+            'comments_text': item_comments.upper() if item_comments else None
+        })
+    
+    # Validate total quantities match donation quantities (from database, not form)
+    # Fetch authoritative donation quantities from database to prevent bypass
+    db_donation_items = {di.item_id: di.item_qty for di in donation_items}
+    
+    for donation_item in donation_items:
+        expected_qty = db_donation_items[donation_item.item_id]  # Authoritative qty from DB
         actual_qty = item_totals.get(donation_item.item_id, Decimal('0'))
         
         if actual_qty != expected_qty:
@@ -333,29 +349,17 @@ def _process_intake_submission(donation, warehouse, existing_intake):
     try:
         current_timestamp = datetime.now()
         
-        # Create or update dnintake header
-        if existing_intake:
-            intake = existing_intake
-            add_audit_fields(intake, current_user, is_new=False)
-        else:
-            intake = DonationIntake()
-            intake.donation_id = donation.donation_id
-            intake.inventory_id = warehouse.warehouse_id
-            intake.status_code = 'V'
-            add_audit_fields(intake, current_user, is_new=True)
-            intake.verify_by_id = current_user.user_name
-            intake.verify_dtime = current_timestamp
-            db.session.add(intake)
-        
+        # Create dnintake header (existing_intake check prevents duplicates)
+        intake = DonationIntake()
+        intake.donation_id = donation.donation_id
+        intake.inventory_id = warehouse.warehouse_id
         intake.intake_date = intake_date
         intake.comments_text = comments_text.upper() if comments_text else None
-        
-        # Delete existing intake items if updating
-        if existing_intake:
-            DonationIntakeItem.query.filter_by(
-                donation_id=donation.donation_id,
-                inventory_id=warehouse.warehouse_id
-            ).delete()
+        intake.status_code = 'V'
+        add_audit_fields(intake, current_user, is_new=True)
+        intake.verify_by_id = current_user.user_name
+        intake.verify_dtime = current_timestamp
+        db.session.add(intake)
         
         # Create intake items and batches
         for item_data in intake_items:
@@ -399,9 +403,14 @@ def _process_intake_submission(donation, warehouse, existing_intake):
             
             db.session.add(item_batch)
             
-            # Update or create inventory record
-            inventory = Inventory.query.get((warehouse.warehouse_id, item_data['item_id']))
+            # Update or create inventory record with optimistic locking
+            inventory = Inventory.query.filter_by(
+                inventory_id=warehouse.warehouse_id,
+                item_id=item_data['item_id']
+            ).with_for_update().first()
+            
             if inventory:
+                # Use optimistic locking to prevent race conditions
                 inventory.usable_qty = (inventory.usable_qty or Decimal('0')) + item_data['usable_qty']
                 inventory.defective_qty = (inventory.defective_qty or Decimal('0')) + item_data['defective_qty']
                 inventory.expired_qty = (inventory.expired_qty or Decimal('0')) + item_data['expired_qty']

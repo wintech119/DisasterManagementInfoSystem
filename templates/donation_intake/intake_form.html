@@ -66,7 +66,7 @@
                                        name="intake_date" 
                                        id="intake_date" 
                                        max="{{ today }}"
-                                       value="{{ existing_intake.intake_date|format_date if existing_intake else today }}"
+                                       value="{{ today }}"
                                        required>
                                 <div class="form-text">Cannot be in the future</div>
                             </div>
@@ -77,7 +77,6 @@
                                        name="comments_text" 
                                        id="comments_text" 
                                        maxlength="255"
-                                       value="{{ existing_intake.comments_text if existing_intake else '' }}"
                                        placeholder="Optional comments (max 255 characters)">
                             </div>
                         </div>
