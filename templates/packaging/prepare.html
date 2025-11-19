@@ -1185,14 +1185,6 @@ function confirmCancelPackage() {
         form.method = 'POST';
         form.action = cancelUrl;
         
-        // Add CSRF token (rendered directly from Flask)
-        const csrfInput = document.createElement('input');
-        csrfInput.type = 'hidden';
-        csrfInput.name = 'csrf_token';
-        csrfInput.value = '{{ csrf_token() }}';
-        form.appendChild(csrfInput);
-        console.log('CSRF token added to form');
-        
         document.body.appendChild(form);
         console.log('Form created and appended, submitting now...');
         form.submit();
