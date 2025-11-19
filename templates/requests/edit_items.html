@@ -285,6 +285,77 @@
         </div>
     </div>
 </div>
+
+<!-- Submit to ODPEM Confirmation Modal -->
+<div class="modal fade" id="submitRequestModal" tabindex="-1" aria-labelledby="submitRequestModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="submitRequestModalLabel">
+                    <i class="bi bi-send-fill me-2"></i>
+                    Submit Request to ODPEM
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3"><strong>Submit this request to ODPEM for eligibility review?</strong></p>
+                <p class="mb-2">After submission:</p>
+                <ul class="mb-3">
+                    <li>You will not be able to edit items</li>
+                    <li>The request will be sent to ODPEM for eligibility review</li>
+                    <li>You can track the status in your requests list</li>
+                </ul>
+                <p class="text-muted mb-0"><small>You can still add notes or communicate about the request after submission.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i>
+                    Cancel
+                </button>
+                <button type="button" class="btn btn-success" onclick="confirmSubmitRequest()">
+                    <i class="bi bi-send-fill"></i>
+                    Yes, Submit Request
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Draft Confirmation Modal -->
+<div class="modal fade" id="deleteDraftModal" tabindex="-1" aria-labelledby="deleteDraftModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteDraftModalLabel">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    Delete Draft Request
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3"><strong>Delete this draft request?</strong></p>
+                <p class="mb-2">This action will:</p>
+                <ul class="mb-3">
+                    <li>Permanently delete the request</li>
+                    <li>Remove all items you've added</li>
+                    <li>Cannot be undone</li>
+                </ul>
+                <p class="text-danger mb-0"><strong>This action cannot be undone.</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i>
+                    Cancel
+                </button>
+                <button type="button" class="btn btn-danger" onclick="confirmDeleteDraft()">
+                    <i class="bi bi-trash"></i>
+                    Yes, Delete Draft
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -347,26 +418,48 @@ if (urgencySelect) {
     });
 }
 
-// Validate submit form
+// Submit form - show modal instead of native confirm
 const submitForm = document.getElementById('submitForm');
 if (submitForm) {
     submitForm.addEventListener('submit', function(e) {
-        if (!confirm('Submit this request to ODPEM? You will not be able to edit items after submission.')) {
-            e.preventDefault();
-            return false;
-        }
+        e.preventDefault();
+        const modal = new bootstrap.Modal(document.getElementById('submitRequestModal'));
+        modal.show();
+        return false;
     });
 }
 
-// Cancel form confirmation
+// Delete form - show modal instead of native confirm
 const cancelForm = document.getElementById('cancelForm');
 if (cancelForm) {
     cancelForm.addEventListener('submit', function(e) {
-        if (!confirm('Cancel and delete this draft request? This action cannot be undone and all items will be lost.')) {
-            e.preventDefault();
-            return false;
-        }
+        e.preventDefault();
+        const modal = new bootstrap.Modal(document.getElementById('deleteDraftModal'));
+        modal.show();
+        return false;
     });
+}
+
+// Confirmation function for submit modal
+function confirmSubmitRequest() {
+    console.log('Confirming submit request');
+    const form = document.getElementById('submitForm');
+    if (form) {
+        // Remove the event listener to prevent recursion
+        form.removeEventListener('submit', arguments.callee);
+        form.submit();
+    }
+}
+
+// Confirmation function for delete modal
+function confirmDeleteDraft() {
+    console.log('Confirming delete draft');
+    const form = document.getElementById('cancelForm');
+    if (form) {
+        // Remove the event listener to prevent recursion
+        form.removeEventListener('submit', arguments.callee);
+        form.submit();
+    }
 }
 </script>
 {% endblock %}
