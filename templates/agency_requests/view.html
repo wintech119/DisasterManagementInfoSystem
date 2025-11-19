@@ -19,7 +19,7 @@
                         <a href="{{ url_for('requests.edit_items', request_id=request.reliefrqst_id) }}" class="btn btn-warning">
                             <i class="bi bi-pencil"></i> Edit Items
                         </a>
-                        <form method="POST" action="{{ url_for('requests.submit_request', request_id=request.reliefrqst_id) }}" style="display: inline;" onsubmit="return confirm('Submit this request to ODPEM? You will not be able to edit it after submission.');">
+                        <form method="POST" action="{{ url_for('requests.submit_request', request_id=request.reliefrqst_id) }}" style="display: inline;" id="submitRequestForm">
                             <button type="submit" class="btn btn-goj">
                                 <i class="bi bi-send"></i> Submit to ODPEM
                             </button>
@@ -229,4 +229,63 @@
     </div>
     {% endif %}
 </div>
+
+<!-- Submit Request Confirmation Modal -->
+<div class="modal fade" id="submitRequestModal" tabindex="-1" aria-labelledby="submitRequestModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="submitRequestModalLabel">
+                    <i class="bi bi-send-fill me-2"></i>
+                    Submit Request to ODPEM
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3"><strong>Submit this request to ODPEM for eligibility review?</strong></p>
+                <p class="mb-2">After submission:</p>
+                <ul class="mb-3">
+                    <li>You will not be able to edit items</li>
+                    <li>The request will be sent to ODPEM for eligibility review</li>
+                    <li>You can track the status in your requests list</li>
+                </ul>
+                <p class="text-muted mb-0"><small>You can still add notes or communicate about the request after submission.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i>
+                    Cancel
+                </button>
+                <button type="button" class="btn btn-success" onclick="confirmSubmitRequest()">
+                    <i class="bi bi-send-fill"></i>
+                    Yes, Submit Request
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Submit form confirmation modal
+const submitRequestForm = document.getElementById('submitRequestForm');
+if (submitRequestForm) {
+    submitRequestForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const modal = new bootstrap.Modal(document.getElementById('submitRequestModal'));
+        modal.show();
+        return false;
+    });
+}
+
+function confirmSubmitRequest() {
+    console.log('Confirming submit request');
+    const form = document.getElementById('submitRequestForm');
+    if (form) {
+        form.removeEventListener('submit', arguments.callee);
+        form.submit();
+    }
+}
+</script>
 {% endblock %}

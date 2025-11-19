@@ -166,14 +166,13 @@
                                 <i class="bi bi-pencil"></i> Edit Profile
                             </a>
                             {% if user.is_active %}
-                            <form method="POST" action="{{ url_for('user_admin.deactivate', user_id=user.user_id) }}" 
-                                  onsubmit="return confirm('Deactivate this user account?');">
+                            <form method="POST" action="{{ url_for('user_admin.deactivate', user_id=user.user_id) }}" id="deactivateUserForm">
                                 <button type="submit" class="btn-user-action danger w-100">
                                     <i class="bi bi-person-x"></i> Deactivate Account
                                 </button>
                             </form>
                             {% else %}
-                            <form method="POST" action="{{ url_for('user_admin.activate', user_id=user.user_id) }}">
+                            <form method="POST" action="{{ url_for('user_admin.activate', user_id=user.user_id) }}" id="activateUserForm">
                                 <button type="submit" class="btn-user-action primary w-100">
                                     <i class="bi bi-person-check"></i> Activate Account
                                 </button>
@@ -404,5 +403,115 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// Deactivate user confirmation modal
+const deactivateUserForm = document.getElementById('deactivateUserForm');
+if (deactivateUserForm) {
+    deactivateUserForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const modal = new bootstrap.Modal(document.getElementById('deactivateUserModal'));
+        modal.show();
+        return false;
+    });
+}
+
+function confirmDeactivateUser() {
+    console.log('Confirming deactivate user');
+    const form = document.getElementById('deactivateUserForm');
+    if (form) {
+        form.removeEventListener('submit', arguments.callee);
+        form.submit();
+    }
+}
+
+// Activate user confirmation modal
+const activateUserForm = document.getElementById('activateUserForm');
+if (activateUserForm) {
+    activateUserForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const modal = new bootstrap.Modal(document.getElementById('activateUserModal'));
+        modal.show();
+        return false;
+    });
+}
+
+function confirmActivateUser() {
+    console.log('Confirming activate user');
+    const form = document.getElementById('activateUserForm');
+    if (form) {
+        form.removeEventListener('submit', arguments.callee);
+        form.submit();
+    }
+}
 </script>
+
+<!-- Deactivate User Confirmation Modal -->
+<div class="modal fade" id="deactivateUserModal" tabindex="-1" aria-labelledby="deactivateUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deactivateUserModalLabel">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    Deactivate User Account
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3"><strong>Deactivate this user account?</strong></p>
+                <p class="mb-2">After deactivation:</p>
+                <ul class="mb-3">
+                    <li>User will no longer be able to log in</li>
+                    <li>User's access to all features will be revoked</li>
+                    <li>User's data and history will be preserved</li>
+                </ul>
+                <p class="text-muted mb-0"><small>You can reactivate the account later if needed.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i>
+                    Cancel
+                </button>
+                <button type="button" class="btn btn-danger" onclick="confirmDeactivateUser()">
+                    <i class="bi bi-person-x"></i>
+                    Yes, Deactivate Account
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Activate User Confirmation Modal -->
+<div class="modal fade" id="activateUserModal" tabindex="-1" aria-labelledby="activateUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="activateUserModalLabel">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    Activate User Account
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3"><strong>Activate this user account?</strong></p>
+                <p class="mb-2">After activation:</p>
+                <ul class="mb-3">
+                    <li>User will be able to log in to the system</li>
+                    <li>User's assigned roles and permissions will be enabled</li>
+                    <li>User can access all authorized features</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i>
+                    Cancel
+                </button>
+                <button type="button" class="btn btn-success" onclick="confirmActivateUser()">
+                    <i class="bi bi-person-check"></i>
+                    Yes, Activate Account
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}

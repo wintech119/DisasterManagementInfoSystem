@@ -226,13 +226,13 @@
                     <!-- Action Buttons -->
                     <div class="d-flex gap-2 justify-content-end border-top pt-3">
                         {% if item.status_code == 'A' %}
-                        <form method="POST" action="{{ url_for('items.inactivate_item', item_id=item.item_id) }}" onsubmit="return confirm('Are you sure you want to inactivate this item? This item will no longer appear in selection lists for new transactions.');">
+                        <form method="POST" action="{{ url_for('items.inactivate_item', item_id=item.item_id) }}" id="inactivateItemForm">
                             <button type="submit" class="btn btn-outline-warning">
                                 <i class="bi bi-x-circle"></i> Inactivate Item
                             </button>
                         </form>
                         {% else %}
-                        <form method="POST" action="{{ url_for('items.activate_item', item_id=item.item_id) }}" onsubmit="return confirm('Are you sure you want to reactivate this item?');">
+                        <form method="POST" action="{{ url_for('items.activate_item', item_id=item.item_id) }}" id="reactivateItemForm">
                             <button type="submit" class="btn btn-outline-success">
                                 <i class="bi bi-check-circle"></i> Reactivate Item
                             </button>
@@ -247,4 +247,117 @@
         </div>
     </div>
 </div>
+
+<!-- Inactivate Item Confirmation Modal -->
+<div class="modal fade" id="inactivateItemModal" tabindex="-1" aria-labelledby="inactivateItemModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title" id="inactivateItemModalLabel">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    Inactivate Item
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3"><strong>Inactivate this item?</strong></p>
+                <p class="mb-2">After inactivation:</p>
+                <ul class="mb-3">
+                    <li>This item will no longer appear in selection lists</li>
+                    <li>No new transactions can be created with this item</li>
+                    <li>Existing inventory and transactions remain intact</li>
+                </ul>
+                <p class="text-muted mb-0"><small>You can reactivate the item later if needed.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i>
+                    Cancel
+                </button>
+                <button type="button" class="btn btn-warning" onclick="confirmInactivateItem()">
+                    <i class="bi bi-x-circle"></i>
+                    Yes, Inactivate Item
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reactivate Item Confirmation Modal -->
+<div class="modal fade" id="reactivateItemModal" tabindex="-1" aria-labelledby="reactivateItemModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="reactivateItemModalLabel">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    Reactivate Item
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3"><strong>Reactivate this item?</strong></p>
+                <p class="mb-2">After reactivation:</p>
+                <ul class="mb-3">
+                    <li>This item will appear in selection lists again</li>
+                    <li>New transactions can be created with this item</li>
+                    <li>Item becomes fully active in the system</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i>
+                    Cancel
+                </button>
+                <button type="button" class="btn btn-success" onclick="confirmReactivateItem()">
+                    <i class="bi bi-check-circle"></i>
+                    Yes, Reactivate Item
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Inactivate item confirmation modal
+const inactivateItemForm = document.getElementById('inactivateItemForm');
+if (inactivateItemForm) {
+    inactivateItemForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const modal = new bootstrap.Modal(document.getElementById('inactivateItemModal'));
+        modal.show();
+        return false;
+    });
+}
+
+function confirmInactivateItem() {
+    console.log('Confirming inactivate item');
+    const form = document.getElementById('inactivateItemForm');
+    if (form) {
+        form.removeEventListener('submit', arguments.callee);
+        form.submit();
+    }
+}
+
+// Reactivate item confirmation modal
+const reactivateItemForm = document.getElementById('reactivateItemForm');
+if (reactivateItemForm) {
+    reactivateItemForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const modal = new bootstrap.Modal(document.getElementById('reactivateItemModal'));
+        modal.show();
+        return false;
+    });
+}
+
+function confirmReactivateItem() {
+    console.log('Confirming reactivate item');
+    const form = document.getElementById('reactivateItemForm');
+    if (form) {
+        form.removeEventListener('submit', arguments.callee);
+        form.submit();
+    }
+}
+</script>
 {% endblock %}
