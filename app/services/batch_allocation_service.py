@@ -309,9 +309,9 @@ class BatchAllocationService:
         allocated_batch_ids: List[int] = None
     ) -> Tuple[List[ItemBatch], Decimal, Decimal]:
         """
-        Get batches for the drawer display with per-warehouse FEFO/FIFO ordering.
-        Shows batches from each warehouse until that warehouse can fulfill remaining_qty
-        OR runs out of batches. Always includes previously allocated batches for editing.
+        Get batches for the drawer display with global FEFO/FIFO ordering.
+        Shows batches in FEFO order across all warehouses until cumulative quantity
+        meets remaining_qty. Always includes previously allocated batches for editing.
         
         Args:
             item_id: Item ID
@@ -321,7 +321,7 @@ class BatchAllocationService:
             
         Returns:
             Tuple of:
-                - List of batches (limited per warehouse + allocated)
+                - List of batches (FEFO ordered + allocated)
                 - Total available from these batches
                 - Shortfall (0 if can fulfill, positive if not)
         """
@@ -335,41 +335,32 @@ class BatchAllocationService:
         
         allocated_batch_ids = allocated_batch_ids or []
         
-        # Group batches by warehouse and limit per warehouse
-        warehouse_groups = {}
+        # Separate allocated batches from available batches
         allocated_batches = []
+        available_batches = []
         
-        # First pass: organize batches by warehouse
         for batch in sorted_batches:
-            warehouse_id = batch.inventory.inventory_id
-            
-            # Always include if this batch is already allocated
             if batch.batch_id in allocated_batch_ids:
                 allocated_batches.append(batch)
-                continue
-            
-            if warehouse_id not in warehouse_groups:
-                warehouse_groups[warehouse_id] = []
-            warehouse_groups[warehouse_id].append(batch)
+            else:
+                available_batches.append(batch)
         
-        # Second pass: limit batches per warehouse
-        # Stop adding batches when warehouse can fulfill remaining_qty
+        # Take batches in FEFO order until cumulative qty >= remaining_qty
+        # This preserves global FEFO order across all warehouses
         limited_batches = []
+        cumulative_qty = Decimal('0')
         
-        for warehouse_id, wh_batches in warehouse_groups.items():
-            warehouse_cumulative_qty = Decimal('0')
+        for batch in available_batches:
+            available_qty = batch.usable_qty - batch.reserved_qty
+            limited_batches.append(batch)
+            cumulative_qty += available_qty
             
-            for batch in wh_batches:
-                available_qty = batch.usable_qty - batch.reserved_qty
-                warehouse_cumulative_qty += available_qty
-                limited_batches.append(batch)
-                
-                # Stop adding batches from this warehouse if it can fulfill remaining_qty
-                if warehouse_cumulative_qty >= remaining_qty:
-                    break
+            # Stop when we have enough to fulfill the request
+            if cumulative_qty >= remaining_qty:
+                break
         
         # Combine allocated batches with limited batches (deduplicating by batch_id)
-        # Allocated batches take priority and must always be shown for editing
+        # Allocated batches must always be shown for editing
         seen_batch_ids = set()
         all_batches = []
         
@@ -384,8 +375,7 @@ class BatchAllocationService:
                 all_batches.append(batch)
                 seen_batch_ids.add(batch.batch_id)
         
-        # Re-sort all_batches to ensure FEFO ordering within each warehouse
-        # This ensures batches are displayed in correct order in the drawer
+        # Re-sort to ensure FEFO ordering (allocated batches may break order)
         all_batches = BatchAllocationService.sort_batches_by_allocation_rule(all_batches, item)
         
         # Calculate total available and shortfall
