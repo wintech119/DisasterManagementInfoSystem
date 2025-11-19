@@ -718,12 +718,15 @@ def prepare_package(reliefrqst_id):
         existing_packages = ReliefPkg.query.filter_by(reliefrqst_id=reliefrqst_id).all()
         
         existing_allocations = {}
+        existing_batch_allocations = {}
         for pkg in existing_packages:
             for pkg_item in pkg.items:
                 item_id = pkg_item.item_id
                 # fr_inventory_id IS the warehouse_id (inventory_id = warehouse_id in schema)
                 warehouse_id = pkg_item.fr_inventory_id
+                batch_id = pkg_item.batch_id
                 
+                # Warehouse-level aggregation (for backward compatibility)
                 if item_id not in existing_allocations:
                     existing_allocations[item_id] = {}
                 
@@ -731,6 +734,16 @@ def prepare_package(reliefrqst_id):
                     existing_allocations[item_id][warehouse_id] = Decimal('0')
                 
                 existing_allocations[item_id][warehouse_id] += pkg_item.item_qty
+                
+                # Batch-level allocations (for drawer persistence)
+                if item_id not in existing_batch_allocations:
+                    existing_batch_allocations[item_id] = []
+                
+                existing_batch_allocations[item_id].append({
+                    'warehouse_id': warehouse_id,
+                    'batch_id': batch_id,
+                    'qty': float(pkg_item.item_qty)  # Convert Decimal to float for JSON
+                })
         
         # Load active item statuses
         status_map = item_status_service.load_status_map()
@@ -762,6 +775,7 @@ def prepare_package(reliefrqst_id):
                              warehouses=warehouses,
                              item_inventory_map=item_inventory_map,
                              existing_allocations=existing_allocations,
+                             existing_batch_allocations=existing_batch_allocations,
                              can_edit=can_edit,
                              blocking_user=blocking_user,
                              lock=lock,

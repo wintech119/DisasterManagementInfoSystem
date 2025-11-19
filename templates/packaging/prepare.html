@@ -658,7 +658,18 @@
                                     <i class="bi bi-box-seam"></i>
                                     Select Batches
                                 </button>
-                                {# Hidden inputs for batch allocations will be added here by JavaScript #}
+                                {# Hidden inputs for batch allocations - populated from saved draft #}
+                                {% if item.item_id in existing_batch_allocations %}
+                                    {% for allocation in existing_batch_allocations[item.item_id] %}
+                                    <input type="hidden" 
+                                           name="batch_allocation_{{ item.item_id }}_{{ allocation.batch_id }}" 
+                                           id="batch_allocation_{{ item.item_id }}_{{ allocation.batch_id }}"
+                                           value="{{ allocation.qty }}"
+                                           data-item-id="{{ item.item_id }}"
+                                           data-batch-id="{{ allocation.batch_id }}"
+                                           data-warehouse-id="{{ allocation.warehouse_id }}">
+                                    {% endfor %}
+                                {% endif %}
                             </td>
                             <td>
                                 {% set allocated_qty = item_status_options.get(item.item_id, {}).get('total_allocated', 0) %}
