@@ -35,7 +35,7 @@ def pending_approval():
     LM approval queue - shows packages submitted by LO awaiting LM approval.
     
     Criteria for "Pending LM Approval":
-    - Relief Request status = SUBMITTED (approved by director, ready for fulfillment)
+    - Relief Request status = SUBMITTED or PART_FILLED (allows multi-batch fulfillment)
     - ReliefPkg exists with status_code='P' (Pending - submitted for approval)
     - No active fulfillment lock (LO released lock after submission)
     - Not yet dispatched (dispatch_dtime is NULL)
@@ -46,7 +46,8 @@ def pending_approval():
         abort(403)
     
     # Find all relief requests with packages awaiting LM approval
-    # Note: fulfillment_lock backref uses uselist=False, so it's either an object or None
+    # IMPORTANT: Include both SUBMITTED and PART_FILLED to support multi-batch fulfillment
+    # (After first dispatch, status becomes PART_FILLED but may need additional batches)
     all_requests = ReliefRqst.query.options(
         joinedload(ReliefRqst.agency),
         joinedload(ReliefRqst.eligible_event),
@@ -55,7 +56,7 @@ def pending_approval():
         joinedload(ReliefRqst.packages),
         joinedload(ReliefRqst.fulfillment_lock).joinedload(ReliefRequestFulfillmentLock.fulfiller)
     ).filter(
-        ReliefRqst.status_code == rr_service.STATUS_SUBMITTED
+        ReliefRqst.status_code.in_([rr_service.STATUS_SUBMITTED, rr_service.STATUS_PART_FILLED])
     ).order_by(ReliefRqst.create_dtime.desc()).all()
     
     # Filter to requests with packages pending LM approval
@@ -76,6 +77,7 @@ def pending_approval():
                          requests=pending_requests,
                          counts=counts,
                          STATUS_SUBMITTED=rr_service.STATUS_SUBMITTED,
+                         STATUS_PART_FILLED=rr_service.STATUS_PART_FILLED,
                          PKG_STATUS_PENDING=rr_service.PKG_STATUS_PENDING)
 
 
