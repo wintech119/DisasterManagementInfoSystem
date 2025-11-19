@@ -458,9 +458,8 @@ const BatchAllocation = (function() {
         container.dataset.batchId = batch.batch_id;
         container.dataset.priorityGroup = batch.priority_group !== undefined ? batch.priority_group : -1;
         
-        // Populate batch details
+        // Populate batch details (warehouse name now in section header, not batch item)
         container.querySelector('.batch-number').textContent = batch.batch_no;
-        container.querySelector('.batch-warehouse-name').textContent = batch.warehouse_name;
         container.querySelector('.batch-batch-date').textContent = formatDate(batch.batch_date);
         container.querySelector('.batch-expiry-date').textContent = formatDate(batch.expiry_date) || 'N/A';
         container.querySelector('.batch-available-qty').textContent = formatNumber(batch.available_qty);
