@@ -265,12 +265,14 @@ const BatchAllocation = (function() {
             return;
         }
         
-        // Group batches by warehouse (returns array in FEFO order)
+        // Group batches by warehouse
         const warehouseGroups = groupBatchesByWarehouse(batches);
         
-        // Render each warehouse section in FEFO order
-        warehouseGroups.forEach(warehouseData => {
-            const warehouseSection = createWarehouseSection(warehouseData.warehouse_id, warehouseData);
+        // Render each warehouse section
+        // Warehouse order doesn't matter - FEFO applies within each warehouse
+        Object.keys(warehouseGroups).forEach(warehouseId => {
+            const warehouseData = warehouseGroups[warehouseId];
+            const warehouseSection = createWarehouseSection(warehouseId, warehouseData);
             elements.batchList.appendChild(warehouseSection);
         });
         
@@ -282,13 +284,13 @@ const BatchAllocation = (function() {
     }
     
     /**
-     * Group batches by warehouse, preserving FEFO order
-     * @param {Array} batches - Array of batch objects (already FEFO sorted)
-     * @returns {Array} Array of warehouse groups in FEFO order
+     * Group batches by warehouse
+     * Batches within each warehouse are already FEFO/FIFO sorted by backend
+     * @param {Array} batches - Array of batch objects (FEFO sorted within each warehouse)
+     * @returns {Object} Warehouses grouped by warehouse_id
      */
     function groupBatchesByWarehouse(batches) {
         const groups = {};
-        const warehouseOrder = [];
         
         batches.forEach(batch => {
             const warehouseId = batch.warehouse_id;
@@ -299,18 +301,12 @@ const BatchAllocation = (function() {
                     batches: [],
                     total_available: 0
                 };
-                // Track order of first appearance to preserve FEFO
-                warehouseOrder.push(warehouseId);
             }
             groups[warehouseId].batches.push(batch);
             groups[warehouseId].total_available += batch.available_qty;
         });
         
-        // Return array of warehouse groups in FEFO order
-        return warehouseOrder.map(wh_id => ({
-            warehouse_id: wh_id,
-            ...groups[wh_id]
-        }));
+        return groups;
     }
     
     /**
@@ -397,10 +393,11 @@ const BatchAllocation = (function() {
         // Clear existing options except first (placeholder)
         select.innerHTML = '<option value="">Select warehouse...</option>';
         
-        // Add warehouse options (warehouseGroups is now an array in FEFO order)
-        warehouseGroups.forEach(warehouse => {
+        // Add warehouse options
+        Object.keys(warehouseGroups).forEach(warehouseId => {
+            const warehouse = warehouseGroups[warehouseId];
             const option = document.createElement('option');
-            option.value = warehouse.warehouse_id;
+            option.value = warehouseId;
             option.textContent = warehouse.warehouse_name;
             select.appendChild(option);
         });
