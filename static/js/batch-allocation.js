@@ -265,13 +265,12 @@ const BatchAllocation = (function() {
             return;
         }
         
-        // Group batches by warehouse
+        // Group batches by warehouse (returns array in FEFO order)
         const warehouseGroups = groupBatchesByWarehouse(batches);
         
-        // Render each warehouse section
-        Object.keys(warehouseGroups).forEach(warehouseId => {
-            const warehouseData = warehouseGroups[warehouseId];
-            const warehouseSection = createWarehouseSection(warehouseId, warehouseData);
+        // Render each warehouse section in FEFO order
+        warehouseGroups.forEach(warehouseData => {
+            const warehouseSection = createWarehouseSection(warehouseData.warehouse_id, warehouseData);
             elements.batchList.appendChild(warehouseSection);
         });
         
@@ -283,12 +282,13 @@ const BatchAllocation = (function() {
     }
     
     /**
-     * Group batches by warehouse
-     * @param {Array} batches - Array of batch objects
-     * @returns {Object} Warehouses grouped by warehouse_id
+     * Group batches by warehouse, preserving FEFO order
+     * @param {Array} batches - Array of batch objects (already FEFO sorted)
+     * @returns {Array} Array of warehouse groups in FEFO order
      */
     function groupBatchesByWarehouse(batches) {
         const groups = {};
+        const warehouseOrder = [];
         
         batches.forEach(batch => {
             const warehouseId = batch.warehouse_id;
@@ -299,12 +299,18 @@ const BatchAllocation = (function() {
                     batches: [],
                     total_available: 0
                 };
+                // Track order of first appearance to preserve FEFO
+                warehouseOrder.push(warehouseId);
             }
             groups[warehouseId].batches.push(batch);
             groups[warehouseId].total_available += batch.available_qty;
         });
         
-        return groups;
+        // Return array of warehouse groups in FEFO order
+        return warehouseOrder.map(wh_id => ({
+            warehouse_id: wh_id,
+            ...groups[wh_id]
+        }));
     }
     
     /**
@@ -391,11 +397,10 @@ const BatchAllocation = (function() {
         // Clear existing options except first (placeholder)
         select.innerHTML = '<option value="">Select warehouse...</option>';
         
-        // Add warehouse options
-        Object.keys(warehouseGroups).forEach(warehouseId => {
-            const warehouse = warehouseGroups[warehouseId];
+        // Add warehouse options (warehouseGroups is now an array in FEFO order)
+        warehouseGroups.forEach(warehouse => {
             const option = document.createElement('option');
-            option.value = warehouseId;
+            option.value = warehouse.warehouse_id;
             option.textContent = warehouse.warehouse_name;
             select.appendChild(option);
         });
