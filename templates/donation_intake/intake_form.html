@@ -258,7 +258,9 @@ input[type=number] {
                                                data-item-id="{{ di.item_id }}"
                                                oninput="enforceDecimalPlaces(this, 2)"
                                                onchange="validateQuantities({{ di.item_id }})"
-                                               required>
+                                               required
+                                               readonly
+                                               style="background-color: #f8f9fa;">
                                     </div>
                                     <div class="col-md-2">
                                         <label for="defective_qty_{{ di.item_id }}" class="field-label">Defective</label>
@@ -270,7 +272,7 @@ input[type=number] {
                                                min="0"
                                                value="0"
                                                data-item-id="{{ di.item_id }}"
-                                               oninput="enforceDecimalPlaces(this, 2)"
+                                               oninput="enforceDecimalPlaces(this, 2); autoAdjustUsableQty({{ di.item_id }});"
                                                onchange="validateQuantities({{ di.item_id }})">
                                     </div>
                                     <div class="col-md-3">
@@ -283,7 +285,7 @@ input[type=number] {
                                                min="0"
                                                value="0"
                                                data-item-id="{{ di.item_id }}"
-                                               oninput="enforceDecimalPlaces(this, 2)"
+                                               oninput="enforceDecimalPlaces(this, 2); autoAdjustUsableQty({{ di.item_id }});"
                                                onchange="validateQuantities({{ di.item_id }})">
                                     </div>
                                 </div>
@@ -376,7 +378,7 @@ input[type=number] {
                     </div>
                     <div class="card-body">
                         <ul class="mb-0 small">
-                            <li><strong>Quantities</strong>: Usable + Defective + Expired must equal donated quantity (max 2 decimal places)</li>
+                            <li><strong>Quantities</strong>: Usable quantity auto-adjusts based on Defective + Expired entries (max 2 decimal places)</li>
                             <li><strong>Batch Number</strong>: Required for batched items</li>
                             <li><strong>Batch Date</strong>: Cannot be in the future</li>
                             <li><strong>Expiry Date</strong>: Required for perishable items, must be future date</li>
@@ -391,6 +393,36 @@ input[type=number] {
 </div>
 
 <script>
+// Auto-adjust usable quantity based on defective and expired quantities
+function autoAdjustUsableQty(itemId) {
+    const usableInput = document.querySelector(`input[name="usable_qty_${itemId}"]`);
+    const defectiveInput = document.querySelector(`input[name="defective_qty_${itemId}"]`);
+    const expiredInput = document.querySelector(`input[name="expired_qty_${itemId}"]`);
+    
+    if (!usableInput || !defectiveInput || !expiredInput) return;
+    
+    const donatedQty = parseFloat(usableInput.dataset.expected) || 0;
+    const defectiveQty = parseFloat(defectiveInput.value) || 0;
+    const expiredQty = parseFloat(expiredInput.value) || 0;
+    
+    // Calculate usable quantity: donated - defective - expired
+    let calculatedUsable = donatedQty - defectiveQty - expiredQty;
+    
+    // Ensure it doesn't go negative
+    if (calculatedUsable < 0) {
+        calculatedUsable = 0;
+    }
+    
+    // Round to 2 decimal places to avoid floating point precision issues
+    calculatedUsable = Math.round(calculatedUsable * 100) / 100;
+    
+    // Update the usable quantity field
+    usableInput.value = calculatedUsable.toFixed(2);
+    
+    // Validate quantities after adjustment
+    validateQuantities(itemId);
+}
+
 // Enforce maximum decimal places on numeric input
 function enforceDecimalPlaces(input, maxDecimals) {
     let value = input.value;
