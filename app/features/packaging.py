@@ -780,7 +780,11 @@ def pending_fulfillment():
                            and not r.fulfillment_lock 
                            and not has_pending_approval(r)]
     elif filter_type == 'in_progress':
-        filtered_requests = [r for r in all_requests if r.fulfillment_lock]
+        # Being Prepared: Only show PART_FILLED requests with locks (active preparation)
+        # SUBMITTED requests should not appear here even if they have a lock
+        filtered_requests = [r for r in all_requests 
+                           if r.fulfillment_lock 
+                           and r.status_code == rr_service.STATUS_PART_FILLED]
     elif filter_type == 'pending_approval':
         # Show only requests with packages awaiting LM approval
         filtered_requests = [r for r in all_requests if has_pending_approval(r)]
