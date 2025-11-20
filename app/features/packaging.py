@@ -255,7 +255,12 @@ def approve_package(reliefrqst_id):
     can_edit, blocking_user, lock = lock_service.check_lock(reliefrqst_id, current_user.user_id)
     
     if request.method == 'GET':
-        # Acquire lock if not already held
+        # BLOCK ACCESS: If another user already has the lock, redirect immediately
+        if not can_edit:
+            flash(f'This relief request is currently being prepared by {blocking_user}. Please try again later.', 'warning')
+            return redirect(url_for('packaging.pending_approval'))
+        
+        # Try to acquire lock if not already held
         if not lock:
             success, message, lock = lock_service.acquire_lock(
                 reliefrqst_id,
@@ -263,7 +268,7 @@ def approve_package(reliefrqst_id):
                 current_user.email
             )
             if not success:
-                # BLOCK ACCESS: Don't render page, redirect with blocking message
+                # Lock acquisition failed (race condition) - redirect with blocking message
                 blocking_user = message.replace("Currently being prepared by ", "")
                 flash(f'This relief request is currently being prepared by {blocking_user}. Please try again later.', 'warning')
                 return redirect(url_for('packaging.pending_approval'))
@@ -839,6 +844,12 @@ def prepare_package(reliefrqst_id):
     can_edit, blocking_user, lock = lock_service.check_lock(reliefrqst_id, current_user.user_id)
     
     if request.method == 'GET':
+        # BLOCK ACCESS: If another user already has the lock, redirect immediately
+        if not can_edit:
+            flash(f'This relief request is currently being prepared by {blocking_user}. Please try again later.', 'warning')
+            return redirect(url_for('packaging.pending_fulfillment'))
+        
+        # Try to acquire lock if not already held
         if not lock:
             success, message, lock = lock_service.acquire_lock(
                 reliefrqst_id, 
@@ -846,7 +857,7 @@ def prepare_package(reliefrqst_id):
                 current_user.email
             )
             if not success:
-                # BLOCK ACCESS: Don't render page, redirect with blocking message
+                # Lock acquisition failed (race condition) - redirect with blocking message
                 blocking_user = message.replace("Currently being prepared by ", "")
                 flash(f'This relief request is currently being prepared by {blocking_user}. Please try again later.', 'warning')
                 return redirect(url_for('packaging.pending_fulfillment'))
