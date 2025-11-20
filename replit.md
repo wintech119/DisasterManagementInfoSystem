@@ -3,6 +3,9 @@
 ## Overview
 DRIMS (Disaster Relief Inventory Management System) is a web-based platform for the Government of Jamaica's ODPEM, designed to manage the entire lifecycle of disaster relief supplies. This includes inventory tracking, donation management, relief request processing, and distribution across multiple warehouses. The system aims to ensure compliance with government processes, support disaster event coordination, supply allocation, and provide robust user administration with Role-Based Access Control (RBAC). Its core purpose is to deliver a modern, efficient, and user-friendly solution for disaster preparedness and response, emphasizing security and comprehensive management capabilities such as inventory transfers, location tracking, analytics, and reporting.
 
+## Recent Changes (2025-11-20)
+- **Receive Inventory Feature Removal (Complete)**: Removed the "Receive Inventory" functionality from the entire system. Changes: (1) **Feature Registry** - Removed the `inventory_intake` feature entry from `app/core/feature_registry.py`, which was previously accessible to LOGISTICS_OFFICER, LOGISTICS_MANAGER, INVENTORY_CLERK, and SYSTEM_ADMINISTRATOR roles. (2) **Navigation** - The "Receive Inventory" menu item no longer appears in any user's navigation menus. (3) **Dashboard Widgets** - Removed `pending_intake_widget` dashboard widget reference. (4) **Access Control** - No users or roles can now access the `/intake/list` route or related intake functionality. Note: The underlying intake blueprint and templates remain in the codebase but are inaccessible through the UI due to feature registry removal. Result: "Receive Inventory" functionality is completely hidden from all users and roles in the system.
+
 ## User Preferences
 - **Communication style**: Simple, everyday language.
 - **UI/UX Requirements**:

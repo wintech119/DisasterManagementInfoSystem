@@ -236,18 +236,6 @@ class FeatureRegistry:
             'navigation_group': 'inventory',
             'priority': 12
         },
-        'inventory_intake': {
-            'name': 'Receive Inventory',
-            'description': 'Process incoming inventory and donations',
-            'roles': ['LOGISTICS_OFFICER', 'LOGISTICS_MANAGER', 'INVENTORY_CLERK', 'SYSTEM_ADMINISTRATOR'],
-            'route': 'intake.list_intakes',
-            'url': '/intake/list',
-            'icon': 'bi-arrow-down-circle',
-            'category': 'inventory',
-            'dashboard_widget': 'pending_intake_widget',
-            'navigation_group': 'inventory',
-            'priority': 14
-        },
         'inventory_transfers': {
             'name': 'Transfer Inventory',
             'description': 'Transfer items between warehouses',
