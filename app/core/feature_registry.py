@@ -172,7 +172,7 @@ class FeatureRegistry:
             'priority': 16
         },
         'package_preparation': {
-            'name': 'Prepare Fulfillment Packages',
+            'name': 'Relief Fulfillment Packages',
             'description': 'Allocate inventory and prepare relief packages',
             'roles': ['LOGISTICS_OFFICER', 'LOGISTICS_MANAGER'],
             'route': 'packaging.pending_fulfillment',
