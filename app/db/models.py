@@ -63,7 +63,8 @@ class User(UserMixin, db.Model):
         """Check if user account is currently locked"""
         if self.lock_until_at is None:
             return False
-        return datetime.utcnow() < self.lock_until_at
+        from app.utils.timezone import now
+        return now() < self.lock_until_at
     
     @property
     def last_login_dtime(self):

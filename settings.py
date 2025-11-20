@@ -10,6 +10,9 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     WORKFLOW_MODE = os.environ.get('WORKFLOW_MODE', 'AIDMGMT')
     
+    TIMEZONE = 'America/Jamaica'
+    TIMEZONE_OFFSET = -5
+    
     GOJ_GREEN = '#006B3E'
     GOJ_GOLD = '#FFD100'
     

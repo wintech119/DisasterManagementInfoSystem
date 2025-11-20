@@ -36,7 +36,8 @@ def notification_list():
 @login_required
 def index():
     """Display all notifications for current user"""
-    from datetime import datetime, timedelta
+    from datetime import timedelta
+    from app.utils.timezone import now, get_date_only
     
     # Get actual notifications from database (no limit - show all)
     user_notifications = NotificationService.get_recent_notifications(current_user.user_id, limit=None)
@@ -56,8 +57,7 @@ def index():
     ).all()
     
     # Calculate datetime boundaries for filtering
-    now = datetime.utcnow()
-    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    today_start = get_date_only()
     week_start = today_start - timedelta(days=today_start.weekday())
     
     # Precompute notification counts for metrics

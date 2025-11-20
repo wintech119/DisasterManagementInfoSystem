@@ -3,12 +3,13 @@ Fulfillment Lock Service
 Manages exclusive access to relief requests during packaging/fulfillment
 Integrated with inventory reservation service to release reservations on lock expiry/release
 """
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Optional, Tuple
 from sqlalchemy.exc import IntegrityError
 
 from app.db import db
 from app.db.models import ReliefRequestFulfillmentLock, User, ReliefRqst
+from app.utils.timezone import now
 
 
 DEFAULT_LOCK_EXPIRY_HOURS = 24
@@ -33,7 +34,7 @@ def acquire_lock(reliefrqst_id: int, user_id: int, user_email: str, expiry_hours
         if existing_lock.fulfiller_user_id == user_id:
             return True, "You already have the lock", existing_lock
         
-        if existing_lock.expires_at and existing_lock.expires_at < datetime.utcnow():
+        if existing_lock.expires_at and existing_lock.expires_at < now():
             db.session.delete(existing_lock)
             db.session.commit()
         else:
@@ -42,13 +43,13 @@ def acquire_lock(reliefrqst_id: int, user_id: int, user_email: str, expiry_hours
             return False, f"Currently being prepared by {user_name}", existing_lock
     
     try:
-        expires_at = datetime.utcnow() + timedelta(hours=expiry_hours) if expiry_hours > 0 else None
+        expires_at = now() + timedelta(hours=expiry_hours) if expiry_hours > 0 else None
         
         lock = ReliefRequestFulfillmentLock(
             reliefrqst_id=reliefrqst_id,
             fulfiller_user_id=user_id,
             fulfiller_email=user_email,
-            acquired_at=datetime.utcnow(),
+            acquired_at=now(),
             expires_at=expires_at
         )
         
@@ -119,7 +120,7 @@ def check_lock(reliefrqst_id: int, user_id: int) -> Tuple[bool, Optional[str], O
     if not lock:
         return True, None, None
     
-    if lock.expires_at and lock.expires_at < datetime.utcnow():
+    if lock.expires_at and lock.expires_at < now():
         # Lock expired - release reservations and delete lock
         from app.services import inventory_reservation_service as reservation_service
         reservation_service.release_all_reservations(reliefrqst_id)
@@ -147,7 +148,7 @@ def cleanup_expired_locks() -> int:
     from app.services import inventory_reservation_service as reservation_service
     
     expired_locks = ReliefRequestFulfillmentLock.query.filter(
-        ReliefRequestFulfillmentLock.expires_at < datetime.utcnow()
+        ReliefRequestFulfillmentLock.expires_at < now()
     ).all()
     
     count = len(expired_locks)

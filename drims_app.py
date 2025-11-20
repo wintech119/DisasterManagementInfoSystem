@@ -127,11 +127,23 @@ def status_label_filter(status_code, entity_type):
     """Return human-readable label for status codes"""
     return get_status_label(status_code, entity_type)
 
+@app.template_filter('format_datetime')
+def format_datetime_filter(dt, format_str='%Y-%m-%d %H:%M:%S'):
+    """Format datetime in Jamaica timezone"""
+    from app.utils.timezone import format_datetime
+    return format_datetime(dt, format_str)
+
+@app.template_filter('format_date')
+def format_date_filter(dt):
+    """Format date only"""
+    from app.utils.timezone import format_datetime
+    return format_datetime(dt, '%Y-%m-%d')
+
 @app.context_processor
 def inject_now():
     """Inject current datetime for footer year and other templates"""
-    from datetime import datetime
-    return {'now': datetime.utcnow()}
+    from app.utils.timezone import now
+    return {'now': now()}
 
 @app.route('/')
 @login_required

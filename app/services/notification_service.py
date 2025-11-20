@@ -102,6 +102,7 @@ class NotificationService:
         Returns:
             Created Notification object
         """
+        from app.utils.timezone import now
         notification = Notification(
             user_id=user_id,
             reliefrqst_id=reliefrqst_id,
@@ -113,7 +114,7 @@ class NotificationService:
             link_url=link_url,
             payload=payload,
             is_archived=False,
-            created_at=datetime.utcnow()
+            created_at=now()
         )
         db.session.add(notification)
         return notification

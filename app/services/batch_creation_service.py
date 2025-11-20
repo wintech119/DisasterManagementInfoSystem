@@ -4,10 +4,11 @@ Automatically creates batches for items with is_batched_flag=TRUE during intake 
 Ensures batch-level traceability for inventory management.
 """
 
-from datetime import datetime, date
+from datetime import date
 from sqlalchemy import func
 from app import db
 from app.db.models import ItemBatch, Item
+from app.utils.timezone import now
 
 
 class BatchCreationService:
@@ -103,7 +104,7 @@ class BatchCreationService:
         if size_spec:
             size_spec = size_spec.upper()
         
-        now = datetime.utcnow()
+        current_time = now()
         
         batch = ItemBatch(
             inventory_id=inventory_id,
@@ -120,9 +121,9 @@ class BatchCreationService:
             avg_unit_value=avg_unit_value,
             status_code='A',
             create_by_id=user_name,
-            create_dtime=now,
+            create_dtime=current_time,
             update_by_id=user_name,
-            update_dtime=now,
+            update_dtime=current_time,
             version_nbr=1
         )
         
@@ -184,7 +185,7 @@ class BatchCreationService:
             existing_batch.defective_qty += defective_qty
             existing_batch.expired_qty += expired_qty
             existing_batch.update_by_id = user_name
-            existing_batch.update_dtime = datetime.utcnow()
+            existing_batch.update_dtime = now()
             existing_batch.version_nbr += 1
             
             return existing_batch

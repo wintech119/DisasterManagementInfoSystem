@@ -58,8 +58,9 @@ def create_intake():
                 flash('At least one item with positive quantity is required', 'danger')
                 return redirect(url_for('intake.create_intake'))
             
+            from app.utils.timezone import now
             user_id_upper = str(current_user.user_id).upper()
-            now = datetime.utcnow()
+            current_time = now()
             
             first_inventory_id = None
             
@@ -258,9 +259,10 @@ def complete_intake(reliefpkg_id, inventory_id):
         flash('Only incomplete intakes can be completed', 'danger')
         return redirect(url_for('intake.view_intake', reliefpkg_id=reliefpkg_id, inventory_id=inventory_id))
     
+    from app.utils.timezone import now
     intake.status_code = 'C'
     intake.update_by_id = str(current_user.user_id).upper()
-    intake.update_dtime = datetime.utcnow()
+    intake.update_dtime = now()
     intake.version_nbr += 1
     
     db.session.commit()
