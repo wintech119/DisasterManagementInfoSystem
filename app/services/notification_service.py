@@ -321,8 +321,8 @@ class NotificationService:
                 link_url = url_for('packaging.awaiting_dispatch', _external=False)
                 message = f'Package for {tracking_no} from {agency_name} approved by {approver_name}. Ready to be handed over to agency.'
             elif is_logistics_user:
-                # Logistics Officers/Managers: Link to package details
-                link_url = url_for('packaging.prepare_package', reliefrqst_id=relief_request.reliefrqst_id, _external=False)
+                # Logistics Officers/Managers: Link to Approved for Dispatch tab
+                link_url = url_for('packaging.pending_fulfillment', filter='approved_for_dispatch', _external=False)
                 message = f'Package for {tracking_no} from {agency_name} approved by {approver_name}. Ready for dispatch.'
             else:
                 # Agency users: Link to request tracking
