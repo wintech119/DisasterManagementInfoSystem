@@ -92,11 +92,6 @@
             <span class="filter-tab-count" aria-label="{{ global_counts.get('approved_no_allocation', 0) }} approved no allocation">{{ global_counts.get('approved_no_allocation', 0) }}</span>
             {% endif %}
         </a>
-        <a href="{{ url_for('packaging.pending_fulfillment', filter='all') }}" 
-           class="filter-tab {% if current_filter == 'all' %}active{% endif %}"
-           aria-current="{% if current_filter == 'all' %}page{% endif %}">
-            All
-        </a>
     </nav>
 
     <!-- Requests Table -->
