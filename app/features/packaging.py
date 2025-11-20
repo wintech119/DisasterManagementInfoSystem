@@ -774,10 +774,10 @@ def pending_fulfillment():
                    for pkg in req.packages)
     
     if filter_type == 'awaiting':
-        # Exclude requests that have packages pending LM approval
+        # Show all SUBMITTED requests regardless of lock status
+        # (SUBMITTED requests should appear here even if being actively prepared)
         filtered_requests = [r for r in all_requests 
                            if r.status_code == rr_service.STATUS_SUBMITTED 
-                           and not r.fulfillment_lock 
                            and not has_pending_approval(r)]
     elif filter_type == 'in_progress':
         # Being Prepared: Only show PART_FILLED requests with locks (active preparation)
@@ -799,7 +799,6 @@ def pending_fulfillment():
     global_counts = {
         'submitted': len([r for r in all_requests 
                          if r.status_code == rr_service.STATUS_SUBMITTED 
-                         and not r.fulfillment_lock 
                          and not has_pending_approval(r)]),
         'locked': len([r for r in all_requests 
                       if r.fulfillment_lock 
@@ -811,7 +810,6 @@ def pending_fulfillment():
     filtered_counts = {
         'submitted': len([r for r in filtered_requests 
                          if r.status_code == rr_service.STATUS_SUBMITTED 
-                         and not r.fulfillment_lock 
                          and not has_pending_approval(r)]),
         'locked': len([r for r in filtered_requests 
                       if r.fulfillment_lock 
