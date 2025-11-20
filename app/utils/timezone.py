@@ -51,13 +51,18 @@ def utc_to_jamaica(dt: Optional[datetime]) -> Optional[datetime]:
     """Convert UTC naive datetime to Jamaica naive datetime.
     
     Args:
-        dt: Naive datetime in UTC (or aware datetime)
+        dt: Naive datetime in UTC (or aware datetime), or date object
         
     Returns:
         datetime: Naive datetime in Jamaica timezone, or None
     """
     if dt is None:
         return None
+    
+    # Handle date objects - just return them as-is (dates don't have timezone)
+    from datetime import date
+    if isinstance(dt, date) and not isinstance(dt, datetime):
+        return dt
     
     # Treat naive datetime as UTC
     if dt.tzinfo is None:
@@ -109,9 +114,10 @@ def format_datetime(dt: Optional[datetime], format_str: str = '%Y-%m-%d %H:%M:%S
     """Format datetime in Jamaica timezone.
     
     Assumes naive datetimes are in UTC and converts them to Jamaica time for display.
+    Handles both datetime and date objects.
     
     Args:
-        dt: Datetime object to format (naive UTC or aware)
+        dt: Datetime or date object to format (naive UTC or aware)
         format_str: strftime format string
         
     Returns:
@@ -119,6 +125,11 @@ def format_datetime(dt: Optional[datetime], format_str: str = '%Y-%m-%d %H:%M:%S
     """
     if dt is None:
         return ''
+    
+    # Handle date objects - just format them directly
+    from datetime import date
+    if isinstance(dt, date) and not isinstance(dt, datetime):
+        return dt.strftime(format_str)
     
     jamaica_dt = to_jamaica_time(dt)
     return jamaica_dt.strftime(format_str)
