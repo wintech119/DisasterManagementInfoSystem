@@ -145,10 +145,57 @@ def review_approval(reliefrqst_id):
     
     if action == 'approve_and_dispatch':
         try:
+            # CRITICAL VALIDATION: Ensure package has items AND issue_qty matches ReliefPkgItem totals
+            # Get all ReliefPkgItem records for this package
+            pkg_items = ReliefPkgItem.query.filter_by(reliefpkg_id=relief_pkg.reliefpkg_id).all()
+            
+            if not pkg_items:
+                # No items allocated - package is empty
+                # Check if all items have valid unavailability statuses (U, D, W)
+                unavailability_statuses = {'U', 'D', 'W'}
+                all_items_unavailable = all(
+                    item.status_code in unavailability_statuses 
+                    for item in relief_request.items
+                )
+                
+                if not all_items_unavailable:
+                    raise ValueError('Cannot dispatch package: no items have been allocated. All requested items must either have batch allocations or be marked as Unavailable (U), Denied (D), or Awaiting Availability (W).')
+            
+            # Validate that ReliefPkgItem quantities match issue_qty for data integrity
+            # Build totals from ReliefPkgItem records
+            pkg_item_totals = {}
+            for pkg_item in pkg_items:
+                if pkg_item.item_id not in pkg_item_totals:
+                    pkg_item_totals[pkg_item.item_id] = Decimal('0')
+                pkg_item_totals[pkg_item.item_id] += pkg_item.item_qty
+            
+            # Verify each item's issue_qty matches ReliefPkgItem total
+            for item in relief_request.items:
+                pkg_total = pkg_item_totals.get(item.item_id, Decimal('0'))
+                
+                # For items with issue_qty > 0, must have matching ReliefPkgItem records
+                if item.issue_qty > 0 and pkg_total == Decimal('0'):
+                    raise ValueError(f'Data integrity error: Item {item.item.item_name} has issue_qty={item.issue_qty} but no package items allocated. Please re-prepare the package.')
+                
+                # Verify totals match (allowing small decimal precision differences)
+                if abs(item.issue_qty - pkg_total) > Decimal('0.001'):
+                    raise ValueError(f'Data integrity error: Item {item.item.item_name} issue_qty ({item.issue_qty}) does not match allocated quantity ({pkg_total}). Please re-prepare the package.')
+            
             # Verify at least one item has allocated quantity (support partial fulfillment)
+            # UNLESS all items are marked as unavailable (U, D, W)
             has_allocated_items = any(item.issue_qty > 0 for item in relief_request.items)
+            
             if not has_allocated_items:
-                raise ValueError('Cannot dispatch package: no items have been allocated')
+                # Check if all items have valid unavailability statuses
+                unavailability_statuses = {'U', 'D', 'W'}
+                all_items_unavailable = all(
+                    item.status_code in unavailability_statuses 
+                    for item in relief_request.items
+                )
+                
+                if not all_items_unavailable:
+                    # Items have no allocations AND not all marked unavailable
+                    raise ValueError('Cannot dispatch empty package. Please allocate items before dispatching or mark all items as unavailable.')
             
             # LM approval: set verify_by_id and verify_dtime
             relief_pkg.verify_by_id = current_user.user_name
@@ -408,11 +455,11 @@ def _approve_and_dispatch(relief_request, relief_pkg):
         # Process and validate allocations (can be partial)
         new_allocations = _process_allocations(relief_request, validate_complete=False)
         
-        # CRITICAL VALIDATION: Ensure package has items before dispatch
-        # Check if any ReliefPkgItem records were created
-        relief_pkg_items_count = ReliefPkgItem.query.filter_by(reliefpkg_id=relief_pkg.reliefpkg_id).count()
+        # CRITICAL VALIDATION: Ensure package has items AND issue_qty matches ReliefPkgItem totals
+        # Get all ReliefPkgItem records for this package
+        pkg_items = ReliefPkgItem.query.filter_by(reliefpkg_id=relief_pkg.reliefpkg_id).all()
         
-        if relief_pkg_items_count == 0:
+        if not pkg_items:
             # No items allocated - package is empty
             # Check if all items have valid unavailability statuses (U, D, W)
             unavailability_statuses = {'U', 'D', 'W'}
@@ -424,12 +471,41 @@ def _approve_and_dispatch(relief_request, relief_pkg):
             if not all_items_unavailable:
                 raise ValueError('Cannot dispatch package: no items have been allocated. All requested items must either have batch allocations or be marked as Unavailable (U), Denied (D), or Awaiting Availability (W).')
         
-        # Verify at least one item has allocated quantity OR all unallocated items have valid unavailability statuses
+        # Validate that ReliefPkgItem quantities match issue_qty for data integrity
+        # Build totals from ReliefPkgItem records
+        pkg_item_totals = {}
+        for pkg_item in pkg_items:
+            if pkg_item.item_id not in pkg_item_totals:
+                pkg_item_totals[pkg_item.item_id] = Decimal('0')
+            pkg_item_totals[pkg_item.item_id] += pkg_item.item_qty
+        
+        # Verify each item's issue_qty matches ReliefPkgItem total
+        for item in relief_request.items:
+            pkg_total = pkg_item_totals.get(item.item_id, Decimal('0'))
+            
+            # For items with issue_qty > 0, must have matching ReliefPkgItem records
+            if item.issue_qty > 0 and pkg_total == Decimal('0'):
+                raise ValueError(f'Data integrity error: Item {item.item.item_name} has issue_qty={item.issue_qty} but no package items allocated. Please re-prepare the package.')
+            
+            # Verify totals match (allowing small decimal precision differences)
+            if abs(item.issue_qty - pkg_total) > Decimal('0.001'):
+                raise ValueError(f'Data integrity error: Item {item.item.item_name} issue_qty ({item.issue_qty}) does not match allocated quantity ({pkg_total}). Please re-prepare the package.')
+        
+        # Verify at least one item has allocated quantity (support partial fulfillment)
+        # UNLESS all items are marked as unavailable (U, D, W)
         has_allocated_items = any(alloc['allocated_qty'] > 0 for alloc in new_allocations)
         
-        if not has_allocated_items and relief_pkg_items_count == 0:
-            # Double-check: No allocations AND no package items
-            raise ValueError('Cannot dispatch empty package. Please allocate items before dispatching or mark items as unavailable.')
+        if not has_allocated_items:
+            # Check if all items have valid unavailability statuses
+            unavailability_statuses = {'U', 'D', 'W'}
+            all_items_unavailable = all(
+                item.status_code in unavailability_statuses 
+                for item in relief_request.items
+            )
+            
+            if not all_items_unavailable:
+                # Items have no allocations AND not all marked unavailable
+                raise ValueError('Cannot dispatch empty package. Please allocate items before dispatching or mark all items as unavailable.')
         
         # Update issue_qty for each item based on total allocated quantity
         for item in relief_request.items:
