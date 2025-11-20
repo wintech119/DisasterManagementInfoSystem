@@ -673,6 +673,7 @@ def pending_fulfillment():
     """
     List all approved relief requests awaiting package preparation.
     Shows SUBMITTED (3) and PART_FILLED (5) requests for LO/LM to fulfill.
+    Also shows approved packages (status='D') for informational purposes.
     """
     from app.core.rbac import is_logistics_officer, is_logistics_manager
     if not (is_logistics_officer() or is_logistics_manager()):
@@ -686,6 +687,40 @@ def pending_fulfillment():
         flash('Access denied. Only Logistics Managers can view packages awaiting approval.', 'danger')
         abort(403)
     
+    # Handle approved_for_dispatch filter - shows approved packages instead of requests
+    if filter_type == 'approved_for_dispatch':
+        # Query approved packages (status='D')
+        approved_packages = ReliefPkg.query.options(
+            joinedload(ReliefPkg.relief_request).joinedload(ReliefRqst.agency),
+            joinedload(ReliefPkg.relief_request).joinedload(ReliefRqst.eligible_event),
+            joinedload(ReliefPkg.items).joinedload(ReliefPkgItem.item)
+        ).filter(
+            ReliefPkg.status_code == rr_service.PKG_STATUS_DISPATCHED
+        ).order_by(ReliefPkg.dispatch_dtime.desc()).all()
+        
+        # Calculate package data
+        package_data = []
+        for pkg in approved_packages:
+            package_data.append({
+                'package': pkg,
+                'relief_request': pkg.relief_request,
+                'item_count': len(pkg.items),
+                'total_qty': sum(item.item_qty for item in pkg.items if item.item_qty)
+            })
+        
+        # Count approved packages
+        total_approved = len(approved_packages)
+        awaiting_handover = len([pkg for pkg in approved_packages if not pkg.received_dtime])
+        
+        return render_template('packaging/pending_fulfillment.html',
+                             requests=[],
+                             packages=package_data,
+                             counts={'approved': total_approved, 'awaiting_handover': awaiting_handover},
+                             global_counts={'approved': total_approved},
+                             current_filter=filter_type,
+                             now=datetime.now())
+    
+    # Normal request-based filters
     base_query = ReliefRqst.query.options(
         joinedload(ReliefRqst.agency),
         joinedload(ReliefRqst.eligible_event),
@@ -719,13 +754,19 @@ def pending_fulfillment():
     else:
         filtered_requests = all_requests
     
+    # Count approved packages for the tab
+    approved_packages_count = ReliefPkg.query.filter(
+        ReliefPkg.status_code == rr_service.PKG_STATUS_DISPATCHED
+    ).count()
+    
     global_counts = {
         'submitted': len([r for r in all_requests 
                          if r.status_code == rr_service.STATUS_SUBMITTED 
                          and not r.fulfillment_lock 
                          and not has_pending_approval(r)]),
         'locked': len([r for r in all_requests if r.fulfillment_lock]),
-        'pending_approval': len([r for r in all_requests if has_pending_approval(r)])
+        'pending_approval': len([r for r in all_requests if has_pending_approval(r)]),
+        'approved': approved_packages_count
     }
     
     filtered_counts = {
@@ -739,6 +780,7 @@ def pending_fulfillment():
     
     return render_template('packaging/pending_fulfillment.html',
                          requests=filtered_requests,
+                         packages=[],
                          counts=filtered_counts,
                          global_counts=global_counts,
                          current_filter=filter_type,

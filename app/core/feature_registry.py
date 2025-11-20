@@ -195,17 +195,6 @@ class FeatureRegistry:
             'navigation_group': 'packaging',
             'priority': 18
         },
-        'approved_packages_queue': {
-            'name': 'Approved Packages',
-            'description': 'Track packages approved by LM and dispatched to Inventory Clerks',
-            'roles': ['LOGISTICS_OFFICER', 'LOGISTICS_MANAGER'],
-            'route': 'packaging.approved_packages',
-            'url': '/packaging/approved-packages',
-            'icon': 'bi-check-circle-fill',
-            'category': 'packaging',
-            'navigation_group': 'packaging',
-            'priority': 13
-        },
         'dispatch_awaiting': {
             'name': 'Awaiting Dispatch',
             'description': 'Process packages awaiting handover to agencies',
