@@ -391,6 +391,11 @@ class BatchAllocationService:
                 if is_allocated:
                     limited_batches.append(batch)
                     warehouse_cumulative_qty += available_qty
+                    
+                    # Check if allocated batches alone already meet remaining_qty
+                    if warehouse_cumulative_qty >= remaining_qty:
+                        warehouse_has_fulfilled = True
+                    
                     continue
                 
                 # For non-allocated batches, only include if warehouse hasn't fulfilled yet
