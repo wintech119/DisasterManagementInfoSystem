@@ -786,19 +786,24 @@ def pending_fulfillment():
             ReliefPkg.status_code == rr_service.PKG_STATUS_DISPATCHED
         ).order_by(ReliefPkg.dispatch_dtime.desc()).all()
         
-        # Filter to only packages WITH items allocated AND user is involved (exclude zero-allocation packages)
+        # Filter to only packages WITH items allocated AND user should see them
         current_user_name = current_user.user_name
         package_data = []
         for pkg in approved_packages:
             item_count = len(pkg.items)
-            # Check if current user is involved with this package
-            user_involved = (
-                pkg.create_by_id == current_user_name or 
-                pkg.update_by_id == current_user_name or 
-                (is_logistics_manager() and pkg.verify_by_id == current_user_name)
-            )
             
-            if item_count > 0 and user_involved:  # Only packages with allocated items AND user involvement
+            # Determine if user should see this package
+            if is_logistics_manager():
+                # LM: Can see all packages
+                user_should_see = True
+            else:
+                # LO: Can only see packages they created or updated
+                user_should_see = (
+                    pkg.create_by_id == current_user_name or 
+                    pkg.update_by_id == current_user_name
+                )
+            
+            if item_count > 0 and user_should_see:  # Only packages with allocated items AND user can see
                 package_data.append({
                     'package': pkg,
                     'relief_request': pkg.relief_request,
@@ -806,16 +811,20 @@ def pending_fulfillment():
                     'total_qty': sum(item.item_qty for item in pkg.items if item.item_qty)
                 })
         
-        # Count approved packages with items (user-specific)
+        # Count approved packages with items (user-specific or all for LM)
         total_approved = len(package_data)
         awaiting_handover = len([p['package'] for p in package_data if not p['package'].received_dtime])
         
-        # Count ALL user's packages with no allocation for global counts
-        approved_no_allocation_count = len([pkg for pkg in approved_packages 
-                                           if len(pkg.items) == 0 
-                                           and (pkg.create_by_id == current_user_name or 
-                                                pkg.update_by_id == current_user_name or 
-                                                (is_logistics_manager() and pkg.verify_by_id == current_user_name))])
+        # Count packages with no allocation for global counts
+        if is_logistics_manager():
+            # LM: Count all packages with no allocation
+            approved_no_allocation_count = len([pkg for pkg in approved_packages if len(pkg.items) == 0])
+        else:
+            # LO: Count only their packages with no allocation
+            approved_no_allocation_count = len([pkg for pkg in approved_packages 
+                                               if len(pkg.items) == 0 
+                                               and (pkg.create_by_id == current_user_name or 
+                                                    pkg.update_by_id == current_user_name)])
         
         return render_template('packaging/pending_fulfillment.html',
                              requests=[],
@@ -837,18 +846,22 @@ def pending_fulfillment():
             ReliefPkg.status_code == rr_service.PKG_STATUS_DISPATCHED
         ).order_by(ReliefPkg.dispatch_dtime.desc()).all()
         
-        # Filter to only packages WITHOUT items allocated AND user is involved (zero-allocation packages)
+        # Filter to only packages WITHOUT items allocated AND user should see them
         current_user_name = current_user.user_name
         package_data = []
         for pkg in all_approved_packages:
-            # Check if current user is involved with this package
-            user_involved = (
-                pkg.create_by_id == current_user_name or 
-                pkg.update_by_id == current_user_name or 
-                (is_logistics_manager() and pkg.verify_by_id == current_user_name)
-            )
+            # Determine if user should see this package
+            if is_logistics_manager():
+                # LM: Can see all packages
+                user_should_see = True
+            else:
+                # LO: Can only see packages they created or updated
+                user_should_see = (
+                    pkg.create_by_id == current_user_name or 
+                    pkg.update_by_id == current_user_name
+                )
             
-            if len(pkg.items) == 0 and user_involved:  # Only packages with NO allocated items AND user involvement
+            if len(pkg.items) == 0 and user_should_see:  # Only packages with NO allocated items AND user can see
                 package_data.append({
                     'package': pkg,
                     'relief_request': pkg.relief_request,
@@ -856,15 +869,19 @@ def pending_fulfillment():
                     'total_qty': 0
                 })
         
-        # Count packages with no allocation (user-specific)
+        # Count packages with no allocation (user-specific or all for LM)
         total_no_allocation = len(package_data)
         
-        # Count ALL user's packages with items for global counts
-        approved_with_items_count = len([pkg for pkg in all_approved_packages 
-                                        if len(pkg.items) > 0 
-                                        and (pkg.create_by_id == current_user_name or 
-                                             pkg.update_by_id == current_user_name or 
-                                             (is_logistics_manager() and pkg.verify_by_id == current_user_name))])
+        # Count packages with items for global counts
+        if is_logistics_manager():
+            # LM: Count all packages with items
+            approved_with_items_count = len([pkg for pkg in all_approved_packages if len(pkg.items) > 0])
+        else:
+            # LO: Count only their packages with items
+            approved_with_items_count = len([pkg for pkg in all_approved_packages 
+                                            if len(pkg.items) > 0 
+                                            and (pkg.create_by_id == current_user_name or 
+                                                 pkg.update_by_id == current_user_name)])
         
         return render_template('packaging/pending_fulfillment.html',
                              requests=[],
@@ -913,30 +930,26 @@ def pending_fulfillment():
     # Helper function to check if current user has worked on this request
     def is_user_involved(req):
         """
-        Check if the current user has worked on this request.
+        Check if the current user should see this request.
         
         For Logistics Officers (LO):
-        - User created or updated any packages for this request
+        - Shows only packages the LO created or updated
         
         For Logistics Managers (LM):
-        - User verified (approved) any packages for this request
-        - Or has packages awaiting their approval
+        - Shows ALL packages from all LOs and themselves
+        - Shows packages they verified or are awaiting their approval
         """
         current_user_name = current_user.user_name
         
-        # Check if user has any packages in this request
+        # LM: Can see all packages from all LOs and themselves
+        if is_logistics_manager():
+            # If request has any packages, LM can see it
+            return len(req.packages) > 0
+        
+        # LO: Can only see packages they created or updated
         for pkg in req.packages:
-            # LO: Check if user created or updated the package
             if pkg.create_by_id == current_user_name or pkg.update_by_id == current_user_name:
                 return True
-            
-            # LM: Check if user verified the package
-            if is_logistics_manager() and pkg.verify_by_id == current_user_name:
-                return True
-        
-        # LM: Check if request has packages awaiting this LM's approval
-        if is_logistics_manager() and has_pending_approval(req):
-            return True
         
         return False
     
