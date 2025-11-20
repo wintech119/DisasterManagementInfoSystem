@@ -11,10 +11,17 @@
 <div class="container-fluid py-4">
     <!-- Back Button -->
     <div class="mb-3">
-        <a href="{{ url_for('packaging.pending_fulfillment') }}" class="btn-back">
-            <i class="bi bi-arrow-left"></i>
-            Back to Pending Fulfillment
-        </a>
+        {% if is_logistics %}
+            <a href="{{ url_for('packaging.pending_fulfillment') }}" class="btn-back">
+                <i class="bi bi-arrow-left"></i>
+                Back to Pending Fulfillment
+            </a>
+        {% else %}
+            <a href="{{ url_for('dashboard.index') }}" class="btn-back">
+                <i class="bi bi-arrow-left"></i>
+                Back to Dashboard
+            </a>
+        {% endif %}
     </div>
 
     <div class="row">
@@ -50,13 +57,20 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="agency_id" class="form-label">Requesting Agency <span class="text-danger">*</span></label>
-                                <select class="form-select" id="agency_id" name="agency_id" required>
-                                    <option value="">Select agency...</option>
-                                    {% for agency in agencies %}
-                                    <option value="{{ agency.agency_id }}">{{ agency.agency_name }}</option>
-                                    {% endfor %}
-                                </select>
-                                <small class="text-muted">Select the agency this request is for</small>
+                                {% if is_logistics %}
+                                    {# Logistics users can select any agency #}
+                                    <select class="form-select" id="agency_id" name="agency_id" required>
+                                        <option value="">Select agency...</option>
+                                        {% for agency in agencies %}
+                                        <option value="{{ agency.agency_id }}">{{ agency.agency_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <small class="text-muted">Select the agency this request is for</small>
+                                {% else %}
+                                    {# Agency users see their own agency (read-only) #}
+                                    <input type="text" class="form-control" value="{{ user_agency.agency_name if user_agency else 'N/A' }}" readonly>
+                                    <small class="text-muted">Your agency</small>
+                                {% endif %}
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="request_date" class="form-label">Request Date <span class="text-danger">*</span></label>
@@ -97,10 +111,17 @@
                                 <i class="bi bi-check-circle"></i>
                                 Create Request
                             </button>
-                            <a href="{{ url_for('packaging.pending_fulfillment') }}" class="btn-relief-secondary">
-                                <i class="bi bi-x-circle"></i>
-                                Cancel
-                            </a>
+                            {% if is_logistics %}
+                                <a href="{{ url_for('packaging.pending_fulfillment') }}" class="btn-relief-secondary">
+                                    <i class="bi bi-x-circle"></i>
+                                    Cancel
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('dashboard.index') }}" class="btn-relief-secondary">
+                                    <i class="bi bi-x-circle"></i>
+                                    Cancel
+                                </a>
+                            {% endif %}
                         </div>
                     </form>
                 </div>

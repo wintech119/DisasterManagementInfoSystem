@@ -603,30 +603,43 @@ def transaction_summary(reliefpkg_id):
 @login_required
 def create_request_on_behalf():
     """
-    LM/LO creates relief request on behalf of an agency.
-    Reuses existing request creation logic with agency selection.
+    Create relief request on behalf of an agency.
+    - Logistics Officers/Managers: Can select any agency
+    - Agency Users: Automatically use their own agency
     """
-    from app.core.rbac import is_logistics_officer, is_logistics_manager
+    from app.core.rbac import is_logistics_officer, is_logistics_manager, is_agency_user
     from app.db.models import Agency, Event
     
-    if not (is_logistics_officer() or is_logistics_manager()):
-        flash('Access denied. Only Logistics Officers and Managers can create requests on behalf of agencies.', 'danger')
+    # Allow logistics users and agency users
+    is_logistics = is_logistics_officer() or is_logistics_manager()
+    is_agency = is_agency_user()
+    
+    if not (is_logistics or is_agency):
+        flash('Access denied.', 'danger')
         abort(403)
     
     if request.method == 'POST':
         try:
-            agency_id = request.form.get('agency_id')
+            # Agency users use their own agency; logistics users select from dropdown
+            if is_agency:
+                agency_id = current_user.agency_id
+                if not agency_id:
+                    flash('Your user account is not associated with an agency.', 'danger')
+                    return redirect(url_for('packaging.create_request_on_behalf'))
+            else:
+                # Logistics users select agency
+                agency_id = request.form.get('agency_id')
+                if not agency_id:
+                    flash('Please select an agency', 'danger')
+                    return redirect(url_for('packaging.create_request_on_behalf'))
+                agency_id = int(agency_id)
+            
             urgency_ind = request.form.get('urgency_ind', 'M')
             eligible_event_id = request.form.get('eligible_event_id')
             eligible_event_id = int(eligible_event_id) if eligible_event_id else None
             rqst_notes_text = request.form.get('rqst_notes_text', '').strip()
             
-            # Validate agency selection
-            if not agency_id:
-                flash('Please select an agency', 'danger')
-                return redirect(url_for('packaging.create_request_on_behalf'))
-            
-            agency_id = int(agency_id)
+            # Validate agency
             agency = Agency.query.get(agency_id)
             if not agency:
                 flash('Invalid agency selected', 'danger')
@@ -657,12 +670,21 @@ def create_request_on_behalf():
             flash(f'Error creating request: {str(e)}', 'danger')
             return redirect(url_for('packaging.create_request_on_behalf'))
     
-    # GET request - show form with agency selector
-    agencies = Agency.query.filter_by(status_code='A').order_by(Agency.agency_name).all()
+    # GET request - show form
     events = Event.query.filter_by(status_code='A').order_by(Event.start_date.desc()).all()
+    
+    # For agency users, get their agency; for logistics, get all agencies
+    if is_agency:
+        user_agency = Agency.query.get(current_user.agency_id) if current_user.agency_id else None
+        agencies = None  # Don't show agency selector for agency users
+    else:
+        user_agency = None
+        agencies = Agency.query.filter_by(status_code='A').order_by(Agency.agency_name).all()
     
     return render_template('packaging/create_request_on_behalf.html',
                          agencies=agencies,
+                         user_agency=user_agency,
+                         is_logistics=is_logistics,
                          events=events,
                          today=date.today().isoformat())
 

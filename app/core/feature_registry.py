@@ -103,18 +103,19 @@ class FeatureRegistry:
         # =================================================================
         # RELIEF REQUEST MANAGEMENT (Agency Users)
         # =================================================================
-        'relief_request_creation': {
-            'name': 'Create Relief Requests',
-            'description': 'Submit new relief requests for disaster events',
-            'roles': ['AGENCY_DISTRIBUTOR', 'AGENCY_SHELTER', 'LOGISTICS_MANAGER', 'LOGISTICS_OFFICER'],
-            'route': 'requests.create_request',
-            'url': '/relief-requests/create',  # Fallback if route fails
-            'icon': 'bi-plus-circle',
-            'category': 'relief_requests',
-            'dashboard_widget': 'create_request_card',
-            'navigation_group': 'relief_requests',
-            'priority': 10
-        },
+        # REMOVED: 'relief_request_creation' - Consolidated into 'create_request_on_behalf'
+        # 'relief_request_creation': {
+        #     'name': 'Create Relief Requests',
+        #     'description': 'Submit new relief requests for disaster events',
+        #     'roles': ['AGENCY_DISTRIBUTOR', 'AGENCY_SHELTER', 'LOGISTICS_MANAGER', 'LOGISTICS_OFFICER'],
+        #     'route': 'requests.create_request',
+        #     'url': '/relief-requests/create',  # Fallback if route fails
+        #     'icon': 'bi-plus-circle',
+        #     'category': 'relief_requests',
+        #     'dashboard_widget': 'create_request_card',
+        #     'navigation_group': 'relief_requests',
+        #     'priority': 10
+        # },
         'relief_request_tracking': {
             'name': 'Track My Requests',
             'description': 'View and track status of submitted relief requests',
@@ -163,13 +164,13 @@ class FeatureRegistry:
         'create_request_on_behalf': {
             'name': 'Create Request (On Behalf of Agency)',
             'description': 'Create relief requests on behalf of agencies',
-            'roles': ['LOGISTICS_OFFICER', 'LOGISTICS_MANAGER'],
+            'roles': ['AGENCY_DISTRIBUTOR', 'AGENCY_SHELTER', 'LOGISTICS_OFFICER', 'LOGISTICS_MANAGER'],
             'route': 'packaging.create_request_on_behalf',
             'url': '/packaging/create-request-on-behalf',
             'icon': 'bi-plus-circle-fill',
-            'category': 'packaging',
-            'navigation_group': 'packaging',
-            'priority': 16
+            'category': 'relief_requests',
+            'navigation_group': 'relief_requests',
+            'priority': 10
         },
         'package_preparation': {
             'name': 'Relief Fulfillment Packages',
