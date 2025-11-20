@@ -762,9 +762,9 @@ def pending_fulfillment():
         'submitted': len([r for r in all_requests 
                          if r.status_code == rr_service.STATUS_SUBMITTED 
                          and not has_pending_approval(r)]),
-        'locked': len([r for r in all_requests 
-                      if r.status_code == rr_service.STATUS_PART_FILLED
-                      and not has_pending_approval(r)]),
+        'in_progress': len([r for r in all_requests 
+                           if r.status_code == rr_service.STATUS_PART_FILLED
+                           and not has_pending_approval(r)]),
         'pending_approval': len([r for r in all_requests if has_pending_approval(r)]),
         'approved': approved_packages_count
     }
@@ -773,9 +773,9 @@ def pending_fulfillment():
         'submitted': len([r for r in filtered_requests 
                          if r.status_code == rr_service.STATUS_SUBMITTED 
                          and not has_pending_approval(r)]),
-        'locked': len([r for r in filtered_requests 
-                      if r.status_code == rr_service.STATUS_PART_FILLED
-                      and not has_pending_approval(r)]),
+        'in_progress': len([r for r in filtered_requests 
+                           if r.status_code == rr_service.STATUS_PART_FILLED
+                           and not has_pending_approval(r)]),
         'pending_approval': len([r for r in filtered_requests if has_pending_approval(r)])
     }
     

@@ -32,7 +32,7 @@
         {
             'icon': 'box-seam',
             'label': 'Being Prepared',
-            'value': counts.get('locked', 0),
+            'value': counts.get('in_progress', 0),
             'variant': 'info'
         }
     ] %}
@@ -62,8 +62,8 @@
            class="filter-tab {% if current_filter == 'in_progress' %}active{% endif %}"
            aria-current="{% if current_filter == 'in_progress' %}page{% endif %}">
             Being Prepared
-            {% if global_counts.get('locked', 0) > 0 %}
-            <span class="filter-tab-count" aria-label="{{ global_counts.get('locked', 0) }} in progress">{{ global_counts.get('locked', 0) }}</span>
+            {% if global_counts.get('in_progress', 0) > 0 %}
+            <span class="filter-tab-count" aria-label="{{ global_counts.get('in_progress', 0) }} in progress">{{ global_counts.get('in_progress', 0) }}</span>
             {% endif %}
         </a>
         {% if has_role('LOGISTICS_MANAGER') %}
