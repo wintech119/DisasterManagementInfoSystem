@@ -36,7 +36,6 @@
             'variant': 'info'
         }
     ] %}
-    {% if has_role('LOGISTICS_MANAGER') %}
     {% set summary_metrics = summary_metrics + [
         {
             'icon': 'clipboard-check',
@@ -45,7 +44,6 @@
             'variant': 'primary'
         }
     ] %}
-    {% endif %}
     {{ render_summary_cards(summary_metrics) }}
 
     <!-- Filter Tabs -->
@@ -66,7 +64,6 @@
             <span class="filter-tab-count" aria-label="{{ global_counts.get('in_progress', 0) }} in progress">{{ global_counts.get('in_progress', 0) }}</span>
             {% endif %}
         </a>
-        {% if has_role('LOGISTICS_MANAGER') %}
         <a href="{{ url_for('packaging.pending_fulfillment', filter='pending_approval') }}" 
            class="filter-tab {% if current_filter == 'pending_approval' %}active{% endif %}"
            aria-current="{% if current_filter == 'pending_approval' %}page{% endif %}">
@@ -75,7 +72,6 @@
             <span class="filter-tab-count" aria-label="{{ global_counts.get('pending_approval', 0) }} awaiting approval">{{ global_counts.get('pending_approval', 0) }}</span>
             {% endif %}
         </a>
-        {% endif %}
         <a href="{{ url_for('packaging.pending_fulfillment', filter='approved_for_dispatch') }}" 
            class="filter-tab {% if current_filter == 'approved_for_dispatch' %}active{% endif %}"
            aria-current="{% if current_filter == 'approved_for_dispatch' %}page{% endif %}">

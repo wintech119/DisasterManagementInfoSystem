@@ -774,11 +774,6 @@ def pending_fulfillment():
     
     filter_type = request.args.get('filter', 'awaiting')
     
-    # Security: Only Logistics Managers can access pending_approval filter
-    if filter_type == 'pending_approval' and not is_logistics_manager():
-        flash('Access denied. Only Logistics Managers can view packages awaiting approval.', 'danger')
-        abort(403)
-    
     # Handle approved_for_dispatch filter - shows approved packages WITH items allocated
     if filter_type == 'approved_for_dispatch':
         # Query approved packages (status='D') with items allocated
