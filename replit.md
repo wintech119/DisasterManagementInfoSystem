@@ -12,6 +12,8 @@ DMIS (Disaster Management Information System) is a web-based platform for the Go
   - Consistent navigation patterns throughout the application
 
 ## Recent Updates (November 21, 2025)
+- **System Rebranding**: Complete rename from "DRIMS" to "DMIS" (Disaster Management Information System) across all user-facing text, templates, and documentation. All technical identifiers (routes, function names, database schemas) remain unchanged.
+- **ItemBatch Schema Update**: Changed `batch_date` column from NOT NULL to NULL constraint. Updated SQLAlchemy model (`app/db/models.py`) and database schema to allow nullable batch dates. All existing code already handles null values properly (BatchAllocationService, BatchCreationService, and frontend JavaScript). When null, batch_date defaults to today's date during creation and displays as 'N/A' in UI.
 - **Operations Dashboard for Executives**: Created new executive-level Operations Dashboard (`/executive/operations`) with read-only KPIs and Chart.js visualizations for system-wide donations, relief requests, and fulfillment metrics. Accessible only to ODPEM_DG, ODPEM_DDG, and ODPEM_DIR_PEOD roles.
 - **Executive Dashboard Routing**: Updated main dashboard routing to send executive roles (DG, Deputy DG, Director PEOD) to Operations Dashboard by default. Director Dashboard (eligibility workflow) remains accessible via navigation menu at `/director/dashboard`.
 - **Relief Request Tab Counters**: All tab counters now show exact counts matching the number of requests in each tab's list using identical filtering logic. Added "All Requests" tab showing total count. Reorganized tabs: All Requests, Pending Review, Approved, Drafts, Completed.
