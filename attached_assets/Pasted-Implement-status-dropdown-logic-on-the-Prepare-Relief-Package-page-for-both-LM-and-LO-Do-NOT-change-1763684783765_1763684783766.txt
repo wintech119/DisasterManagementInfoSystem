@@ -1,0 +1,146 @@
+Implement status dropdown logic on the Prepare Relief Package page for both LM and LO. Do NOT change the database schema; keep existing DRIMS UI and navigation.
+
+1. General Behaviour – Status Dropdown (per item row)
+
+Each item row in the request list has a Status dropdown.
+
+The value and allowed options in this dropdown must be driven only by:
+
+The item’s Requested Quantity, and
+
+The item’s Allocated Quantity (total across all warehouses/batches from the side drawer).
+
+The system must:
+
+Automatically set a default status whenever allocations change.
+
+Restrict the selectable options according to the rules below.
+
+Re-apply this logic every time the drawer is closed for that item.
+
+2. Case 1 – Fully Allocated (Allocated == Requested)
+
+Logic
+
+If Allocated Qty == Requested Qty for the item:
+
+Set Status to “FILLED”.
+
+The dropdown must show only “FILLED”.
+
+The dropdown must be disabled/read-only (user cannot change it).
+
+Acceptance
+
+When allocations become exactly equal to requested:
+
+Status auto-sets to FILLED.
+
+Dropdown is locked (read-only).
+
+Reopening/closing the drawer with allocations still equal to requested keeps status as FILLED and locked.
+
+3. Case 2 – No Allocation (Allocated == 0)
+
+Logic
+
+If Allocated Qty == 0:
+
+Default Status = “UNAVAILABLE”.
+
+Dropdown options must be exactly:
+
+UNAVAILABLE
+
+DENIED
+
+AWAITING AVAILABILITY
+
+User can freely switch between these 3 values.
+
+Acceptance
+
+When allocated total is 0:
+
+Returning from the drawer sets Status to UNAVAILABLE by default.
+
+Only the 3 values above are shown.
+
+If user previously chose DENIED or AWAITING AVAILABILITY but then reopens the drawer and leaves allocations at 0, on closing:
+
+The system must re-apply the 0 allocation logic and reset Status back to UNAVAILABLE as the default.
+
+4. Case 3 – Partially Allocated (0 < Allocated < Requested)
+
+Logic
+
+If 0 < Allocated Qty < Requested Qty:
+
+Default Status = “PARTLY FILLED”.
+
+Dropdown options must be exactly:
+
+PARTLY FILLED
+
+ALLOWED LIMIT
+
+User can toggle between these two.
+
+Acceptance
+
+When allocated total is greater than 0 but less than requested:
+
+Returning from the drawer sets Status to PARTLY FILLED by default.
+
+Only PARTLY FILLED and ALLOWED LIMIT are available.
+
+If user reopens the drawer and allocations remain partial (still 0 < Allocated < Requested), on closing:
+
+The system must re-apply the partial logic and reset Status back to PARTLY FILLED as the default.
+
+5. Refresh Status After Drawer Changes
+
+Whenever the user:
+
+Opens the side drawer for an item,
+
+Changes allocations, and
+
+Saves/closes the drawer,
+the system must:
+
+Recalculate Allocated Qty total for that item.
+
+Compare it with Requested Qty.
+
+Determine which case applies:
+
+Case 1: Allocated == Requested → FILLED (locked).
+
+Case 2: Allocated == 0 → UNAVAILABLE, DENIED, AWAITING AVAILABILITY.
+
+Case 3: 0 < Allocated < Requested → PARTLY FILLED, ALLOWED LIMIT.
+
+Update both:
+
+Status dropdown default value, and
+
+The allowed options according to that case.
+
+Ensure the main grid’s Allocated Qty and Remaining Qty are updated before applying the status logic so the dropdown always reflects the latest state.
+
+6. Edge Conditions & Validation
+
+The system must never allow:
+
+Status FILLED if Allocated ≠ Requested.
+
+Status UNAVAILABLE / DENIED / AWAITING AVAILABILITY if Allocated > 0.
+
+Status PARTLY FILLED / ALLOWED LIMIT if Allocated == 0 or Allocated == Requested.
+
+If, for any reason, data would violate these rules when returning from the drawer:
+
+Automatically correct the Status to the appropriate default based on the latest allocation values.
+
+Restrict the dropdown options to only those allowed for that allocation state.

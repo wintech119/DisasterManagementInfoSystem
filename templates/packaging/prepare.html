@@ -449,6 +449,17 @@
     border-color: #dc3545;
 }
 
+.status-dropdown.is-locked {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+    opacity: 0.85;
+}
+
+.status-dropdown:disabled {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+}
+
 .violation-alert {
     position: fixed;
     top: 20px;
@@ -860,67 +871,89 @@ function updateStatusDropdown(itemId, allocated, requested) {
     const statusDropdown = document.getElementById(`status_${itemId}`);
     if (!statusDropdown) return;
     
-    const autoStatus = statusDropdown.dataset.autoStatus;
     const currentValue = statusDropdown.value;
     
-    // Determine auto status based on allocation
-    let newAutoStatus;
-    if (allocated === 0) {
-        newAutoStatus = 'R';  // Requested
-    } else if (allocated >= requested) {
-        newAutoStatus = 'F';  // Filled
+    // Determine default status based on allocation rules
+    let defaultStatus;
+    let shouldLock = false;
+    
+    if (allocated === requested && allocated > 0) {
+        // Case 1: Fully Allocated - Set to FILLED and lock
+        defaultStatus = 'F';  // FILLED
+        shouldLock = true;
+    } else if (allocated === 0) {
+        // Case 2: No Allocation - Default to UNAVAILABLE
+        defaultStatus = 'U';  // UNAVAILABLE
+        shouldLock = false;
+    } else if (allocated > 0 && allocated < requested) {
+        // Case 3: Partially Allocated - Default to PARTLY FILLED
+        defaultStatus = 'P';  // PARTLY FILLED
+        shouldLock = false;
+    } else if (allocated > requested) {
+        // Over-allocated - Set to FILLED but show validation error
+        defaultStatus = 'F';  // FILLED
+        shouldLock = false;
     } else {
-        newAutoStatus = 'P';  // Partly filled
+        // Fallback
+        defaultStatus = 'U';
+        shouldLock = false;
     }
     
     // Update data attribute
-    statusDropdown.dataset.autoStatus = newAutoStatus;
+    statusDropdown.dataset.autoStatus = defaultStatus;
     
-    // Auto-select if current status doesn't match the new allocation state
-    // Only auto-change for automatic statuses (R, P, F), not manual ones (D, U, W, L)
-    const autoStatuses = ['R', 'P', 'F'];
-    if (autoStatuses.includes(currentValue)) {
-        statusDropdown.value = newAutoStatus;
+    // Always reset to default status when returning from drawer
+    // This ensures status matches current allocation state
+    statusDropdown.value = defaultStatus;
+    
+    // Update disabled state
+    if (shouldLock) {
+        statusDropdown.disabled = true;
+        statusDropdown.classList.add('is-locked');
+    } else {
+        statusDropdown.disabled = false;
+        statusDropdown.classList.remove('is-locked');
     }
     
     // Update allowed options based on allocation state
-    updateAllowedStatusOptions(itemId, allocated, requested);
+    updateAllowedStatusOptions(itemId, allocated, requested, defaultStatus);
 }
 
-function updateAllowedStatusOptions(itemId, allocated, requested) {
+function updateAllowedStatusOptions(itemId, allocated, requested, defaultStatus) {
     const statusDropdown = document.getElementById(`status_${itemId}`);
     if (!statusDropdown) return;
     
     // Determine allowed status codes based on allocation
     let allowedCodes;
-    if (allocated === 0) {
-        allowedCodes = ['R', 'D', 'U', 'W'];
-    } else if (allocated >= requested) {
+    
+    if (allocated === requested && allocated > 0) {
+        // Case 1: Fully Allocated - Only FILLED allowed, dropdown locked
+        allowedCodes = ['F'];  // FILLED only
+    } else if (allocated === 0) {
+        // Case 2: No Allocation - UNAVAILABLE, DENIED, AWAITING AVAILABILITY
+        allowedCodes = ['U', 'D', 'W'];  // UNAVAILABLE, DENIED, AWAITING AVAILABILITY
+    } else if (allocated > 0 && allocated < requested) {
+        // Case 3: Partially Allocated - PARTLY FILLED, ALLOWED LIMIT
+        allowedCodes = ['P', 'L'];  // PARTLY FILLED, ALLOWED LIMIT
+    } else if (allocated > requested) {
+        // Over-allocated - Show FILLED only (with error)
         allowedCodes = ['F'];
     } else {
-        allowedCodes = ['P', 'L'];
-    }
-    
-    // Get current value before updating options
-    const currentValue = statusDropdown.value;
-    
-    // CRITICAL: Preserve current selection even if outside allowed codes
-    // This prevents discarding legitimate manual statuses (e.g., Denied after partial allocation)
-    const finalAllowedCodes = [...allowedCodes];
-    if (currentValue && !allowedCodes.includes(currentValue)) {
-        finalAllowedCodes.push(currentValue);
+        // Fallback
+        allowedCodes = ['U', 'D', 'W'];
     }
     
     // Store status map from template
     const statusMap = {{ status_map|tojson }};
     
-    // Rebuild dropdown options
+    // Rebuild dropdown options with ONLY the allowed codes
+    // Do NOT preserve previous selections outside allowed codes
     statusDropdown.innerHTML = '';
-    finalAllowedCodes.forEach(code => {
+    allowedCodes.forEach(code => {
         const option = document.createElement('option');
         option.value = code;
         option.textContent = statusMap[code]?.desc || code;
-        if (code === currentValue) {
+        if (code === defaultStatus) {
             option.selected = true;
         }
         statusDropdown.appendChild(option);
