@@ -113,15 +113,14 @@ const BatchAllocation = (function() {
         showLoading();
         
         try {
-            // Load existing allocations to calculate remaining qty
+            // Load existing allocations
             loadExistingAllocations();
-            const alreadyAllocated = getTotalAllocated();
-            const remainingQty = currentItemData.requestedQty - alreadyAllocated;
             
             // Build API URL with query parameters
             const params = new URLSearchParams();
-            // Always include remaining_qty, even if 0 (for consistent API response format)
-            params.append('remaining_qty', remainingQty);
+            // Pass the full requested quantity (not adjusted for already-allocated batches)
+            // The backend will calculate shortfall correctly based on total request
+            params.append('remaining_qty', currentItemData.requestedQty);
             if (currentItemData.requiredUom) {
                 params.append('required_uom', currentItemData.requiredUom);
             }
