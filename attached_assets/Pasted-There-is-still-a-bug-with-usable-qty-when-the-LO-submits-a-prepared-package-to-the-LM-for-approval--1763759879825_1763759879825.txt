@@ -1,0 +1,86 @@
+There is still a bug with usable_qty when the LO submits a prepared package to the LM for approval.
+
+Current Problem
+
+Flow:
+
+LO prepares allocations in Prepare Relief Package.
+
+LO clicks Submit for Approval (send to LM).
+
+In the code/UI:
+
+When LO submits, the usable quantity is being reduced (as if stock was consumed).
+
+In the database (correct behaviour):
+
+Only reserved_qty is increased for the relevant itembatch rows.
+
+`usable_qty is NOT reduced at this stage.
+
+This creates a mismatch: the UI / in-memory logic thinks usable stock went down, but the DB still shows the original usable_qty with higher reserved_qty.
+
+Required Behaviour
+
+On LO “Submit for Approval” (pre-dispatch stage):
+
+For all affected batches:
+
+Do NOT decrement usable_qty in code.
+
+Only:
+
+Increase reserved_qty for those batches, and
+
+Update any inventory.reserved_qty totals as needed.
+
+After submission:
+
+In the UI and business logic, treat available quantity as:
+
+available_qty = usable_qty - reserved_qty
+
+
+using the unchanged usable_qty and the updated reserved_qty.
+
+Under no circumstance should usable_qty be changed in memory or on the client when the LO submits for LM approval.
+
+Dispatch remains the only point that reduces usable_qty
+
+Keep the existing behaviour where usable_qty is actually reduced only when the LM approves and sends to dispatch.
+
+At Send/Approve Dispatch:
+
+Use the reserved quantities to reconcile and reduce usable_qty in the database (current correct logic).
+
+Do not change this dispatch logic—only stop any earlier code from decrementing usable_qty at LO submit time.
+
+Consistency Across Layers
+
+Review the LO Submit for Approval handler, any services it calls, and any client-side state updates to:
+
+Remove/rollback any lines that subtract from usable_qty.
+
+Ensure all availability, banners, and validation use usable_qty - reserved_qty (with usable_qty untouched until dispatch).
+
+After the fix:
+
+Immediately after LO submits, if you reload from the API, the UI must show:
+
+Same usable_qty as before,
+
+Higher reserved_qty, and
+
+Lower available_qty only because reserved_qty increased, not because usable_qty was decremented.
+
+Constraints
+
+Do not change the database schema.
+
+Do not alter workflows, statuses, or FEFO/FIFO logic.
+
+Only correct the logic around LO “Submit for Approval” so that:
+
+usable_qty is never reduced at this step, and
+
+The code’s behaviour fully matches the database behaviour.

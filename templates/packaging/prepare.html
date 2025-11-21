@@ -1173,15 +1173,17 @@ function validateAllAllocations() {
     let valid = true;
     const errors = [];
     
-    // Validate individual allocations against stock
+    // Validate individual allocations against available stock (usable - reserved)
     document.querySelectorAll('.allocation-input').forEach(input => {
         const itemId = input.dataset.itemId;
         const warehouseId = input.dataset.warehouseId;
         const allocated = parseFloat(input.value || 0);
         const stockElement = document.getElementById(`stock_${itemId}_${warehouseId}`);
         const usableQty = parseFloat(stockElement.dataset.usableQty || 0);
+        const reservedQty = parseFloat(stockElement.dataset.reservedQty || 0);
+        const availableQty = usableQty - reservedQty;
         
-        if (allocated > usableQty) {
+        if (allocated > availableQty) {
             valid = false;
             input.style.borderColor = '#dc3545';
             input.style.boxShadow = '0 0 0 0.2rem rgba(220,53,69,.25)';
