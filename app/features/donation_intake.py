@@ -25,6 +25,7 @@ from decimal import Decimal
 from datetime import datetime, date, timedelta
 
 from app.db import db
+from app.utils.timezone import now as jamaica_now
 from app.db.models import (
     Donation, DonationItem, DonationIntake, DonationIntakeItem,
     Item, ItemBatch, Warehouse, Inventory, UnitOfMeasure
@@ -450,7 +451,7 @@ def _process_intake_submission(donation, warehouse):
     
     # Process the intake
     try:
-        current_timestamp = datetime.now()
+        current_timestamp = jamaica_now()
         
         # Create dnintake header (existing_intake check prevents duplicates)
         intake = DonationIntake()

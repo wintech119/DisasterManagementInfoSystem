@@ -12,6 +12,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import StaleDataError
 
 from app.db import db
+from app.utils.timezone import now as jamaica_now
 from app.db.models import Donation, DonationItem, Donor, Event, Custodian, Item, UnitOfMeasure
 from app.core.audit import add_audit_fields, add_verify_fields
 from app.core.decorators import feature_required
@@ -178,7 +179,7 @@ def create_donation():
             donation.status_code = 'V'
             donation.comments_text = comments_text.upper() if comments_text else None
             
-            current_timestamp = datetime.now()
+            current_timestamp = jamaica_now()
             
             add_audit_fields(donation, current_user, is_new=True)
             
@@ -412,7 +413,7 @@ def edit_donation(donation_id):
             # Update verify fields to reflect current user and timestamp
             if status_code == 'V':
                 donation.verify_by_id = current_user.user_name
-                donation.verify_dtime = datetime.now()
+                donation.verify_dtime = jamaica_now()
             
             db.session.commit()
             
@@ -541,7 +542,7 @@ def add_donation_item(donation_id):
             donation_item.status_code = 'V'
             donation_item.comments_text = comments_text.upper() if comments_text else None
             
-            current_timestamp = datetime.now()
+            current_timestamp = jamaica_now()
             
             add_audit_fields(donation_item, current_user, is_new=True)
             
@@ -643,7 +644,7 @@ def edit_donation_item(donation_id, item_id):
             # Status remains 'V' and verify fields are updated
             if status_code == 'V':
                 donation_item.verify_by_id = current_user.user_name
-                donation_item.verify_dtime = datetime.now()
+                donation_item.verify_dtime = jamaica_now()
             
             db.session.commit()
             

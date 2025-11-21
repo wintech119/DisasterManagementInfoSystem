@@ -5,6 +5,7 @@ from app.db.models import db, Inventory, Item, Warehouse, Event, Donor, Donation
 from datetime import datetime
 import csv
 from io import StringIO
+from app.utils.timezone import now as jamaica_now
 
 reports_bp = Blueprint('reports', __name__)
 
@@ -66,7 +67,7 @@ def export_inventory():
     return Response(
         output,
         mimetype='text/csv',
-        headers={'Content-Disposition': f'attachment; filename=inventory_summary_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'}
+        headers={'Content-Disposition': f'attachment; filename=inventory_summary_{jamaica_now().strftime("%Y%m%d_%H%M%S")}.csv'}
     )
 
 @reports_bp.route('/donations_summary')

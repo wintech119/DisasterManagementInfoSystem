@@ -4,13 +4,14 @@ Allows Logistics Officers/Managers to prepare relief packages from approved requ
 """
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, abort
 from flask_login import login_required, current_user
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from decimal import Decimal
 from sqlalchemy import and_
 from sqlalchemy.orm import joinedload
 import uuid
 
 from app.db import db
+from app.utils.timezone import now as jamaica_now
 from app.db.models import (
     ReliefRqst, ReliefRqstItem, Item, Warehouse, Inventory, ItemBatch,
     User, Notification,
@@ -218,13 +219,13 @@ def review_approval(reliefrqst_id):
             
             # LM approval: set verify_by_id and verify_dtime
             relief_pkg.verify_by_id = current_user.user_name
-            relief_pkg.verify_dtime = datetime.now()
+            relief_pkg.verify_dtime = jamaica_now()
             
             # Mark package as dispatched
             relief_pkg.status_code = rr_service.PKG_STATUS_DISPATCHED
-            relief_pkg.dispatch_dtime = datetime.now()
+            relief_pkg.dispatch_dtime = jamaica_now()
             relief_pkg.update_by_id = current_user.user_name
-            relief_pkg.update_dtime = datetime.now()
+            relief_pkg.update_dtime = jamaica_now()
             
             # Commit inventory: convert reservations to actual deductions
             success, error_msg = reservation_service.commit_inventory(relief_request.reliefrqst_id)
@@ -233,7 +234,7 @@ def review_approval(reliefrqst_id):
             
             # Update relief request status
             relief_request.action_by_id = current_user.user_name
-            relief_request.action_dtime = datetime.now()
+            relief_request.action_dtime = jamaica_now()
             relief_request.status_code = rr_service.STATUS_PART_FILLED
             relief_request.version_nbr += 1
             
@@ -446,7 +447,7 @@ def _save_draft_approval(relief_request, relief_pkg, relief_request_version, pac
         # Keep package in pending status
         relief_pkg.status_code = rr_service.PKG_STATUS_PENDING
         relief_pkg.update_by_id = current_user.user_name
-        relief_pkg.update_dtime = datetime.now()
+        relief_pkg.update_dtime = jamaica_now()
         relief_pkg.version_nbr += 1
         
         # Flush to persist allocations before reservation
@@ -573,13 +574,13 @@ def _approve_and_dispatch(relief_request, relief_pkg, relief_request_version, pa
         
         # LM approval: set verify_by_id and verify_dtime
         relief_pkg.verify_by_id = current_user.user_name
-        relief_pkg.verify_dtime = datetime.now()
+        relief_pkg.verify_dtime = jamaica_now()
         
         # Mark package as dispatched
         relief_pkg.status_code = rr_service.PKG_STATUS_DISPATCHED
-        relief_pkg.dispatch_dtime = datetime.now()
+        relief_pkg.dispatch_dtime = jamaica_now()
         relief_pkg.update_by_id = current_user.user_name
-        relief_pkg.update_dtime = datetime.now()
+        relief_pkg.update_dtime = jamaica_now()
         relief_pkg.version_nbr += 1
         
         # Flush to persist allocations
@@ -592,7 +593,7 @@ def _approve_and_dispatch(relief_request, relief_pkg, relief_request_version, pa
         
         # Update relief request status
         relief_request.action_by_id = current_user.user_name
-        relief_request.action_dtime = datetime.now()
+        relief_request.action_dtime = jamaica_now()
         relief_request.status_code = rr_service.STATUS_PART_FILLED
         relief_request.version_nbr += 1
         
@@ -719,7 +720,7 @@ def transaction_summary(reliefpkg_id):
                          total_items=total_items,
                          total_batches=total_batches,
                          warehouses_used=warehouses_used,
-                         generated_at=datetime.now(),
+                         generated_at=jamaica_now(),
                          from_tab=from_tab)
 
 
@@ -1018,7 +1019,7 @@ def pending_fulfillment():
                              counts=all_tab_counts,
                              global_counts=all_tab_counts,
                              current_filter=filter_type,
-                             now=datetime.now())
+                             now=jamaica_now())
     
     elif filter_type == 'approved_no_allocation':
         # Show approved packages WITHOUT items - use pre-built dataset
@@ -1037,7 +1038,7 @@ def pending_fulfillment():
                              counts=all_tab_counts,
                              global_counts=all_tab_counts,
                              current_filter=filter_type,
-                             now=datetime.now())
+                             now=jamaica_now())
     
     elif filter_type == 'awaiting':
         filtered_requests = awaiting_requests
@@ -1252,7 +1253,7 @@ def _save_draft(relief_request, relief_request_version, package_version):
         # Change request status to PART_FILLED to show in "Being Prepared" tab
         relief_request.status_code = rr_service.STATUS_PART_FILLED
         relief_request.action_by_id = current_user.user_name
-        relief_request.action_dtime = datetime.now()
+        relief_request.action_dtime = jamaica_now()
         relief_request.version_nbr += 1
         
         # Flush to database (still in transaction - not committed yet)
@@ -1359,15 +1360,15 @@ def _submit_for_approval(relief_request, relief_request_version, package_version
         # LM approval will overwrite this sentinel with the actual LM's username
         relief_pkg.status_code = rr_service.PKG_STATUS_PENDING
         relief_pkg.verify_by_id = '__PENDING_LM__'  # Sentinel: submitted for LM approval
-        relief_pkg.verify_dtime = datetime.now()  # Mark submission time
+        relief_pkg.verify_dtime = jamaica_now()  # Mark submission time
         relief_pkg.update_by_id = current_user.user_name
-        relief_pkg.update_dtime = datetime.now()
+        relief_pkg.update_dtime = jamaica_now()
         relief_pkg.version_nbr += 1
         
         # Change request status to PART_FILLED (submitted for approval)
         relief_request.status_code = rr_service.STATUS_PART_FILLED
         relief_request.action_by_id = current_user.user_name
-        relief_request.action_dtime = datetime.now()
+        relief_request.action_dtime = jamaica_now()
         relief_request.version_nbr += 1
         
         # Flush to persist allocations before calculating reservation deltas
@@ -1449,13 +1450,13 @@ def _send_for_dispatch(relief_request, relief_request_version, package_version):
         
         # LM approval: set verify_by_id to current LM (bypasses LO approval step)
         relief_pkg.verify_by_id = current_user.user_name
-        relief_pkg.verify_dtime = datetime.now()
+        relief_pkg.verify_dtime = jamaica_now()
         
         # Mark package as dispatched
         relief_pkg.status_code = rr_service.PKG_STATUS_DISPATCHED
-        relief_pkg.dispatch_dtime = datetime.now()
+        relief_pkg.dispatch_dtime = jamaica_now()
         relief_pkg.update_by_id = current_user.user_name
-        relief_pkg.update_dtime = datetime.now()
+        relief_pkg.update_dtime = jamaica_now()
         
         # Flush to persist allocations
         db.session.flush()
@@ -1467,7 +1468,7 @@ def _send_for_dispatch(relief_request, relief_request_version, package_version):
         
         # Update relief request status
         relief_request.action_by_id = current_user.user_name
-        relief_request.action_dtime = datetime.now()
+        relief_request.action_dtime = jamaica_now()
         relief_request.status_code = rr_service.STATUS_PART_FILLED
         relief_request.version_nbr += 1
         
@@ -1539,9 +1540,9 @@ def _process_allocations(relief_request, validate_complete=False):
             start_date=date.today(),
             status_code='P',  # Preparing
             create_by_id=current_user.user_name,
-            create_dtime=datetime.now(),
+            create_dtime=jamaica_now(),
             update_by_id=current_user.user_name,
-            update_dtime=datetime.now(),
+            update_dtime=jamaica_now(),
             verify_by_id=None,  # NULL for drafts, set when submitted for approval
             received_by_id=None,  # NULL until package is received
             version_nbr=1
@@ -1715,7 +1716,7 @@ def _process_allocations(relief_request, validate_complete=False):
         # Only set action_by_id when status is NOT 'R' (per constraint c_reliefrqst_item_7)
         if requested_status != 'R':
             item.action_by_id = current_user.user_name
-            item.action_dtime = datetime.now()
+            item.action_dtime = jamaica_now()
         else:
             # When status is 'R', action_by_id must be NULL
             item.action_by_id = None
@@ -1735,9 +1736,9 @@ def _process_allocations(relief_request, validate_complete=False):
                 item_qty=allocated_qty,  # Can be zero
                 uom_code=uom_code,
                 create_by_id=current_user.user_name,
-                create_dtime=datetime.now(),
+                create_dtime=jamaica_now(),
                 update_by_id=current_user.user_name,
-                update_dtime=datetime.now(),
+                update_dtime=jamaica_now(),
                 version_nbr=1
             )
             db.session.add(pkg_item)
@@ -2215,9 +2216,9 @@ def mark_handover(reliefpkg_id):
     try:
         # Mark as received/handed over
         relief_pkg.received_by_id = current_user.user_name
-        relief_pkg.received_dtime = datetime.now()
+        relief_pkg.received_dtime = jamaica_now()
         relief_pkg.update_by_id = current_user.user_name
-        relief_pkg.update_dtime = datetime.now()
+        relief_pkg.update_dtime = jamaica_now()
         
         # Note: Status remains 'D' (Dispatched). We use received_dtime to track handover.
         # Status changes to 'C' (Completed) when agency signs off, if needed.
@@ -2303,7 +2304,7 @@ def dispatch_received():
     if current_filter == 'recent':
         # Last 30 days
         from datetime import timedelta
-        cutoff_date = datetime.now() - timedelta(days=30)
+        cutoff_date = jamaica_now() - timedelta(days=30)
         packages = base_query.filter(
             ReliefPkg.received_dtime >= cutoff_date
         ).order_by(ReliefPkg.received_dtime.desc()).all()
@@ -2312,7 +2313,7 @@ def dispatch_received():
     
     # Calculate counts
     from datetime import timedelta
-    cutoff_date = datetime.now() - timedelta(days=30)
+    cutoff_date = jamaica_now() - timedelta(days=30)
     global_counts = {
         'recent': base_query.filter(ReliefPkg.received_dtime >= cutoff_date).count(),
         'all': base_query.count()

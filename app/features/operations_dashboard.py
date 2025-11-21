@@ -21,6 +21,7 @@ from app.core.rbac import role_required
 from app.services import relief_request_service as rr_service
 from datetime import datetime, timedelta
 from collections import defaultdict
+from app.utils.timezone import now as jamaica_now
 
 operations_dashboard_bp = Blueprint('operations_dashboard', __name__)
 
@@ -34,7 +35,7 @@ def index():
     """
     # Get time period from query parameter (default: 30 days)
     period_days = int(request.args.get('period', 30))
-    start_date = datetime.now() - timedelta(days=period_days)
+    start_date = jamaica_now() - timedelta(days=period_days)
     
     # =======================
     # DONATION METRICS
