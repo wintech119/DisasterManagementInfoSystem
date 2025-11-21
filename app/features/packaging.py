@@ -955,27 +955,20 @@ def pending_fulfillment():
     if filter_type == 'awaiting':
         # Show all SUBMITTED requests (not yet partially filled)
         # Exclude requests with dispatched packages (they belong in Approved for Dispatch tab)
-        # Filter by user involvement for LOs
         filtered_requests = [r for r in all_requests 
                            if r.status_code == rr_service.STATUS_SUBMITTED 
                            and not has_pending_approval(r)
-                           and not has_dispatched_package(r)
-                           and is_user_involved(r)]
+                           and not has_dispatched_package(r)]
     elif filter_type == 'in_progress':
         # Being Prepared: Show PART_FILLED requests (in active preparation)
         # Exclude requests with dispatched packages (they belong in Approved for Dispatch tab)
-        # Filter by user involvement for LOs
         filtered_requests = [r for r in all_requests 
                            if r.status_code == rr_service.STATUS_PART_FILLED
                            and not has_pending_approval(r)
-                           and not has_dispatched_package(r)
-                           and is_user_involved(r)]
+                           and not has_dispatched_package(r)]
     elif filter_type == 'pending_approval':
         # Show only requests with packages awaiting LM approval
-        # Filter by user involvement for LOs
-        filtered_requests = [r for r in all_requests 
-                           if has_pending_approval(r)
-                           and is_user_involved(r)]
+        filtered_requests = [r for r in all_requests if has_pending_approval(r)]
     else:
         # "All" tab: Show only requests where current user is involved
         filtered_requests = [r for r in all_requests if is_user_involved(r)]
