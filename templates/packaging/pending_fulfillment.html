@@ -52,26 +52,31 @@
            class="filter-tab {% if current_filter == 'awaiting' or not current_filter %}active{% endif %}"
            aria-current="{% if current_filter == 'awaiting' or not current_filter %}page{% endif %}">
             Awaiting to be Filled
+            <span class="filter-tab-count" aria-label="{{ counts.get('submitted', 0) }} awaiting">{{ counts.get('submitted', 0) }}</span>
         </a>
         <a href="{{ url_for('packaging.pending_fulfillment', filter='in_progress') }}" 
            class="filter-tab {% if current_filter == 'in_progress' %}active{% endif %}"
            aria-current="{% if current_filter == 'in_progress' %}page{% endif %}">
             Being Prepared
+            <span class="filter-tab-count" aria-label="{{ counts.get('in_progress', 0) }} in progress">{{ counts.get('in_progress', 0) }}</span>
         </a>
         <a href="{{ url_for('packaging.pending_fulfillment', filter='pending_approval') }}" 
            class="filter-tab {% if current_filter == 'pending_approval' %}active{% endif %}"
            aria-current="{% if current_filter == 'pending_approval' %}page{% endif %}">
             Awaiting Approval
+            <span class="filter-tab-count" aria-label="{{ counts.get('pending_approval', 0) }} pending approval">{{ counts.get('pending_approval', 0) }}</span>
         </a>
         <a href="{{ url_for('packaging.pending_fulfillment', filter='approved_for_dispatch') }}" 
            class="filter-tab {% if current_filter == 'approved_for_dispatch' %}active{% endif %}"
            aria-current="{% if current_filter == 'approved_for_dispatch' %}page{% endif %}">
             Approved for Dispatch
+            <span class="filter-tab-count" aria-label="{{ counts.get('approved', 0) }} approved">{{ counts.get('approved', 0) }}</span>
         </a>
         <a href="{{ url_for('packaging.pending_fulfillment', filter='approved_no_allocation') }}" 
            class="filter-tab {% if current_filter == 'approved_no_allocation' %}active{% endif %}"
            aria-current="{% if current_filter == 'approved_no_allocation' %}page{% endif %}">
             Approved (No Allocation)
+            <span class="filter-tab-count" aria-label="{{ counts.get('approved_no_allocation', 0) }} no allocation">{{ counts.get('approved_no_allocation', 0) }}</span>
         </a>
     </nav>
 
