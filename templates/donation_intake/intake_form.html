@@ -564,7 +564,7 @@ function validateQuantities(itemId) {
     }
 }
 
-// Validate batch number and batch date pairing
+// Validate batch number and batch date pairing (deterministic clear-then-validate workflow)
 function validateBatchPairing(itemId) {
     const batchNoInput = document.querySelector(`input[name="batch_no_${itemId}"]`);
     const batchDateInput = document.querySelector(`input[name="batch_date_${itemId}"]`);
@@ -573,11 +573,7 @@ function validateBatchPairing(itemId) {
     
     if (!batchNoInput || !batchDateInput) return true; // No inputs to validate
     
-    const batchNo = batchNoInput.value.trim();
-    const batchDate = batchDateInput.value.trim();
-    const isBatched = batchNoInput.dataset.isBatched === 'true';
-    
-    // Remove existing error states
+    // Step 1: Clear existing error states (deterministic reset)
     batchNoInput.classList.remove('is-invalid');
     batchDateInput.classList.remove('is-invalid');
     if (errorDiv && errorText) {
@@ -585,53 +581,68 @@ function validateBatchPairing(itemId) {
         errorDiv.style.display = 'none';
     }
     
-    // For batched items, both fields are always required (HTML required attribute handles this, but double-check)
+    // Step 2: Read current values
+    const batchNo = batchNoInput.value.trim();
+    const batchDate = batchDateInput.value.trim();
+    const isBatched = batchNoInput.dataset.isBatched === 'true';
+    
+    // Step 3: Evaluate validation rules and reapply errors only if failing
     if (isBatched) {
-        let hasError = false;
-        if (!batchNo) {
+        // Batched items: both fields are always required
+        if (!batchNo && !batchDate) {
+            // Both missing
+            batchNoInput.classList.add('is-invalid');
+            batchDateInput.classList.add('is-invalid');
+            if (errorDiv && errorText) {
+                errorText.textContent = 'Batch number and date are required for batched items.';
+                errorDiv.style.display = 'block';
+            }
+            return false;
+        } else if (!batchNo) {
+            // Only batch number missing
             batchNoInput.classList.add('is-invalid');
             if (errorDiv && errorText) {
                 errorText.textContent = 'Batch number is required for batched items.';
                 errorDiv.style.display = 'block';
             }
-            hasError = true;
-        }
-        if (!batchDate) {
+            return false;
+        } else if (!batchDate) {
+            // Only batch date missing
             batchDateInput.classList.add('is-invalid');
             if (errorDiv && errorText) {
                 errorText.textContent = 'Batch date is required for batched items.';
                 errorDiv.style.display = 'block';
             }
-            hasError = true;
+            return false;
         }
-        return !hasError; // Return true if valid, false if error
+        // Both present - valid
+        return true;
+    } else {
+        // Non-batched items: enforce pairing (both filled or both empty)
+        const hasBatchNo = batchNo.length > 0;
+        const hasBatchDate = batchDate.length > 0;
+        
+        if (hasBatchNo && !hasBatchDate) {
+            // Has batch number but no batch date
+            batchDateInput.classList.add('is-invalid');
+            if (errorDiv && errorText) {
+                errorText.textContent = 'Please enter a Batch Date when a Batch No is provided.';
+                errorDiv.style.display = 'block';
+            }
+            return false;
+        } else if (!hasBatchNo && hasBatchDate) {
+            // Has batch date but no batch number
+            batchNoInput.classList.add('is-invalid');
+            if (errorDiv && errorText) {
+                errorText.textContent = 'Please enter a Batch No when a Batch Date is provided.';
+                errorDiv.style.display = 'block';
+            }
+            return false;
+        }
+        
+        // Either both are filled or both are empty - valid
+        return true;
     }
-    
-    // For non-batched items, enforce pairing: both filled or both empty
-    // Check all four cases explicitly
-    const hasBatchNo = batchNo.length > 0;
-    const hasBatchDate = batchDate.length > 0;
-    
-    if (hasBatchNo && !hasBatchDate) {
-        // Has batch number but no batch date
-        batchDateInput.classList.add('is-invalid');
-        if (errorDiv && errorText) {
-            errorText.textContent = 'Please enter a Batch Date when a Batch No is provided.';
-            errorDiv.style.display = 'block';
-        }
-        return false;
-    } else if (!hasBatchNo && hasBatchDate) {
-        // Has batch date but no batch number
-        batchNoInput.classList.add('is-invalid');
-        if (errorDiv && errorText) {
-            errorText.textContent = 'Please enter a Batch No when a Batch Date is provided.';
-            errorDiv.style.display = 'block';
-        }
-        return false;
-    }
-    
-    // Either both are filled or both are empty - valid
-    return true;
 }
 
 document.getElementById('intakeForm').addEventListener('submit', function(e) {
