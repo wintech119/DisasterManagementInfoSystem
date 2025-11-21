@@ -1108,6 +1108,32 @@ def prepare_package(reliefrqst_id):
         flash(f'Only SUBMITTED or PART FILLED requests can be packaged. Current status: {relief_request.status.status_desc}', 'danger')
         return redirect(url_for('packaging.pending_fulfillment'))
     
+    # ACCESS CONTROL: Check if package has been submitted for LM approval
+    # A package is "submitted for LM approval" when it matches has_pending_approval() logic:
+    # 1. Relief request status is PART_FILLED (submission or draft in progress)
+    # 2. Package status is PENDING ('P')
+    # 3. Package has dispatch_dtime = NULL (not yet dispatched by LM)
+    # 4. Package was updated (update_by_id is set, indicating LO touched it after initial creation)
+    #
+    # This differentiates from new drafts which have:
+    # - status='P' but update_by_id might be NULL or same as create_by_id
+    # - OR relief request is still SUBMITTED (not PART_FILLED)
+    existing_package = ReliefPkg.query.filter_by(reliefrqst_id=reliefrqst_id).first()
+    is_submitted_for_approval = (
+        existing_package and
+        relief_request.status_code == rr_service.STATUS_PART_FILLED and
+        existing_package.status_code == rr_service.PKG_STATUS_PENDING and
+        existing_package.dispatch_dtime is None and
+        existing_package.update_by_id is not None and
+        existing_package.update_by_id != existing_package.create_by_id  # Differentiates from brand new package
+    )
+    is_read_only_for_lo = is_submitted_for_approval and is_logistics_officer() and not is_logistics_manager()
+    
+    if is_read_only_for_lo and request.method == 'POST':
+        # LO trying to POST to a submitted package - block it
+        flash('This relief request package has already been submitted and is awaiting approval from the Logistics Manager.', 'warning')
+        return redirect(url_for('packaging.pending_fulfillment'))
+    
     if request.method == 'GET':
         
         warehouses = Warehouse.query.filter_by(status_code='A').order_by(Warehouse.warehouse_name).all()
@@ -1124,7 +1150,7 @@ def prepare_package(reliefrqst_id):
             item_inventory_map[item.item_id] = inventories
         
         # Get existing package for this relief request (should only be one)
-        existing_package = ReliefPkg.query.filter_by(reliefrqst_id=reliefrqst_id).first()
+        # Note: existing_package already loaded above for access control check
         existing_packages = [existing_package] if existing_package else []
         
         existing_allocations = {}
@@ -1188,7 +1214,8 @@ def prepare_package(reliefrqst_id):
                              existing_allocations=existing_allocations,
                              existing_batch_allocations=existing_batch_allocations,
                              status_map=status_map,
-                             item_status_options=item_status_options)
+                             item_status_options=item_status_options,
+                             is_read_only=is_read_only_for_lo)
     
     action = request.form.get('action')
     
@@ -1338,8 +1365,8 @@ def _submit_for_approval(relief_request, relief_request_version, package_version
                 return redirect(url_for('packaging.pending_fulfillment'))
         
         # Mark package as submitted for approval (status stays 'P' but we're now in "awaiting LM approval" state)
-        # NOTE: verify_by_id is NOT set here - it will be set by LM when they approve/dispatch
-        # The "submitted for LM approval" state is indicated by: status='P' + create_by_id set
+        # Set update_by_id to mark who submitted (LO), but keep verify_by_id NULL until LM actually verifies
+        # The "submitted for LM approval" state is indicated by: status='P' + update_by_id set + dispatch_dtime NULL
         relief_pkg.status_code = rr_service.PKG_STATUS_PENDING
         relief_pkg.update_by_id = current_user.user_name
         relief_pkg.update_dtime = datetime.now()

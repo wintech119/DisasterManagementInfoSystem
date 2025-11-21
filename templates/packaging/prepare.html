@@ -491,13 +491,24 @@
                 <div>
                     <h1 class="page-title">
                         <i class="bi bi-box-seam"></i>
-                        Prepare Relief Package
+                        {% if is_read_only %}View Relief Package{% else %}Prepare Relief Package{% endif %}
                     </h1>
                     <p class="page-subtitle">
                         {{ relief_request.tracking_no if relief_request.tracking_no else 'RR-' + '%06d'|format(relief_request.reliefrqst_id) }} • {{ relief_request.agency.agency_name if relief_request.agency else 'Unknown Agency' }}
                     </p>
                 </div>
             </div>
+
+            {% if is_read_only %}
+            <!-- Read-Only Alert Banner -->
+            <div class="alert alert-info d-flex align-items-center mb-4" role="alert">
+                <i class="bi bi-info-circle-fill me-3" style="font-size: 1.5rem;"></i>
+                <div>
+                    <strong>View Only Mode</strong><br>
+                    This relief request package has already been submitted and is awaiting approval from the Logistics Manager. You cannot make changes at this time.
+                </div>
+            </div>
+            {% endif %}
 
             <!-- Metric Cards -->
             <div class="metric-cards">
@@ -597,6 +608,7 @@
                                 {% endif %}
                             </td>
                             <td>
+                                {% if not is_read_only %}
                                 <button 
                                     type="button" 
                                     class="btn btn-outline select-batches-btn"
@@ -605,6 +617,12 @@
                                     <i class="bi bi-box-seam"></i>
                                     Select Batches
                                 </button>
+                                {% else %}
+                                <span class="text-muted">
+                                    <i class="bi bi-eye"></i>
+                                    View Only
+                                </span>
+                                {% endif %}
                                 {# Hidden inputs for batch allocations - populated from saved draft #}
                                 {% if item.item_id in existing_batch_allocations %}
                                     {% for allocation in existing_batch_allocations[item.item_id] %}
@@ -638,7 +656,8 @@
                                     data-requested-qty="{{ item.request_qty }}"
                                     data-auto-status="{{ auto }}"
                                     data-allowed-codes="{{ allowed|join(',') }}"
-                                    onchange="toggleReasonField({{ item.item_id }})">
+                                    onchange="toggleReasonField({{ item.item_id }})"
+                                    {% if is_read_only %}disabled{% endif %}>
                                     {% for code in allowed %}
                                     {% set label = status_map.get(code, {}).get('desc', code) %}
                                     <option value="{{ code }}" {% if code == item.status_code %}selected{% endif %}>{{ label }}</option>
@@ -654,7 +673,8 @@
                                         id="status_reason_{{ item.item_id }}"
                                         rows="2"
                                         placeholder="Provide reason for this decision..."
-                                        style="font-size: 0.8125rem; resize: vertical;">{{ item.status_reason_desc or '' }}</textarea>
+                                        style="font-size: 0.8125rem; resize: vertical;"
+                                        {% if is_read_only %}disabled{% endif %}>{{ item.status_reason_desc or '' }}</textarea>
                                 </div>
                             </td>
                         </tr>
@@ -663,6 +683,7 @@
                 </table>
 
                 <!-- Action Buttons -->
+                {% if not is_read_only %}
                 <div class="action-buttons">
                     <button type="submit" name="action" value="save_draft" class="btn-relief-secondary">
                         <i class="bi bi-save"></i>
@@ -681,15 +702,18 @@
                     </button>
                     {% endif %}
                 </div>
+                {% endif %}
             </form>
             
             <!-- Cancel Button -->
+            {% if not is_read_only %}
             <div style="margin-top: 1rem;">
                 <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#cancelPackageModal" style="cursor: pointer;">
                     <i class="bi bi-x-circle"></i>
                     Cancel Package Preparation
                 </button>
             </div>
+            {% endif %}
             </div>
         </div>
         
