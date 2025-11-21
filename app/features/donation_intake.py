@@ -250,23 +250,39 @@ def _process_intake_submission(donation, warehouse):
         # Get item details from donation_item (already loaded from DB)
         item = donation_item.item
         
-        # Validate batch number
-        if item.is_batched_flag and not batch_no:
-            errors.append(f'{item.item_name} requires a batch number')
-            continue
-        
-        if not batch_no:
-            batch_no = f'NOBATCH-{item_id}'
-        
-        # Validate batch date
-        if not batch_date_str:
-            errors.append(f'Batch date is required for {item.item_name}')
-            continue
-        
-        batch_date = datetime.strptime(batch_date_str, '%Y-%m-%d').date()
-        if batch_date > date.today():
-            errors.append(f'Batch date cannot be in the future for {item.item_name}')
-            continue
+        # Paired validation for batch_no and batch_date
+        # For batched items: both fields are required
+        # For non-batched items: both must be provided or both must be empty
+        if item.is_batched_flag:
+            # Batched items require both batch_no and batch_date
+            if not batch_no:
+                errors.append(f'{item.item_name} requires a batch number')
+                continue
+            if not batch_date_str:
+                errors.append(f'{item.item_name} requires a batch date')
+                continue
+        else:
+            # Non-batched items: enforce pairing (both filled or both empty)
+            if batch_no and not batch_date_str:
+                errors.append(f'{item.item_name}: Please enter a Batch Date when a Batch No is provided')
+                continue
+            elif not batch_no and batch_date_str:
+                errors.append(f'{item.item_name}: Please enter a Batch No when a Batch Date is provided')
+                continue
+            
+            # If both are empty, use auto-generated NOBATCH placeholder
+            if not batch_no and not batch_date_str:
+                batch_no = f'NOBATCH-{item_id}'
+                batch_date = None  # Will default to today in BatchCreationService
+            
+        # Validate and parse batch date if provided
+        if batch_date_str:
+            batch_date = datetime.strptime(batch_date_str, '%Y-%m-%d').date()
+            if batch_date > date.today():
+                errors.append(f'Batch date cannot be in the future for {item.item_name}')
+                continue
+        else:
+            batch_date = None  # Will default to today in BatchCreationService
         
         # Validate expiry date
         expiry_date = None
