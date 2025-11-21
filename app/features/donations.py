@@ -337,6 +337,11 @@ def edit_donation(donation_id):
     """Edit donation header (optimistic locking)"""
     donation = Donation.query.get_or_404(donation_id)
     
+    # Prevent editing of verified or processed donations
+    if donation.status_code == 'V':
+        flash('Cannot edit a verified donation. Donation has been verified and is now read-only.', 'danger')
+        return redirect(url_for('donations.view_donation', donation_id=donation_id))
+    
     # Prevent editing of processed donations (already in warehouse)
     if donation.status_code == 'P':
         flash('Cannot edit a processed donation. It has already been added to warehouse inventory.', 'danger')
@@ -445,6 +450,11 @@ def delete_donation(donation_id):
     """Delete donation (only if no items exist)"""
     donation = Donation.query.get_or_404(donation_id)
     
+    # Prevent deleting verified or processed donations
+    if donation.status_code == 'V':
+        flash('Cannot delete a verified donation. Donation has been verified and is now read-only.', 'danger')
+        return redirect(url_for('donations.view_donation', donation_id=donation_id))
+    
     # Prevent deleting processed donations (already in warehouse)
     if donation.status_code == 'P':
         flash('Cannot delete a processed donation. It has already been added to warehouse inventory.', 'danger')
@@ -471,6 +481,11 @@ def delete_donation(donation_id):
 def add_donation_item(donation_id):
     """Add item to donation"""
     donation = Donation.query.get_or_404(donation_id)
+    
+    # Prevent adding items to verified or processed donations
+    if donation.status_code == 'V':
+        flash('Cannot add items to a verified donation. Donation has been verified and items cannot be modified.', 'danger')
+        return redirect(url_for('donations.view_donation', donation_id=donation_id))
     
     # Prevent adding items to processed donations (already in warehouse)
     if donation.status_code == 'P':
@@ -566,6 +581,11 @@ def edit_donation_item(donation_id, item_id):
     donation = Donation.query.get_or_404(donation_id)
     donation_item = DonationItem.query.get_or_404((donation_id, item_id))
     
+    # Prevent editing items from verified or processed donations
+    if donation.status_code == 'V':
+        flash('Cannot edit items from a verified donation. Donation has been verified and items cannot be modified.', 'danger')
+        return redirect(url_for('donations.view_donation', donation_id=donation_id))
+    
     # Prevent editing of processed donations (already in warehouse)
     if donation.status_code == 'P':
         flash('Cannot edit items from a processed donation. It has already been added to warehouse inventory.', 'danger')
@@ -658,6 +678,11 @@ def delete_donation_item(donation_id, item_id):
     """Delete donation item"""
     donation = Donation.query.get_or_404(donation_id)
     donation_item = DonationItem.query.get_or_404((donation_id, item_id))
+    
+    # Prevent deleting items from verified or processed donations
+    if donation.status_code == 'V':
+        flash('Cannot delete items from a verified donation. Donation has been verified and items cannot be modified.', 'danger')
+        return redirect(url_for('donations.view_donation', donation_id=donation_id))
     
     # Prevent deleting items from processed donations (already in warehouse)
     if donation.status_code == 'P':
