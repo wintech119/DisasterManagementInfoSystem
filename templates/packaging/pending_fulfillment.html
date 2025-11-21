@@ -52,40 +52,40 @@
            class="filter-tab {% if current_filter == 'awaiting' or not current_filter %}active{% endif %}"
            aria-current="{% if current_filter == 'awaiting' or not current_filter %}page{% endif %}">
             Awaiting to be Filled
-            {% if global_counts.get('submitted', 0) > 0 %}
-            <span class="filter-tab-count" aria-label="{{ global_counts.get('submitted', 0) }} awaiting">{{ global_counts.get('submitted', 0) }}</span>
+            {% if counts.get('submitted', 0) > 0 %}
+            <span class="filter-tab-count" aria-label="{{ counts.get('submitted', 0) }} awaiting">{{ counts.get('submitted', 0) }}</span>
             {% endif %}
         </a>
         <a href="{{ url_for('packaging.pending_fulfillment', filter='in_progress') }}" 
            class="filter-tab {% if current_filter == 'in_progress' %}active{% endif %}"
            aria-current="{% if current_filter == 'in_progress' %}page{% endif %}">
             Being Prepared
-            {% if global_counts.get('in_progress', 0) > 0 %}
-            <span class="filter-tab-count" aria-label="{{ global_counts.get('in_progress', 0) }} in progress">{{ global_counts.get('in_progress', 0) }}</span>
+            {% if counts.get('in_progress', 0) > 0 %}
+            <span class="filter-tab-count" aria-label="{{ counts.get('in_progress', 0) }} in progress">{{ counts.get('in_progress', 0) }}</span>
             {% endif %}
         </a>
         <a href="{{ url_for('packaging.pending_fulfillment', filter='pending_approval') }}" 
            class="filter-tab {% if current_filter == 'pending_approval' %}active{% endif %}"
            aria-current="{% if current_filter == 'pending_approval' %}page{% endif %}">
             Awaiting Approval
-            {% if global_counts.get('pending_approval', 0) > 0 %}
-            <span class="filter-tab-count" aria-label="{{ global_counts.get('pending_approval', 0) }} awaiting approval">{{ global_counts.get('pending_approval', 0) }}</span>
+            {% if counts.get('pending_approval', 0) > 0 %}
+            <span class="filter-tab-count" aria-label="{{ counts.get('pending_approval', 0) }} awaiting approval">{{ counts.get('pending_approval', 0) }}</span>
             {% endif %}
         </a>
         <a href="{{ url_for('packaging.pending_fulfillment', filter='approved_for_dispatch') }}" 
            class="filter-tab {% if current_filter == 'approved_for_dispatch' %}active{% endif %}"
            aria-current="{% if current_filter == 'approved_for_dispatch' %}page{% endif %}">
             Approved for Dispatch
-            {% if global_counts.get('approved', 0) > 0 %}
-            <span class="filter-tab-count" aria-label="{{ global_counts.get('approved', 0) }} approved">{{ global_counts.get('approved', 0) }}</span>
+            {% if counts.get('approved', 0) > 0 %}
+            <span class="filter-tab-count" aria-label="{{ counts.get('approved', 0) }} approved">{{ counts.get('approved', 0) }}</span>
             {% endif %}
         </a>
         <a href="{{ url_for('packaging.pending_fulfillment', filter='approved_no_allocation') }}" 
            class="filter-tab {% if current_filter == 'approved_no_allocation' %}active{% endif %}"
            aria-current="{% if current_filter == 'approved_no_allocation' %}page{% endif %}">
             Approved (No Allocation)
-            {% if global_counts.get('approved_no_allocation', 0) > 0 %}
-            <span class="filter-tab-count" aria-label="{{ global_counts.get('approved_no_allocation', 0) }} approved no allocation">{{ global_counts.get('approved_no_allocation', 0) }}</span>
+            {% if counts.get('approved_no_allocation', 0) > 0 %}
+            <span class="filter-tab-count" aria-label="{{ counts.get('approved_no_allocation', 0) }} approved no allocation">{{ counts.get('approved_no_allocation', 0) }}</span>
             {% endif %}
         </a>
     </nav>

@@ -3,6 +3,10 @@
 ## Overview
 DRIMS (Disaster Relief Inventory Management System) is a web-based platform for the Government of Jamaica's ODPEM, designed to manage the entire lifecycle of disaster relief supplies. This includes inventory tracking, donation management, relief request processing, and distribution across multiple warehouses. The system aims to ensure compliance with government processes, support disaster event coordination, supply allocation, and provide robust user administration with Role-Based Access Control (RBAC). Its core purpose is to deliver a modern, efficient, and user-friendly solution for disaster preparedness and response, emphasizing security and comprehensive management capabilities such as inventory transfers, location tracking, analytics, and reporting.
 
+## Recent Changes (November 21, 2025)
+- **User-Scoped Badge Counts**: Fixed tab badge counts to display user-appropriate numbers. Logistics Officers now see only counts for packages they created or updated (e.g., "Approved for Dispatch (1)"), while Logistics Managers see global counts for all packages (e.g., "Approved for Dispatch (6)"). This applies to all workflow tabs including "Awaiting to be Filled", "Being Prepared", "Awaiting Approval", "Approved for Dispatch", and "Approved (No Allocation)". Updated backend to calculate separate user-scoped counts for LOs and global counts for LMs.
+- **Awaiting Approval Tab Access for LOs**: Extended "Awaiting Approval" tab access to both Logistics Officers and Logistics Managers. LOs can now view all packages they submitted for approval, while LMs continue to see all packages from all LOs. Updated navigation to show the tab and summary card for both roles. This improves workflow visibility and allows LOs to track their submitted packages through the approval process.
+
 ## User Preferences
 - **Communication style**: Simple, everyday language.
 - **UI/UX Requirements**:

@@ -984,6 +984,19 @@ def pending_fulfillment():
     approved_with_items = len([pkg for pkg in all_approved_pkgs if len(pkg.items) > 0])
     approved_no_allocation = len([pkg for pkg in all_approved_pkgs if len(pkg.items) == 0])
     
+    # For LOs: Filter approved packages by user involvement
+    current_user_name = current_user.user_name
+    if is_logistics_manager():
+        # LM sees all packages
+        user_approved_pkgs = all_approved_pkgs
+    else:
+        # LO sees only packages they created or updated
+        user_approved_pkgs = [pkg for pkg in all_approved_pkgs 
+                             if pkg.create_by_id == current_user_name or pkg.update_by_id == current_user_name]
+    
+    user_approved_with_items = len([pkg for pkg in user_approved_pkgs if len(pkg.items) > 0])
+    user_approved_no_allocation = len([pkg for pkg in user_approved_pkgs if len(pkg.items) == 0])
+    
     global_counts = {
         'submitted': len([r for r in all_requests 
                          if r.status_code == rr_service.STATUS_SUBMITTED 
@@ -1007,7 +1020,9 @@ def pending_fulfillment():
                            if r.status_code == rr_service.STATUS_PART_FILLED
                            and not has_pending_approval(r)
                            and not has_dispatched_package(r)]),
-        'pending_approval': len([r for r in filtered_requests if has_pending_approval(r)])
+        'pending_approval': len([r for r in filtered_requests if has_pending_approval(r)]),
+        'approved': user_approved_with_items,
+        'approved_no_allocation': user_approved_no_allocation
     }
     
     return render_template('packaging/pending_fulfillment.html',
