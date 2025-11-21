@@ -163,7 +163,9 @@
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <h6 class="card-title">Donations Over Time</h6>
-                    <canvas id="donationsTimelineChart" height="250"></canvas>
+                    <div style="position: relative; height: 300px;">
+                        <canvas id="donationsTimelineChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -171,7 +173,9 @@
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <h6 class="card-title">Relief Requests & Fulfillment Over Time</h6>
-                    <canvas id="requestsTimelineChart" height="250"></canvas>
+                    <div style="position: relative; height: 300px;">
+                        <canvas id="requestsTimelineChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -183,7 +187,9 @@
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <h6 class="card-title">Relief Request Status Breakdown</h6>
-                    <canvas id="statusBreakdownChart" height="250"></canvas>
+                    <div style="position: relative; height: 300px;">
+                        <canvas id="statusBreakdownChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -191,7 +197,9 @@
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <h6 class="card-title">Top Requesting Agencies</h6>
-                    <canvas id="topAgenciesChart" height="250"></canvas>
+                    <div style="position: relative; height: 300px;">
+                        <canvas id="topAgenciesChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -228,9 +236,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 label: 'Donations',
                 data: donationsValues,
                 borderColor: 'rgb(13, 110, 253)',
-                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                backgroundColor: 'rgba(13, 110, 253, 0.2)',
+                borderWidth: 3,
                 tension: 0.4,
-                fill: true
+                fill: true,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                pointBackgroundColor: 'rgb(13, 110, 253)',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2
             }]
         },
         options: {
@@ -260,17 +274,29 @@ document.addEventListener('DOMContentLoaded', function() {
                     label: 'Requests Submitted',
                     data: requestsTimelineData.values,
                     borderColor: 'rgb(255, 193, 7)',
-                    backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                    backgroundColor: 'rgba(255, 193, 7, 0.2)',
+                    borderWidth: 3,
                     tension: 0.4,
-                    fill: true
+                    fill: true,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: 'rgb(255, 193, 7)',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
                 },
                 {
                     label: 'Requests Fulfilled',
                     data: fulfilledTimelineData.values,
                     borderColor: 'rgb(25, 135, 84)',
-                    backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                    backgroundColor: 'rgba(25, 135, 84, 0.2)',
+                    borderWidth: 3,
                     tension: 0.4,
-                    fill: true
+                    fill: true,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: 'rgb(25, 135, 84)',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
                 }
             ]
         },
