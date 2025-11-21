@@ -1240,21 +1240,22 @@ def _submit_for_approval(relief_request):
     
     try:
         # SUBMIT-ONCE GUARD: Prevent multiple LOs from submitting the same relief request
-        # Check if package already exists and is ALREADY submitted for LM approval
+        # Check if package already exists and is ALREADY in PENDING status (submitted for LM approval)
         existing_pkg = ReliefPkg.query.filter_by(reliefrqst_id=relief_request.reliefrqst_id).first()
         
-        # A package is considered "already submitted" if:
-        # 1. It exists AND
-        # 2. Status is PENDING ('P') AND
-        # 3. verify_by_id is set (indicating submission to LM, not just a draft)
-        if existing_pkg and existing_pkg.status_code == rr_service.PKG_STATUS_PENDING and existing_pkg.verify_by_id:
-            flash('This relief request has already been submitted to the Logistics Manager for approval by another user.', 'warning')
-            return redirect(url_for('packaging.pending_fulfillment'))
-        
-        # Store the current package version for optimistic locking check
+        # Store the current package version for optimistic locking check (before processing)
         pkg_version_before = existing_pkg.version_nbr if existing_pkg else None
         
+        # A package is considered "already submitted" if it exists and status is PENDING ('P')
+        # Status 'P' with a package record means it's either being prepared or already submitted for approval
+        # To differentiate, we check if this is a "fresh" submission vs. an update to existing draft
         was_already_pending = existing_pkg and existing_pkg.status_code == rr_service.PKG_STATUS_PENDING
+        
+        # CRITICAL: If package is already PENDING, only allow the SAME user to update it (not a different LO)
+        # This prevents LO #2 from submitting after LO #1 has already submitted
+        if was_already_pending and existing_pkg.create_by_id != current_user.user_name:
+            flash('This relief request has already been submitted to the Logistics Manager for approval by another user.', 'warning')
+            return redirect(url_for('packaging.pending_fulfillment'))
         
         # Process and validate allocations
         new_allocations = _process_allocations(relief_request, validate_complete=False)
@@ -1264,21 +1265,20 @@ def _submit_for_approval(relief_request):
         if not relief_pkg:
             raise ValueError('Failed to create relief package')
         
-        # OPTIMISTIC LOCKING CHECK: Verify package hasn't been submitted by another LO
-        # If package existed before and another LO has already set verify_by_id in a parallel transaction,
-        # the version_nbr will have changed
+        # OPTIMISTIC LOCKING CHECK: Verify package hasn't been modified by another LO in parallel
+        # If package existed before and version_nbr has changed, another user modified it
         if pkg_version_before is not None and relief_pkg.version_nbr != pkg_version_before:
-            # Package was modified by another user (likely submitted)
-            # Re-check if it's now in submitted state
-            if relief_pkg.status_code == rr_service.PKG_STATUS_PENDING and relief_pkg.verify_by_id:
+            # Package was modified by another user - they may have submitted it
+            # Re-check the creator to see if it's a different LO
+            if relief_pkg.status_code == rr_service.PKG_STATUS_PENDING and relief_pkg.create_by_id != current_user.user_name:
                 flash('This relief request has already been submitted to the Logistics Manager for approval by another user.', 'warning')
                 db.session.rollback()
                 return redirect(url_for('packaging.pending_fulfillment'))
         
-        # Mark package as submitted for approval by setting verify_by_id
-        # This differentiates submitted packages from drafts (where verify_by_id=NULL)
+        # Mark package as submitted for approval (status stays 'P' but we're now in "awaiting LM approval" state)
+        # NOTE: verify_by_id is NOT set here - it will be set by LM when they approve/dispatch
+        # The "submitted for LM approval" state is indicated by: status='P' + create_by_id set
         relief_pkg.status_code = rr_service.PKG_STATUS_PENDING
-        relief_pkg.verify_by_id = current_user.user_name  # Set when submitting for LM approval
         relief_pkg.update_by_id = current_user.user_name
         relief_pkg.update_dtime = datetime.now()
         relief_pkg.version_nbr += 1
