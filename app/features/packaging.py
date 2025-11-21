@@ -796,10 +796,11 @@ def pending_fulfillment():
                 # LM: Can see all packages
                 user_should_see = True
             else:
-                # LO: Can only see packages they created or updated
+                # LO: Can see packages they created/updated OR relief requests they created
                 user_should_see = (
                     pkg.create_by_id == current_user_name or 
-                    pkg.update_by_id == current_user_name
+                    pkg.update_by_id == current_user_name or
+                    (pkg.relief_request and pkg.relief_request.create_by_id == current_user_name)
                 )
             
             if item_count > 0 and user_should_see:  # Only packages with allocated items AND user can see
@@ -819,11 +820,12 @@ def pending_fulfillment():
             # LM: Count all packages with no allocation
             approved_no_allocation_count = len([pkg for pkg in approved_packages if len(pkg.items) == 0])
         else:
-            # LO: Count only their packages with no allocation
+            # LO: Count only their packages with no allocation (or relief requests they created)
             approved_no_allocation_count = len([pkg for pkg in approved_packages 
                                                if len(pkg.items) == 0 
                                                and (pkg.create_by_id == current_user_name or 
-                                                    pkg.update_by_id == current_user_name)])
+                                                    pkg.update_by_id == current_user_name or
+                                                    (pkg.relief_request and pkg.relief_request.create_by_id == current_user_name))])
         
         return render_template('packaging/pending_fulfillment.html',
                              requests=[],
@@ -854,10 +856,11 @@ def pending_fulfillment():
                 # LM: Can see all packages
                 user_should_see = True
             else:
-                # LO: Can only see packages they created or updated
+                # LO: Can see packages they created/updated OR relief requests they created
                 user_should_see = (
                     pkg.create_by_id == current_user_name or 
-                    pkg.update_by_id == current_user_name
+                    pkg.update_by_id == current_user_name or
+                    (pkg.relief_request and pkg.relief_request.create_by_id == current_user_name)
                 )
             
             if len(pkg.items) == 0 and user_should_see:  # Only packages with NO allocated items AND user can see
@@ -876,11 +879,12 @@ def pending_fulfillment():
             # LM: Count all packages with items
             approved_with_items_count = len([pkg for pkg in all_approved_packages if len(pkg.items) > 0])
         else:
-            # LO: Count only their packages with items
+            # LO: Count only their packages with items (or relief requests they created)
             approved_with_items_count = len([pkg for pkg in all_approved_packages 
                                             if len(pkg.items) > 0 
                                             and (pkg.create_by_id == current_user_name or 
-                                                 pkg.update_by_id == current_user_name)])
+                                                 pkg.update_by_id == current_user_name or
+                                                 (pkg.relief_request and pkg.relief_request.create_by_id == current_user_name))])
         
         return render_template('packaging/pending_fulfillment.html',
                              requests=[],
