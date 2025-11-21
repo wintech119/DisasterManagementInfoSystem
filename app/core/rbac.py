@@ -121,6 +121,7 @@ def can_access_relief_request(relief_request):
     User has access if:
     1. Request belongs to their agency (for agency users)
     2. User is a Logistics Manager or Logistics Officer (can access all requests)
+    3. User is a director-level executive (DG, Deputy DG, Director PEOD - read-only access to all requests)
     
     Args:
         relief_request: ReliefRqst object to check access for
@@ -133,6 +134,10 @@ def can_access_relief_request(relief_request):
     
     # Logistics Managers and Officers have access to all relief requests
     if has_role('LOGISTICS_MANAGER', 'LOGISTICS_OFFICER'):
+        return True
+    
+    # Director-level executives have read-only access to all relief requests
+    if has_role('ODPEM_DG', 'ODPEM_DDG', 'ODPEM_DIR_PEOD'):
         return True
     
     # Agency users can access their own agency's requests
