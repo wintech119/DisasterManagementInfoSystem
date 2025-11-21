@@ -1108,31 +1108,9 @@ def prepare_package(reliefrqst_id):
         flash(f'Only SUBMITTED or PART FILLED requests can be packaged. Current status: {relief_request.status.status_desc}', 'danger')
         return redirect(url_for('packaging.pending_fulfillment'))
     
-    # ACCESS CONTROL: Check if package has been submitted for LM approval
-    # A package is "submitted for LM approval" when it matches has_pending_approval() logic:
-    # 1. Relief request status is PART_FILLED (submission or draft in progress)
-    # 2. Package status is PENDING ('P')
-    # 3. Package has dispatch_dtime = NULL (not yet dispatched by LM)
-    # 4. Package was updated (update_by_id is set, indicating LO touched it after initial creation)
-    #
-    # This differentiates from new drafts which have:
-    # - status='P' but update_by_id might be NULL or same as create_by_id
-    # - OR relief request is still SUBMITTED (not PART_FILLED)
-    existing_package = ReliefPkg.query.filter_by(reliefrqst_id=reliefrqst_id).first()
-    is_submitted_for_approval = (
-        existing_package and
-        relief_request.status_code == rr_service.STATUS_PART_FILLED and
-        existing_package.status_code == rr_service.PKG_STATUS_PENDING and
-        existing_package.dispatch_dtime is None and
-        existing_package.update_by_id is not None and
-        existing_package.update_by_id != existing_package.create_by_id  # Differentiates from brand new package
-    )
-    is_read_only_for_lo = is_submitted_for_approval and is_logistics_officer() and not is_logistics_manager()
-    
-    if is_read_only_for_lo and request.method == 'POST':
-        # LO trying to POST to a submitted package - block it
-        flash('This relief request package has already been submitted and is awaiting approval from the Logistics Manager.', 'warning')
-        return redirect(url_for('packaging.pending_fulfillment'))
+    # NOTE: Read-only enforcement for LOs after submission cannot be implemented without schema changes
+    # Both _save_draft() and _submit_for_approval() set identical fields (status='P', update_by_id),
+    # making it impossible to distinguish draft packages from submitted packages using existing schema.
     
     if request.method == 'GET':
         
@@ -1150,7 +1128,7 @@ def prepare_package(reliefrqst_id):
             item_inventory_map[item.item_id] = inventories
         
         # Get existing package for this relief request (should only be one)
-        # Note: existing_package already loaded above for access control check
+        existing_package = ReliefPkg.query.filter_by(reliefrqst_id=reliefrqst_id).first()
         existing_packages = [existing_package] if existing_package else []
         
         existing_allocations = {}
