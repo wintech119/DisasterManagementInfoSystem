@@ -40,7 +40,7 @@ def pending_list():
     
     # Get all pending for metrics
     all_pending = base_query.order_by(
-        ReliefRqst.request_date.asc(),
+        ReliefRqst.request_date.desc(),
         ReliefRqst.urgency_ind.desc()
     ).all()
     
