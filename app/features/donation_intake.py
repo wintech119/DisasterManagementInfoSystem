@@ -307,16 +307,23 @@ def _process_intake_submission(donation, warehouse):
         batch_no = normalized_batch_no
         batch_date = normalized_batch_date
         
-        # Validate expiry date
+        # Validate expiry date (required for items that can expire)
         expiry_date = None
-        if expiry_date_str:
-            expiry_date = datetime.strptime(expiry_date_str, '%Y-%m-%d').date()
-            if item.can_expire_flag and expiry_date < date.today():
-                errors.append(f'Expiry date has already passed for {item.item_name}')
+        if item.can_expire_flag:
+            # For items that can expire, expiry date is required
+            if not expiry_date_str:
+                errors.append(f'{item.item_name}: Expiry Date is required for items that can expire.')
                 continue
-        elif item.can_expire_flag:
-            errors.append(f'Expiry date is required for {item.item_name}')
-            continue
+            try:
+                expiry_date = datetime.strptime(expiry_date_str, '%Y-%m-%d').date()
+                if expiry_date < date.today():
+                    errors.append(f'Expiry date has already passed for {item.item_name}')
+                    continue
+            except ValueError:
+                errors.append(f'Invalid expiry date format for {item.item_name}')
+                continue
+        # For items that cannot expire, ignore any submitted expiry date
+        # (expiry_date remains None)
         
         # Validate UOM
         if not uom_code:

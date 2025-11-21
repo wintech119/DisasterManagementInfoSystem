@@ -213,9 +213,16 @@ input[type=number] {
                                                class="form-control form-control-sm iso-date-picker expiry-date" 
                                                id="expiry_date_{{ di.item_id }}"
                                                name="expiry_date_{{ di.item_id }}" 
+                                               data-item-id="{{ di.item_id }}"
+                                               data-can-expire="{{ 'true' if di.item.can_expire_flag else 'false' }}"
                                                data-min-date="{{ today }}"
-                                               placeholder="YYYY-MM-DD"
-                                               {% if di.item.can_expire_flag %}required{% endif %}>
+                                               placeholder="{% if di.item.can_expire_flag %}YYYY-MM-DD{% else %}Not applicable{% endif %}"
+                                               {% if di.item.can_expire_flag %}required{% else %}disabled{% endif %}
+                                               {% if not di.item.can_expire_flag %}style="background-color: #f8f9fa; cursor: not-allowed;"{% endif %}>
+                                        <div class="invalid-feedback expiry-error-{{ di.item_id }}" style="display:none;">
+                                            <i class="bi bi-exclamation-circle"></i>
+                                            <span class="expiry-error-text-{{ di.item_id }}"></span>
+                                        </div>
                                     </div>
                                 </div>
                                 
@@ -647,6 +654,37 @@ function validateBatchPairing(itemId) {
     }
 }
 
+// Validate expiry date for items that can expire
+function validateExpiryDate(itemId) {
+    const expiryInput = document.querySelector(`input[name="expiry_date_${itemId}"]`);
+    const errorDiv = document.querySelector(`.expiry-error-${itemId}`);
+    const errorText = document.querySelector(`.expiry-error-text-${itemId}`);
+    
+    if (!expiryInput) return true; // No input to validate
+    
+    // Clear existing error states
+    expiryInput.classList.remove('is-invalid');
+    if (errorDiv && errorText) {
+        errorText.textContent = '';
+        errorDiv.style.display = 'none';
+    }
+    
+    const canExpire = expiryInput.dataset.canExpire === 'true';
+    const expiryValue = expiryInput.value.trim();
+    
+    // Only validate if item can expire
+    if (canExpire && !expiryValue) {
+        expiryInput.classList.add('is-invalid');
+        if (errorDiv && errorText) {
+            errorText.textContent = 'Expiry Date is required for items that can expire.';
+            errorDiv.style.display = 'block';
+        }
+        return false;
+    }
+    
+    return true;
+}
+
 document.getElementById('intakeForm').addEventListener('submit', function(e) {
     let hasError = false;
     let errorMessages = [];
@@ -658,6 +696,18 @@ document.getElementById('intakeForm').addEventListener('submit', function(e) {
         if (!isValid) {
             hasError = true;
             const errorDiv = document.querySelector(`.batch-pair-error-text-${itemId}`);
+            if (errorDiv && errorDiv.textContent) {
+                errorMessages.push(errorDiv.textContent);
+            }
+        }
+    });
+    
+    // Validate expiry dates
+    itemIds.forEach(itemId => {
+        const isValid = validateExpiryDate(itemId);
+        if (!isValid) {
+            hasError = true;
+            const errorDiv = document.querySelector(`.expiry-error-text-${itemId}`);
             if (errorDiv && errorDiv.textContent) {
                 errorMessages.push(errorDiv.textContent);
             }
@@ -710,6 +760,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const dateInputs = document.querySelectorAll('.iso-date-picker');
     
     dateInputs.forEach(function(input) {
+        // Skip disabled inputs (e.g., expiry date for non-expirable items)
+        if (input.disabled) {
+            return;
+        }
+        
         const maxDate = input.getAttribute('data-max-date');
         const minDate = input.getAttribute('data-min-date');
         
