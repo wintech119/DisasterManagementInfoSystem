@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Login · DRIMS</title>
+  <title>Login · DIMS</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
@@ -21,14 +21,14 @@
             <img src="{{ url_for('static', filename='images/odpem-logo.png') }}" 
                  alt="ODPEM Logo">
           </div>
-          <h1>Disaster Relief Inventory Management System</h1>
-          <p class="login-header-subtitle">DRIMS</p>
+          <h1>Disaster Management Information System</h1>
+          <p class="login-header-subtitle">DIMS</p>
           <p class="login-header-meta">Government of Jamaica</p>
         </div>
 
         <div class="login-body">
           <h2>Sign in to your account</h2>
-          <p class="subtitle">Use your email and password to access DRIMS.</p>
+          <p class="subtitle">Use your email and password to access DIMS.</p>
 
           <!-- Flash messages -->
           {% with messages = get_flashed_messages(with_categories=true) %}
@@ -59,7 +59,7 @@
                 value="{{ request.form.get('email', '') }}"
                 aria-describedby="email-help">
               <div id="email-help" class="form-text">
-                Enter the email address associated with your DRIMS account
+                Enter the email address associated with your DIMS account
               </div>
             </div>
 
@@ -99,7 +99,7 @@
           <span>New Agency?</span>
         </div>
         <p class="subtitle">
-          Relief agencies can request access to DRIMS to submit relief requests and manage disaster response distributions.
+          Relief agencies can request access to DIMS to submit relief requests and manage disaster response distributions.
         </p>
         <a href="{{ url_for('account_requests.submit_form') }}" class="btn-agency-request">
           <i class="bi bi-plus-circle"></i>
@@ -127,7 +127,7 @@
           <i class="bi bi-shield-check"></i>
           <span>Secure Government System</span>
         </div>
-        <p>© {% if now %}{{ now.year }}{% else %}2025{% endif %} DRIMS – Disaster Relief Inventory Management System</p>
+        <p>© {% if now %}{{ now.year }}{% else %}2025{% endif %} DIMS – Disaster Management Information System</p>
         <p class="login-footer-small">By signing in you agree to the acceptable use and data policies</p>
       </div>
     </div>

@@ -16,7 +16,7 @@
                 <i class="bi bi-gear-fill page-title-icon"></i>
                 <h1 class="page-title-text">System Administration</h1>
             </div>
-            <p class="page-subtitle">Welcome back, {{ current_user.first_name }}! Manage DRIMS system</p>
+            <p class="page-subtitle">Welcome back, {{ current_user.first_name }}! Manage DIMS system</p>
         </div>
         {% if has_feature('user_management') %}
         <a href="{{ url_for('user_admin.index') }}" class="btn btn-modern btn-primary">
