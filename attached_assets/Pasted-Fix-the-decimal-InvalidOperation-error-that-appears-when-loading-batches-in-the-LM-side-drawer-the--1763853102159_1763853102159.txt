@@ -1,0 +1,122 @@
+Fix the decimal.InvalidOperation error that appears when loading batches in the LM side drawer (the popup says:
+Failed to load batches: [<class 'decimal.InvalidOperation'>]) — without breaking any existing logic, workflows, behaviour, UI, or database schema.
+
+Context
+
+The error happens when clicking “Select batch” for an item.
+
+After clicking “OK” on the error popup, the batches still load in the side drawer.
+
+This means:
+
+The query and JSON response are mostly working.
+
+But somewhere in the calculation/conversion of numeric fields for batches, we are triggering decimal.InvalidOperation from Python’s decimal module.
+
+Likely Problem
+
+In the batch-loading code, we compute something like:
+
+available = usable_qty - reserved_qty
+
+
+or we are converting DB values using Decimal(...).
+
+If usable_qty or reserved_qty is:
+
+None
+
+an empty string ''
+
+a malformed string
+
+or some non-numeric value
+
+then Decimal(...) or arithmetic can raise decimal.InvalidOperation.
+
+Requirements
+
+Make decimal handling robust
+
+In the backend code that loads or prepares batch data for the LM drawer:
+
+Introduce a small, safe helper to normalize numeric values:
+
+from decimal import Decimal, InvalidOperation
+
+def safe_decimal(value, default=Decimal("0")):
+    if value is None:
+        return default
+    if isinstance(value, Decimal):
+        return value
+    try:
+        return Decimal(str(value))
+    except (InvalidOperation, ValueError, TypeError):
+        # Optionally log the bad value here for debugging
+        return default
+
+
+When computing available, always use this helper:
+
+usable_qty = safe_decimal(row.usable_qty)
+reserved_qty = safe_decimal(row.reserved_qty)
+
+available = usable_qty - reserved_qty
+
+
+Ensure all decimal fields involved in batch calculations for Set A and Set B (e.g. usable_qty, reserved_qty, allocated_qty) are passed through safe_decimal before doing arithmetic.
+
+Optional SQL-side safety (no schema change)
+
+If using raw SQL/ORM queries, you may also use COALESCE in the query to avoid NULL values, e.g.:
+
+SELECT
+  ...,
+  COALESCE(usable_qty, 0) AS usable_qty,
+  COALESCE(reserved_qty, 0) AS reserved_qty,
+  ...
+
+
+This is an additional safety net and does not change any schema, only how values are returned.
+
+Do NOT break anything
+
+Do NOT:
+
+Change any database schema, tables, columns, triggers, or constraints.
+
+Change any business logic or workflows for donations, relief requests, packaging, dispatch, or approvals.
+
+Change the LM/LO permissions or flows.
+
+Change the LM drawer UI behaviour, layout, or styling.
+
+Only:
+
+Make the numeric conversions and arithmetic more robust.
+
+Ensure decimal.InvalidOperation is never thrown for weird/null values.
+
+Error handling
+
+Keep the existing error handling structure, but after adding safe_decimal, the decimal.InvalidOperation should no longer be raised.
+
+If an unexpected value is encountered:
+
+Default to 0 for that problematic field.
+
+Optionally log a warning for developers (but do not show internals to end users).
+
+Validation / Outcome
+
+After the fix:
+
+Clicking “Select batch” and loading the LM drawer must:
+
+Work without showing Failed to load batches: [<class 'decimal.InvalidOperation'>].
+
+Still show the correct batches (Set A + Set B, with union and filters as previously defined).
+
+All existing flows must continue working exactly as before.
+
+No regressions in the security headers, CSP, cookies, TLS, or any other security fixes.
