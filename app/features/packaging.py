@@ -1851,8 +1851,7 @@ def get_item_batches(item_id):
     """
     try:
         # Get query parameters
-        requested_qty = request.args.get('requested_qty', type=float)  # NEW: Full requested qty
-        remaining_qty = request.args.get('remaining_qty', type=float)  # DEPRECATED: Keep for backward compat
+        remaining_qty = request.args.get('remaining_qty', type=float)
         required_uom = request.args.get('required_uom', type=str)
         allocated_batch_ids_str = request.args.get('allocated_batch_ids', type=str)
         current_allocations_str = request.args.get('current_allocations', type=str)
@@ -1881,47 +1880,32 @@ def get_item_batches(item_id):
         if not item:
             return jsonify({'error': 'Item not found'}), 404
         
-        # Determine which quantity to use for truncation logic
-        # Prefer requested_qty (new parameter), fallback to remaining_qty (deprecated)
-        qty_for_truncation = requested_qty if requested_qty is not None else remaining_qty
-        
-        # Use new method to get limited batches if qty provided
-        # Include qty=0 case for editing existing allocations
-        if qty_for_truncation is not None:
+        # Use new method to get limited batches if remaining_qty provided
+        # Include remaining_qty=0 case for editing existing allocations
+        if remaining_qty is not None:
             limited_batches, total_available, shortfall = BatchAllocationService.get_limited_batches_for_drawer(
                 item_id,
-                Decimal(str(qty_for_truncation)),
+                Decimal(str(remaining_qty)),
                 required_uom,
                 allocated_batch_ids,
                 current_allocations
             )
             
             # Debug logging
-            print(f"DEBUG get_item_batches: item_id={item_id}, requested_qty={requested_qty}, remaining_qty={remaining_qty}")
+            print(f"DEBUG get_item_batches: item_id={item_id}, remaining_qty={remaining_qty}")
             print(f"DEBUG get_item_batches: allocated_batch_ids={allocated_batch_ids}")
             print(f"DEBUG get_item_batches: limited_batches count={len(limited_batches)}")
             print(f"DEBUG get_item_batches: total_available={total_available}, shortfall={shortfall}")
             
-            # Extract batches from DTOs for priority group assignment
-            # Temporarily attach _released_available for compatibility with assign_priority_groups
-            batches_only = []
-            for dto in limited_batches:
-                batch = dto.batch
-                batch._released_available = dto.released_available
-                batches_only.append(batch)
-            
-            batch_groups = BatchAllocationService.assign_priority_groups(batches_only, item)
-            
-            # Create lookup for DTOs by batch_id to preserve released_available
-            dto_lookup = {dto.batch.batch_id: dto for dto in limited_batches}
+            # Assign priority groups
+            batch_groups = BatchAllocationService.assign_priority_groups(limited_batches, item)
             
             # Format batches with priority groups
             result = []
             for batch, priority_group in batch_groups:
-                # Get the DTO for this batch to access released_available
-                dto = dto_lookup[batch.batch_id]
-                # Use DTO's released_available (architecturally sound!)
-                available_qty = dto.released_available
+                # Calculate available_qty: release current package's allocations from reserved_qty
+                released_qty = current_allocations.get(batch.batch_id, Decimal('0'))
+                available_qty = batch.usable_qty - (batch.reserved_qty - released_qty)
                 batch_info = {
                     'batch_id': batch.batch_id,
                     'batch_no': batch.batch_no,

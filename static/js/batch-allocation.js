@@ -54,7 +54,7 @@ const BatchAllocation = (function() {
         if (elements.applyBtn) elements.applyBtn.addEventListener('click', applyAllocations);
         if (elements.overlay) elements.overlay.addEventListener('click', closeDrawer);
         
-        // Expose open function globally (for backwards compatibility)
+        // Expose open function globally
         window.openBatchDrawer = openDrawer;
     }
     
@@ -113,19 +113,19 @@ const BatchAllocation = (function() {
         showLoading();
         
         try {
-            // Load existing allocations
+            // Load existing allocations to calculate remaining qty
             loadExistingAllocations();
+            const alreadyAllocated = getTotalAllocated();
+            const remainingQty = currentItemData.requestedQty - alreadyAllocated;
             
             // Build API URL with query parameters
             const params = new URLSearchParams();
-            // CRITICAL: Send full requested_qty (not remaining) for per-warehouse truncation logic
-            // The backend uses this to determine how many batches to show per warehouse
-            // (enough to hypothetically fill the entire request from each single warehouse)
-            params.append('requested_qty', currentItemData.requestedQty);
+            // Always include remaining_qty, even if 0 (for consistent API response format)
+            params.append('remaining_qty', remainingQty);
             if (currentItemData.requiredUom) {
                 params.append('required_uom', currentItemData.requiredUom);
             }
-            // Include allocated batch IDs so they're always shown for editing (Set A)
+            // Include allocated batch IDs so they're always shown for editing
             const allocatedBatchIds = Object.keys(currentAllocations);
             if (allocatedBatchIds.length > 0) {
                 params.append('allocated_batch_ids', allocatedBatchIds.join(','));
@@ -895,22 +895,6 @@ const BatchAllocation = (function() {
             day: 'numeric'
         });
     }
-    
-    // Event delegation for batch selection buttons (CSP-compliant)
-    // Registered at module level to work across page navigations
-    document.addEventListener('click', function(event) {
-        const button = event.target.closest('.select-batches-btn');
-        if (button) {
-            // Ensure elements are initialized before opening drawer
-            if (!elements.drawer) {
-                init();
-            }
-            const itemId = parseInt(button.dataset.itemId);
-            const itemName = JSON.parse(button.dataset.itemName || '"Unknown Item"');
-            const requestedQty = parseFloat(button.dataset.requestedQty);
-            openDrawer(itemId, itemName, requestedQty);
-        }
-    });
     
     // Initialize on DOM ready
     if (document.readyState === 'loading') {

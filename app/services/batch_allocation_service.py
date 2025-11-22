@@ -6,22 +6,12 @@ First In First Out (FIFO) for non-expirable items based on item configuration.
 """
 from datetime import date, datetime
 from decimal import Decimal
-from typing import List, Dict, Tuple, Optional, NamedTuple
+from typing import List, Dict, Tuple, Optional
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import joinedload
 
 from app.db import db
 from app.db.models import Item, ItemBatch, Inventory, Warehouse
-
-
-class BatchDTO(NamedTuple):
-    """
-    Data Transfer Object for batch information with released availability.
-    This ensures released availability is carried through all layers without relying on ORM attributes.
-    """
-    batch: ItemBatch
-    released_available: Decimal
-    is_allocated: bool
 
 
 class BatchAllocationService:
@@ -70,7 +60,7 @@ class BatchAllocationService:
         return query.all()
     
     @staticmethod
-    def sort_batches_for_drawer(batches: List[ItemBatch], item: Item, skip_availability_filter: bool = False) -> List[ItemBatch]:
+    def sort_batches_for_drawer(batches: List[ItemBatch], item: Item) -> List[ItemBatch]:
         """
         Sort batches for drawer display based ONLY on can_expire_flag.
         Ignores item.issuance_order field to ensure consistent FEFO/FIFO behavior.
@@ -80,10 +70,8 @@ class BatchAllocationService:
         - If can_expire_flag = FALSE: Sort by oldest batch_date (FIFO)
         
         Args:
-            batches: List of batches to sort
+            batches: List of batches to sort (already filtered for available qty > 0)
             item: Item object with can_expire_flag
-            skip_availability_filter: If True, don't filter out zero-available batches
-                                      (used for Set A allocated batches that must always be shown)
             
         Returns:
             Sorted list of batches
@@ -101,13 +89,10 @@ class BatchAllocationService:
             active_batches = batches
         
         # Filter out batches with zero available quantity
-        # UNLESS skip_availability_filter is True (for Set A allocated batches)
-        # CRITICAL: ALWAYS use _released_available (must be attached before calling this function)
-        if not skip_availability_filter:
-            active_batches = [
-                b for b in active_batches 
-                if b._released_available > 0
-            ]
+        active_batches = [
+            b for b in active_batches 
+            if (b.usable_qty - b.reserved_qty) > 0
+        ]
         
         # Sort based ONLY on can_expire_flag (ignore issuance_order)
         if item.can_expire_flag:
@@ -389,56 +374,44 @@ class BatchAllocationService:
     @staticmethod
     def get_limited_batches_for_drawer(
         item_id: int,
-        requested_qty: Decimal,
+        remaining_qty: Decimal,
         required_uom: str = None,
         allocated_batch_ids: List[int] = None,
         current_allocations: dict = None
-    ) -> Tuple[List[BatchDTO], Decimal, Decimal]:
+    ) -> Tuple[List[ItemBatch], Decimal, Decimal]:
         """
-        Get batches for the LM drawer display with enhanced allocation and truncation logic.
+        Get batches for the drawer display with warehouse-based filtering and sorting.
         
-        This implements the following rules:
-        
-        SET A (Allocated Batches): Always shown, even if available = 0
-        - These are batches already allocated to this (reliefpkg_id, item_id) pair
-        - Must always appear in the drawer for editing
-        
-        SET B (Available Batches): Only shown if available > 0
-        - Only include batches where: available = usable_qty - reserved_qty > 0
-        - These are potential batches the LM can use for adjustments
-        
-        Per-Warehouse Sorting:
-        - If item can expire: Sort by earliest expiry_date, then oldest batch_date (FEFO)
-        - If item cannot expire: Sort by oldest batch_date (FIFO)
-        
-        Per-Warehouse Truncation:
-        - Start with all allocated batches from this warehouse (Set A)
-        - Add available-only batches (Set B) until potentialFromWarehouse >= requested_qty
-        - This ensures LM sees enough batches to hypothetically fill the entire request 
-          from each single warehouse, while never seeing more batches than necessary
+        Warehouse Filtering: Only shows warehouses where total (usable_qty - reserved_qty) > 0.
+        Per-Warehouse Sorting: Batches sorted within each warehouse (FEFO if can_expire, else FIFO).
+        Early Stopping: For each warehouse, stops loading batches once cumulative quantity 
+        meets or exceeds remaining_qty.
         
         Important: When current_allocations is provided, those quantities are "released" from
-        reserved_qty when calculating available_qty. This allows LM to re-allocate freely.
+        reserved_qty when calculating available_qty. This allows LM to re-allocate freely
+        when editing existing package allocations.
         
         Args:
             item_id: Item ID
-            requested_qty: Requested quantity for this item on the relief request (NOT remaining)
+            remaining_qty: Remaining quantity to fulfill
             required_uom: Required unit of measure
-            allocated_batch_ids: List of batch IDs that are already allocated (Set A)
+            allocated_batch_ids: List of batch IDs that are already allocated (for editing)
             current_allocations: Dict mapping batch_id -> qty for current package's allocations
                                  (these are "released" from reserved_qty when calculating available)
             
         Returns:
             Tuple of:
-                - List of batches (Set A union truncated Set B, per warehouse)
+                - List of batches (limited per warehouse based on remaining_qty)
                 - Total available from these batches
                 - Shortfall (0 if can fulfill, positive if not)
         """
-        # Get item
+        # Get item and all available batches
         item = Item.query.get(item_id)
         if not item:
-            return [], Decimal('0'), requested_qty
+            return [], Decimal('0'), remaining_qty
         
+        # Get all available batches (with available qty > 0)
+        all_batches = BatchAllocationService.get_available_batches(item_id, required_uom=required_uom)
         allocated_batch_ids_set = set(allocated_batch_ids or [])
         current_allocations = current_allocations or {}
         
@@ -448,160 +421,82 @@ class BatchAllocationService:
             released_qty = current_allocations.get(batch.batch_id, Decimal('0'))
             return batch.usable_qty - (batch.reserved_qty - released_qty)
         
-        # STEP 1A: Fetch ALL batches for this item (no availability filtering yet)
-        # We'll calculate availability AFTER releasing current allocations
-        from app.db.models import ItemBatch
-        from sqlalchemy.orm import joinedload
-        
-        all_batches_query = ItemBatch.query.join(
-            Inventory,
-            and_(
-                ItemBatch.inventory_id == Inventory.inventory_id,
-                ItemBatch.item_id == Inventory.item_id
-            )
-        ).join(
-            Warehouse,
-            Inventory.inventory_id == Warehouse.warehouse_id
-        ).filter(
-            ItemBatch.item_id == item_id,
-            ItemBatch.status_code == 'A',
-            Inventory.status_code == 'A',
-            Warehouse.status_code == 'A'
-        ).options(
-            joinedload(ItemBatch.inventory).joinedload(Inventory.warehouse)
-        )
-        
-        if required_uom:
-            all_batches_query = all_batches_query.filter(ItemBatch.uom_code == required_uom)
-        
-        all_batches = all_batches_query.all()
-        
-        # STEP 1B: Create BatchDTO objects for all batches with released availability
-        # This ensures released availability is carried through all layers
-        batch_dtos = []
-        for batch in all_batches:
-            is_allocated = batch.batch_id in allocated_batch_ids_set
-            released_available = calc_available_qty(batch)
-            
-            dto = BatchDTO(
-                batch=batch,
-                released_available=released_available,
-                is_allocated=is_allocated
-            )
-            batch_dtos.append(dto)
-        
-        # STEP 1C: Separate BatchDTOs into Set A and Set B based on allocation status
+        # Group batches by warehouse first (before sorting)
         warehouse_groups = {}
-        
-        for dto in batch_dtos:
-            warehouse_id = dto.batch.inventory.inventory_id
-            
+        for batch in all_batches:
+            warehouse_id = batch.inventory.inventory_id
             if warehouse_id not in warehouse_groups:
                 warehouse_groups[warehouse_id] = {
-                    'allocated_dtos': [],  # Set A: Always shown
-                    'available_dtos': [],  # Set B: Shown only if released available > 0
-                    'allocated_qty_sum': Decimal('0')  # Sum of allocated quantities (not available)
+                    'batches': [],
+                    'total_available': Decimal('0')
                 }
             
-            # Set A: Allocated batches - ALWAYS include, even if released_available <= 0
-            if dto.is_allocated:
-                warehouse_groups[warehouse_id]['allocated_dtos'].append(dto)
-                # Track sum of ALLOCATED quantities (from current_allocations), not available
-                allocated_qty = current_allocations.get(dto.batch.batch_id, Decimal('0'))
-                warehouse_groups[warehouse_id]['allocated_qty_sum'] += allocated_qty
-            # Set B: Available batches - only include if released_available > 0
-            elif dto.released_available > 0:
-                warehouse_groups[warehouse_id]['available_dtos'].append(dto)
-            # Do NOT include: batches with released_available <= 0 that are NOT allocated
+            available_qty = calc_available_qty(batch)
+            is_allocated = batch.batch_id in allocated_batch_ids_set
+            
+            # Skip batches with zero or negative available inventory
+            # EXCEPT if they're already allocated (need to show them for editing)
+            if available_qty <= 0 and not is_allocated:
+                continue
+            
+            warehouse_groups[warehouse_id]['batches'].append(batch)
+            warehouse_groups[warehouse_id]['total_available'] += max(Decimal('0'), available_qty)
         
-        # ALL warehouses are kept - do not filter out warehouses with only allocated batches!
+        # Filter out warehouses with zero total available quantity
+        warehouse_groups = {
+            wh_id: wh_data 
+            for wh_id, wh_data in warehouse_groups.items() 
+            if wh_data['total_available'] > 0
+        }
         
-        # STEP 2: Sort DTOs WITHIN each warehouse using FEFO/FIFO rules
+        # Sort batches WITHIN each warehouse using drawer-specific FEFO/FIFO rules
+        # (ignores issuance_order, only uses can_expire_flag)
         for warehouse_id, wh_data in warehouse_groups.items():
-            # Sort allocated DTOs (Set A) - skip availability filter, must always show
-            wh_data['allocated_dtos'] = BatchAllocationService.sort_dtos_for_drawer(
-                wh_data['allocated_dtos'],
-                item,
-                skip_availability_filter=True  # CRITICAL: Don't filter out zero-available allocated batches
-            )
-            # Sort available DTOs (Set B) - apply availability filter
-            wh_data['available_dtos'] = BatchAllocationService.sort_dtos_for_drawer(
-                wh_data['available_dtos'],
-                item,
-                skip_availability_filter=False  # Filter out zero-available batches from Set B
+            wh_data['batches'] = BatchAllocationService.sort_batches_for_drawer(
+                wh_data['batches'],
+                item
             )
         
-        # STEP 3: Per-Warehouse Truncation
-        # Build limited DTO list with per-warehouse truncation logic
-        limited_dtos = []
+        # Build limited batch list with per-warehouse early stopping
+        limited_batches = []
         
         for warehouse_id, wh_data in warehouse_groups.items():
-            # STEP 3.1: Always include ALL allocated DTOs from this warehouse (Set A)
-            # These are ALWAYS shown, even if available <= 0
-            for dto in wh_data['allocated_dtos']:
-                limited_dtos.append(dto)
+            warehouse_cumulative_qty = Decimal('0')
+            warehouse_has_fulfilled = False
             
-            # STEP 3.2: Initialize potentialFromWarehouse with ALLOCATED quantities (not available)
-            # This is the sum of allocated quantities from current_allocations for this warehouse
-            potential_from_warehouse = wh_data['allocated_qty_sum']
-            
-            # STEP 3.3: Add available-only DTOs (Set B) until potential >= requested_qty
-            for dto in wh_data['available_dtos']:
-                # Stop adding if this warehouse can already fulfill the entire request
-                # using allocated quantities + previously added available batches
-                if potential_from_warehouse >= requested_qty:
-                    break
+            for batch in wh_data['batches']:
+                is_allocated = batch.batch_id in allocated_batch_ids_set
+                available_qty = calc_available_qty(batch)
                 
-                # Add this available DTO
-                limited_dtos.append(dto)
-                # Use the DTO's released availability (guaranteed to exist)
-                available_qty = dto.released_available
-                # Add the available quantity to potential
-                potential_from_warehouse += available_qty
+                # Always include allocated batches with available inventory (for editing)
+                if is_allocated:
+                    limited_batches.append(batch)
+                    warehouse_cumulative_qty += available_qty
+                    
+                    # Check if allocated batches alone already meet remaining_qty
+                    if warehouse_cumulative_qty >= remaining_qty:
+                        warehouse_has_fulfilled = True
+                    
+                    continue
+                
+                # For non-allocated batches, only include if warehouse hasn't fulfilled yet
+                if not warehouse_has_fulfilled:
+                    limited_batches.append(batch)
+                    warehouse_cumulative_qty += available_qty
+                    
+                    # Stop loading more batches once this warehouse can fulfill remaining_qty
+                    if warehouse_cumulative_qty >= remaining_qty:
+                        warehouse_has_fulfilled = True
         
-        # STEP 4: Calculate total available and shortfall
+        # Calculate total available and shortfall
         cumulative_available = Decimal('0')
-        for dto in limited_dtos:
-            # Use the DTO's released availability (guaranteed to exist)
-            # Only count positive quantities (allocated batches may have zero or negative available)
-            cumulative_available += max(Decimal('0'), dto.released_available)
+        for batch in limited_batches:
+            available_qty = calc_available_qty(batch)
+            cumulative_available += available_qty
         
-        # Shortfall is the difference between requested and what's actually available
-        shortfall = max(Decimal('0'), requested_qty - cumulative_available)
+        shortfall = max(Decimal('0'), remaining_qty - cumulative_available)
         
-        return limited_dtos, cumulative_available, shortfall
-    
-    @staticmethod
-    def sort_dtos_for_drawer(dtos: List[BatchDTO], item: Item, skip_availability_filter: bool = False) -> List[BatchDTO]:
-        """
-        Sort BatchDTOs using FEFO/FIFO rules.
-        
-        Args:
-            dtos: List of BatchDTO objects to sort
-            item: Item object for determining FEFO vs FIFO
-            skip_availability_filter: If True, don't filter out zero-available batches
-            
-        Returns:
-            Sorted list of BatchDTO objects
-        """
-        # Extract batches and temporarily attach _released_available for compatibility
-        # with existing sort_batches_for_drawer and assign_priority_groups functions
-        batches = []
-        for dto in dtos:
-            batch = dto.batch
-            batch._released_available = dto.released_available
-            batches.append(batch)
-        
-        # Use existing sort logic
-        sorted_batches = BatchAllocationService.sort_batches_for_drawer(
-            batches, item, skip_availability_filter
-        )
-        
-        # Rebuild DTOs in sorted order, preserving original DTO data
-        dto_lookup = {dto.batch.batch_id: dto for dto in dtos}
-        sorted_dtos = [dto_lookup[batch.batch_id] for batch in sorted_batches]
-        
-        return sorted_dtos
+        return limited_batches, cumulative_available, shortfall
     
     @staticmethod
     def assign_priority_groups(batches: List[ItemBatch], item: Item) -> List[Tuple[ItemBatch, int]]:
