@@ -176,22 +176,20 @@ input[type=number] {
                                         <div class="field-label">Donated Qty</div>
                                         <div class="donated-qty-box">
                                             <strong class="text-primary fs-6">{{ di.item_qty }}</strong>
-                                            <small class="text-muted d-block" style="font-size: 0.7rem;">{{ di.uom_code }}</small>
+                                            <small class="text-muted d-block fs-tiny">{{ di.uom_code }}</small>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
                                         <label for="batch_no_{{ di.item_id }}" class="field-label">Batch No</label>
                                         <input type="text" 
-                                               class="form-control form-control-sm batch-no-input" 
+                                               class="form-control form-control-sm batch-no-input text-uppercase" 
                                                id="batch_no_{{ di.item_id }}"
                                                name="batch_no_{{ di.item_id }}" 
                                                data-item-id="{{ di.item_id }}"
                                                data-is-batched="{{ 'true' if di.item.is_batched_flag else 'false' }}"
                                                placeholder="{% if di.item.is_batched_flag %}Required{% else %}Optional{% endif %}"
                                                {% if di.item.is_batched_flag %}required{% endif %}
-                                               oninput="validateBatchPairing({{ di.item_id }})"
-                                               onblur="validateBatchPairing({{ di.item_id }})"
-                                               style="text-transform: uppercase;">
+                                               data-validate="batch-pairing">
                                     </div>
                                     <div class="col-md-3">
                                         <label for="batch_date_{{ di.item_id }}" class="field-label">Batch Date</label>
@@ -204,8 +202,7 @@ input[type=number] {
                                                data-max-date="{{ today }}"
                                                placeholder="YYYY-MM-DD"
                                                {% if di.item.is_batched_flag %}required{% endif %}
-                                               onchange="validateBatchPairing({{ di.item_id }})"
-                                               onblur="validateBatchPairing({{ di.item_id }})">
+                                               data-validate="batch-pairing">
                                     </div>
                                     <div class="col-md-4">
                                         <label for="expiry_date_{{ di.item_id }}" class="field-label">Expiry Date</label>
@@ -218,8 +215,8 @@ input[type=number] {
                                                data-min-date="{{ today }}"
                                                placeholder="{% if di.item.can_expire_flag %}YYYY-MM-DD{% else %}Not applicable{% endif %}"
                                                {% if di.item.can_expire_flag %}required{% else %}disabled{% endif %}
-                                               {% if not di.item.can_expire_flag %}style="background-color: #f8f9fa; cursor: not-allowed;"{% endif %}>
-                                        <div class="invalid-feedback expiry-error-{{ di.item_id }}" style="display:none;">
+                                               {% if not di.item.can_expire_flag %}class="form-control form-control-sm iso-date-picker expiry-date bg-light cursor-not-allowed"{% endif %}>
+                                        <div class="invalid-feedback expiry-error-{{ di.item_id }} d-none">
                                             <i class="bi bi-exclamation-circle"></i>
                                             <span class="expiry-error-text-{{ di.item_id }}"></span>
                                         </div>
@@ -256,9 +253,9 @@ input[type=number] {
                                                max="99999999.99"
                                                data-item-id="{{ di.item_id }}"
                                                placeholder="0.00"
-                                               oninput="validateUnitCost(this)"
+                                               data-validate="unit-cost"
                                                required>
-                                        <div class="invalid-feedback unit-cost-error-{{ di.item_id }}" style="display:none;"></div>
+                                        <div class="invalid-feedback unit-cost-error-{{ di.item_id }} d-none"></div>
                                     </div>
                                     <div class="col-md-3">
                                         <label for="usable_qty_{{ di.item_id }}" class="field-label">Usable Qty</label>
@@ -271,11 +268,11 @@ input[type=number] {
                                                value="{{ di.item_qty }}"
                                                data-expected="{{ di.item_qty }}"
                                                data-item-id="{{ di.item_id }}"
-                                               oninput="enforceDecimalPlaces(this, 2)"
-                                               onchange="validateQuantities({{ di.item_id }})"
+                                               data-validate="quantities"
+                                               data-decimal-places="2"
                                                required
                                                readonly
-                                               style="background-color: #f8f9fa;">
+                                               class="form-control form-control-sm qty-input bg-light">
                                     </div>
                                     <div class="col-md-2">
                                         <label for="defective_qty_{{ di.item_id }}" class="field-label">Defective</label>
@@ -287,8 +284,9 @@ input[type=number] {
                                                min="0"
                                                value="0"
                                                data-item-id="{{ di.item_id }}"
-                                               oninput="enforceDecimalPlaces(this, 2); autoAdjustUsableQty({{ di.item_id }});"
-                                               onchange="validateQuantities({{ di.item_id }})">
+                                               data-validate="quantities"
+                                               data-decimal-places="2"
+                                               data-auto-adjust="usable-qty">
                                     </div>
                                     <div class="col-md-3">
                                         <label for="expired_qty_{{ di.item_id }}" class="field-label">Expired</label>
@@ -300,15 +298,16 @@ input[type=number] {
                                                min="0"
                                                value="0"
                                                data-item-id="{{ di.item_id }}"
-                                               oninput="enforceDecimalPlaces(this, 2); autoAdjustUsableQty({{ di.item_id }});"
-                                               onchange="validateQuantities({{ di.item_id }})">
+                                               data-validate="quantities"
+                                               data-decimal-places="2"
+                                               data-auto-adjust="usable-qty">
                                     </div>
                                 </div>
                                 
                                 <!-- Batch Pairing Validation Error Messages -->
                                 <div class="row g-2 mt-1">
                                     <div class="col-12">
-                                        <div class="invalid-feedback d-block batch-pair-error-{{ di.item_id }}" style="display:none;">
+                                        <div class="invalid-feedback d-block batch-pair-error-{{ di.item_id }} d-none">
                                             <i class="bi bi-exclamation-circle"></i>
                                             <span class="batch-pair-error-text-{{ di.item_id }}"></span>
                                         </div>
@@ -318,7 +317,7 @@ input[type=number] {
                                 <!-- Quantity Validation Error Messages -->
                                 <div class="row g-2 mt-1">
                                     <div class="col-12">
-                                        <div class="invalid-feedback d-block qty-error-{{ di.item_id }}" style="display:none !important;">
+                                        <div class="invalid-feedback d-block qty-error-{{ di.item_id }} d-none">
                                             <i class="bi bi-exclamation-circle"></i>
                                             <span class="qty-error-text-{{ di.item_id }}"></span>
                                         </div>
@@ -793,6 +792,56 @@ document.addEventListener('DOMContentLoaded', function() {
     const itemIds = [...new Set([...document.querySelectorAll('[data-item-id]')].map(el => el.dataset.itemId))];
     itemIds.forEach(itemId => {
         validateQuantities(itemId);
+    });
+    
+    // Event delegation for data-validate attributes
+    document.addEventListener('input', function(e) {
+        const target = e.target;
+        const validateType = target.dataset.validate;
+        const itemId = target.dataset.itemId;
+        
+        if (!validateType || !itemId) return;
+        
+        if (validateType === 'batch-pairing') {
+            validateBatchPairing(itemId);
+        } else if (validateType === 'unit-cost') {
+            validateUnitCost(target);
+        } else if (validateType === 'quantities') {
+            const decimalPlaces = target.dataset.decimalPlaces;
+            if (decimalPlaces) {
+                enforceDecimalPlaces(target, parseInt(decimalPlaces));
+            }
+            if (target.dataset.autoAdjust === 'usable-qty') {
+                autoAdjustUsableQty(itemId);
+            }
+            validateQuantities(itemId);
+        }
+    });
+    
+    document.addEventListener('change', function(e) {
+        const target = e.target;
+        const validateType = target.dataset.validate;
+        const itemId = target.dataset.itemId;
+        
+        if (!validateType || !itemId) return;
+        
+        if (validateType === 'batch-pairing') {
+            validateBatchPairing(itemId);
+        } else if (validateType === 'quantities') {
+            validateQuantities(itemId);
+        }
+    });
+    
+    document.addEventListener('blur', function(e) {
+        const target = e.target;
+        const validateType = target.dataset.validate;
+        const itemId = target.dataset.itemId;
+        
+        if (!validateType || !itemId) return;
+        
+        if (validateType === 'batch-pairing') {
+            validateBatchPairing(itemId);
+        }
     });
 });
 </script>

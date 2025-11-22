@@ -301,15 +301,20 @@ document.getElementById('addItemBtn').addEventListener('click', function() {
     itemSelect.focus();
 });
 
-function removeItem(itemId) {
-    const index = donationItems.findIndex(item => item.id === itemId);
-    if (index > -1) {
-        if (confirm('Remove this item from the donation?')) {
-            donationItems.splice(index, 1);
-            updateItemsTable();
+// Event delegation for remove item buttons
+document.addEventListener('click', function(e) {
+    const removeBtn = e.target.closest('[data-action="remove-donation-item"]');
+    if (removeBtn) {
+        const itemId = parseInt(removeBtn.dataset.itemId);
+        const index = donationItems.findIndex(item => item.id === itemId);
+        if (index > -1) {
+            if (confirm('Remove this item from the donation?')) {
+                donationItems.splice(index, 1);
+                updateItemsTable();
+            }
         }
     }
-}
+});
 
 function updateItemsTable() {
     const tableContainer = document.getElementById('itemsTableContainer');
@@ -322,9 +327,11 @@ function updateItemsTable() {
     if (donationItems.length === 0) {
         tableContainer.innerHTML = '';
         hiddenContainer.innerHTML = '';
-        noItemsMsg.style.display = 'block';
+        noItemsMsg.classList.remove('d-none');
+        noItemsMsg.classList.add('d-block');
     } else {
-        noItemsMsg.style.display = 'none';
+        noItemsMsg.classList.remove('d-block');
+        noItemsMsg.classList.add('d-none');
         
         // Build table HTML
         let tableHtml = `
@@ -353,7 +360,7 @@ function updateItemsTable() {
                         ${item.comments ? item.comments : '<span class="text-muted">—</span>'}
                     </td>
                     <td class="text-end">
-                        <button type="button" class="btn btn-sm btn-danger" onclick="removeItem(${item.id})">
+                        <button type="button" class="btn btn-sm btn-danger" data-action="remove-donation-item" data-item-id="${item.id}">
                             <i class="bi bi-trash"></i> Remove
                         </button>
                     </td>

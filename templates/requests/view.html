@@ -260,7 +260,7 @@
                     <i class="bi bi-x-circle"></i>
                     Cancel
                 </button>
-                <button type="button" class="btn btn-success" onclick="confirmSubmitRequest()">
+                <button type="button" class="btn btn-success" data-action="confirm-submit-request">
                     <i class="bi bi-send-fill"></i>
                     Yes, Submit Request
                 </button>
@@ -283,13 +283,16 @@ if (submitRequestForm) {
     });
 }
 
-function confirmSubmitRequest() {
-    console.log('Confirming submit request');
-    const form = document.getElementById('submitRequestForm');
-    if (form) {
-        form.removeEventListener('submit', arguments.callee);
-        form.submit();
+// Confirmation handler for modal button
+document.addEventListener('click', function(e) {
+    const confirmSubmit = e.target.closest('[data-action="confirm-submit-request"]');
+    if (confirmSubmit) {
+        const form = document.getElementById('submitRequestForm');
+        if (form) {
+            form.removeEventListener('submit', arguments.callee);
+            form.submit();
+        }
     }
-}
+});
 </script>
 {% endblock %}

@@ -50,7 +50,7 @@
                         </thead>
                         <tbody>
                             {% for item in low_stock_items %}
-                            <tr style="cursor: pointer;" onclick="window.location='{{ url_for('items.view', item_id=item.item_id) }}'">
+                            <tr class="cursor-pointer" data-href="{{ url_for('items.view', item_id=item.item_id) }}">
                                 <td class="py-2 px-3">{{ item.item_name }}</td>
                                 <td class="py-2 px-3 text-end">{{ "%.2f"|format(item.total_qty) }}</td>
                                 <td class="py-2 px-3 text-end">{{ "%.2f"|format(item.reorder_level) }}</td>
@@ -91,7 +91,7 @@
                         </thead>
                         <tbody>
                             {% for wh in warehouse_stock %}
-                            <tr style="cursor: pointer;" onclick="window.location='{{ url_for('warehouses.view', warehouse_id=wh.warehouse_id) }}'">
+                            <tr class="cursor-pointer" data-href="{{ url_for('warehouses.view', warehouse_id=wh.warehouse_id) }}">
                                 <td class="py-2 px-3">{{ wh.warehouse_name }}</td>
                                 <td class="py-2 px-3 text-end">{{ wh.item_count }}</td>
                                 <td class="py-2 px-3 text-end">{{ "%.2f"|format(wh.total_qty) }}</td>
@@ -132,7 +132,7 @@
                         </thead>
                         <tbody>
                             {% for event in active_events %}
-                            <tr style="cursor: pointer;" onclick="window.location='{{ url_for('events.view', event_id=event.event_id) }}'">
+                            <tr class="cursor-pointer" data-href="{{ url_for('events.view', event_id=event.event_id) }}">
                                 <td class="py-2 px-3"><strong>{{ event.event_id }}</strong></td>
                                 <td class="py-2 px-3">{{ event.event_name }}</td>
                                 <td class="py-2 px-3">{{ event.event_type_desc }}</td>

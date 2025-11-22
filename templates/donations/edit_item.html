@@ -95,14 +95,13 @@
                                         Storage Location <span class="text-danger">*</span>
                                     </label>
                                     <input type="text" 
-                                           class="form-control" 
+                                           class="form-control text-uppercase" 
                                            id="location_name" 
                                            name="location_name" 
                                            value="{{ donation_item.location_name }}" 
                                            maxlength="50" 
                                            required
-                                           placeholder="e.g., WAREHOUSE A - SHELF 12"
-                                           style="text-transform: uppercase;">
+                                           placeholder="e.g., WAREHOUSE A - SHELF 12">
                                     <small class="form-text text-muted">Auto-converted to uppercase</small>
                                 </div>
                             </div>
@@ -118,12 +117,11 @@
                                     <label for="comments_text" class="form-label">
                                         Comments
                                     </label>
-                                    <textarea class="form-control" 
+                                    <textarea class="form-control text-uppercase" 
                                               id="comments_text" 
                                               name="comments_text" 
                                               rows="2"
-                                              placeholder="Optional comments about this item..."
-                                              style="text-transform: uppercase;">{{ donation_item.comments_text or '' }}</textarea>
+                                              placeholder="Optional comments about this item...">{{ donation_item.comments_text or '' }}</textarea>
                                     <small class="form-text text-muted">Auto-converted to uppercase</small>
                                 </div>
                             </div>

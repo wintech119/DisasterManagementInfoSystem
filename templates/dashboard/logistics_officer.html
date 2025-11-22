@@ -191,7 +191,7 @@
                                 </td>
                                 <td class="py-2 px-3 text-end">
                                     <a href="{{ url_for('packaging.prepare_package', reliefrqst_id=req.reliefrqst_id) }}" 
-                                       class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation();">
+                                       class="btn btn-sm btn-outline-primary" data-action="stop-propagation">
                                         <i class="bi bi-box-seam"></i> Prepare
                                     </a>
                                 </td>
@@ -202,7 +202,7 @@
                 </div>
                 {% else %}
                 <div class="p-3 text-center text-muted">
-                    <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                    <i class="bi bi-inbox fs-2rem"></i>
                     <p class="mb-0 mt-2">No relief requests pending fulfillment</p>
                 </div>
                 {% endif %}
@@ -230,7 +230,7 @@
                         </thead>
                         <tbody>
                             {% for item in low_stock_items %}
-                            <tr style="cursor: pointer;" onclick="window.location='{{ url_for('items.view', item_id=item.item_id) }}'">
+                            <tr class="cursor-pointer" data-href="{{ url_for('items.view', item_id=item.item_id) }}">
                                 <td class="py-2 px-3">
                                     <i class="bi bi-exclamation-circle text-danger"></i> {{ item.item_name }}
                                 </td>
@@ -268,7 +268,7 @@
                         </thead>
                         <tbody>
                             {% for wh in warehouse_stock[:6] %}
-                            <tr style="cursor: pointer;" onclick="window.location='{{ url_for('warehouses.view', warehouse_id=wh.warehouse_id) }}'">
+                            <tr class="cursor-pointer" data-href="{{ url_for('warehouses.view', warehouse_id=wh.warehouse_id) }}">
                                 <td class="py-2 px-3">{{ wh.warehouse_name }}</td>
                                 <td class="py-2 px-3 text-end">{{ wh.item_count }}</td>
                                 <td class="py-2 px-3 text-end">{{ "%.2f"|format(wh.total_qty) }}</td>
@@ -292,13 +292,13 @@
                 <div class="row g-3">
                     <div class="col-md-3">
                         <a href="{{ url_for('needs_list.index') }}" class="btn btn-outline-primary w-100 py-3">
-                            <i class="bi bi-list-check d-block mb-2" style="font-size: 2rem;"></i>
+                            <i class="bi bi-list-check d-block mb-2 fs-2rem"></i>
                             View All Needs Lists
                         </a>
                     </div>
                     <div class="col-md-3">
                         <a href="{{ url_for('fulfilment.index') }}" class="btn btn-outline-primary w-100 py-3">
-                            <i class="bi bi-box-seam d-block mb-2" style="font-size: 2rem;"></i>
+                            <i class="bi bi-box-seam d-block mb-2 fs-2rem"></i>
                             View All Fulfilments
                         </a>
                     </div>

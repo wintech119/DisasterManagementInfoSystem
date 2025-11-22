@@ -282,7 +282,7 @@
 <div class="print-container">
     <!-- Document Header -->
     <div class="document-header">
-        <div style="text-align: center; margin-bottom: 0.5rem;">
+        <div class="text-center mb-2">
             <strong>Government of Jamaica</strong><br>
             <strong>Office of Disaster Preparedness and Emergency Management (ODPEM)</strong>
         </div>
@@ -362,7 +362,7 @@
             </div>
             <div class="info-row">
                 <span class="info-label">Status:</span>
-                <span class="info-value" style="color: #009639; font-weight: 600;">APPROVED & DISPATCHED</span>
+                <span class="info-value text-success fw-bold">APPROVED & DISPATCHED</span>
             </div>
         </div>
     </div>
@@ -388,8 +388,8 @@
         <thead>
             <tr>
                 <th>Item Description</th>
-                <th style="text-align: center; width: 120px;">Requested Qty</th>
-                <th style="text-align: center; width: 120px;">Issued Qty</th>
+                <th class="text-center" style="width: 120px;">Requested Qty</th>
+                <th class="text-center" style="width: 120px;">Issued Qty</th>
                 <th style="width: 100px;">UOM</th>
                 <th style="width: 150px;">Status</th>
             </tr>
@@ -400,7 +400,7 @@
                 <td>
                     <strong>{{ item_data.item.item_desc if item_data.item else 'Unknown Item' }}</strong>
                     {% if item_data.item and item_data.item.sku_code %}
-                    <div style="font-size: 0.8125rem; color: #6c757d;">SKU: {{ item_data.item.sku_code }}</div>
+                    <div class="text-muted fs-small">SKU: {{ item_data.item.sku_code }}</div>
                     {% endif %}
                     
                     <!-- Batch Details -->
@@ -419,32 +419,32 @@
                         </div>
                         {% endfor %}
                         {% else %}
-                        <div class="batch-item" style="color: #dc3545; font-style: italic;">
+                        <div class="batch-item text-danger fst-italic">
                             No allocation made
                         </div>
                         {% endif %}
                     </div>
                 </td>
-                <td style="text-align: center; font-weight: 600;">{{ item_data.requested_qty }}</td>
-                <td style="text-align: center; font-weight: 600; {% if item_data.issued_qty > 0 %}color: #009639;{% else %}color: #dc3545;{% endif %}">{{ item_data.issued_qty }}</td>
+                <td class="text-center fw-bold">{{ item_data.requested_qty }}</td>
+                <td class="text-center fw-bold {% if item_data.issued_qty > 0 %}text-success{% else %}text-danger{% endif %}">{{ item_data.issued_qty }}</td>
                 <td>{{ item_data.item.default_uom.uom_desc if item_data.item and item_data.item.default_uom else 'N/A' }}</td>
                 <td>
                     {% if item_data.status_code in ['U', 'D', 'W'] %}
-                    <span style="color: #dc3545; font-weight: 600;">{{ item_data.status_desc or item_data.status_code }}</span>
+                    <span class="text-danger fw-bold">{{ item_data.status_desc or item_data.status_code }}</span>
                     {% if item_data.status_reason %}
-                    <div style="font-size: 0.8125rem; color: #6c757d; margin-top: 0.25rem;">{{ item_data.status_reason }}</div>
+                    <div class="text-muted fs-small mt-1">{{ item_data.status_reason }}</div>
                     {% endif %}
                     {% elif item_data.status_code == 'F' %}
-                    <span style="color: #009639; font-weight: 600;">{{ item_data.status_desc or 'Filled' }}</span>
+                    <span class="text-success fw-bold">{{ item_data.status_desc or 'Filled' }}</span>
                     {% elif item_data.status_code == 'P' %}
-                    <span style="color: #ffc107; font-weight: 600;">{{ item_data.status_desc or 'Partly Filled' }}</span>
+                    <span class="text-warning fw-bold">{{ item_data.status_desc or 'Partly Filled' }}</span>
                     {% elif item_data.status_code == 'L' %}
-                    <span style="color: #0dcaf0; font-weight: 600;">{{ item_data.status_desc or 'Allowed Limit' }}</span>
+                    <span class="text-info fw-bold">{{ item_data.status_desc or 'Allowed Limit' }}</span>
                     {% if item_data.status_reason %}
-                    <div style="font-size: 0.8125rem; color: #6c757d; margin-top: 0.25rem;">{{ item_data.status_reason }}</div>
+                    <div class="text-muted fs-small mt-1">{{ item_data.status_reason }}</div>
                     {% endif %}
                     {% else %}
-                    <span style="font-weight: 600;">{{ item_data.status_desc or item_data.status_code }}</span>
+                    <span class="fw-bold">{{ item_data.status_desc or item_data.status_code }}</span>
                     {% endif %}
                 </td>
             </tr>
@@ -455,7 +455,7 @@
     <!-- Signature Section -->
     <div class="signature-section">
         <h2 class="signature-title">Collection Acknowledgment</h2>
-        <p style="text-align: center; color: #6c757d; margin-bottom: 2rem;">
+        <p class="text-center text-muted mb-4">
             I acknowledge receipt of the above-listed items on behalf of {{ relief_request.agency.agency_name if relief_request.agency else 'the requesting agency' }}.
         </p>
         
@@ -487,9 +487,9 @@
     </div>
 
     <!-- Footer -->
-    <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #dee2e6; text-align: center; color: #6c757d; font-size: 0.875rem;">
+    <div class="mt-4 pt-3 border-top text-center text-muted fs-small">
         <p>This document serves as official confirmation of relief supplies dispatch from ODPEM to the requesting agency.</p>
-        <p style="margin-top: 0.5rem;">Generated on {{ generated_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+        <p class="mt-2">Generated on {{ generated_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
     </div>
 </div>
 {% endblock %}

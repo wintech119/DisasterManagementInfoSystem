@@ -104,7 +104,7 @@
                         </thead>
                         <tbody>
                             {% for wh in warehouse_stock %}
-                            <tr style="cursor: pointer;" onclick="window.location='{{ url_for('warehouses.view', warehouse_id=wh.warehouse_id) }}'">
+                            <tr class="cursor-pointer" data-href="{{ url_for('warehouses.view', warehouse_id=wh.warehouse_id) }}">
                                 <td class="py-2 px-3"><strong>{{ wh.warehouse_name }}</strong></td>
                                 <td class="py-2 px-3 text-end">{{ wh.item_count }}</td>
                                 <td class="py-2 px-3 text-end">{{ "%.2f"|format(wh.total_qty) }}</td>
@@ -112,7 +112,7 @@
                                     <span class="badge bg-success">Active</span>
                                 </td>
                                 <td class="py-2 px-3 text-end">
-                                    <a href="{{ url_for('warehouses.view', warehouse_id=wh.warehouse_id) }}" class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation();">
+                                    <a href="{{ url_for('warehouses.view', warehouse_id=wh.warehouse_id) }}" class="btn btn-sm btn-outline-primary" data-action="stop-propagation">
                                         <i class="bi bi-eye"></i> View
                                     </a>
                                 </td>
@@ -191,7 +191,7 @@
                                 </td>
                                 <td class="py-2 px-3 text-end">
                                     <a href="{{ url_for('packaging.prepare_package', reliefrqst_id=req.reliefrqst_id) }}" 
-                                       class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation();">
+                                       class="btn btn-sm btn-outline-primary" data-action="stop-propagation">
                                         <i class="bi bi-box-seam"></i> Prepare
                                     </a>
                                 </td>

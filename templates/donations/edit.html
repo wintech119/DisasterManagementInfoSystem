@@ -74,13 +74,12 @@
                                     <label for="donation_desc" class="form-label">
                                         Donation Description <span class="text-danger">*</span>
                                     </label>
-                                    <textarea class="form-control" 
+                                    <textarea class="form-control text-uppercase" 
                                               id="donation_desc" 
                                               name="donation_desc" 
                                               rows="3" 
                                               required 
-                                              placeholder="Describe the donation contents and source..."
-                                              style="text-transform: uppercase;">{{ donation.donation_desc }}</textarea>
+                                              placeholder="Describe the donation contents and source...">{{ donation.donation_desc }}</textarea>
                                     <small class="form-text text-muted">Auto-converted to uppercase</small>
                                 </div>
                                 <div class="col-md-6">
@@ -141,12 +140,11 @@
                                     <label for="comments_text" class="form-label">
                                         Comments
                                     </label>
-                                    <textarea class="form-control" 
+                                    <textarea class="form-control text-uppercase" 
                                               id="comments_text" 
                                               name="comments_text" 
                                               rows="2"
-                                              placeholder="Optional comments about this donation..."
-                                              style="text-transform: uppercase;">{{ donation.comments_text or '' }}</textarea>
+                                              placeholder="Optional comments about this donation...">{{ donation.comments_text or '' }}</textarea>
                                     <small class="form-text text-muted">Auto-converted to uppercase</small>
                                 </div>
                             </div>

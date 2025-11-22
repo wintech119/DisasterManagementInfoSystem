@@ -176,7 +176,7 @@
                     </div>
                     {% else %}
                     <div class="text-center py-5">
-                        <i class="bi bi-box-seam text-muted" style="font-size: 3rem;"></i>
+                        <i class="bi bi-box-seam text-muted fs-3rem"></i>
                         <p class="text-muted mt-3">No items added yet. {% if donation.status_code == 'E' %}Add items to complete the donation record.{% elif donation.status_code == 'V' %}This verified donation has no items.{% else %}This processed donation has no items.{% endif %}</p>
                         {% if donation.status_code == 'E' %}
                         <a href="{{ url_for('donations.add_donation_item', donation_id=donation.donation_id) }}" class="btn-relief-primary">

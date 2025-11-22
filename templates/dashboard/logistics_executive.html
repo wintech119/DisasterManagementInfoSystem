@@ -155,7 +155,7 @@
                         </thead>
                         <tbody>
                             {% for wh in warehouse_stock[:8] %}
-                            <tr style="cursor: pointer;" onclick="window.location='{{ url_for('warehouses.view', warehouse_id=wh.warehouse_id) }}'">
+                            <tr class="cursor-pointer" data-href="{{ url_for('warehouses.view', warehouse_id=wh.warehouse_id) }}">
                                 <td class="py-2 px-3"><strong>{{ wh.warehouse_name }}</strong></td>
                                 <td class="py-2 px-3 text-end">{{ wh.item_count }}</td>
                                 <td class="py-2 px-3 text-end">{{ "%.0f"|format(wh.total_qty) }}</td>
