@@ -113,19 +113,19 @@ const BatchAllocation = (function() {
         showLoading();
         
         try {
-            // Load existing allocations to calculate remaining qty
+            // Load existing allocations
             loadExistingAllocations();
-            const alreadyAllocated = getTotalAllocated();
-            const remainingQty = currentItemData.requestedQty - alreadyAllocated;
             
             // Build API URL with query parameters
             const params = new URLSearchParams();
-            // Always include remaining_qty, even if 0 (for consistent API response format)
-            params.append('remaining_qty', remainingQty);
+            // CRITICAL: Send full requested_qty (not remaining) for per-warehouse truncation logic
+            // The backend uses this to determine how many batches to show per warehouse
+            // (enough to hypothetically fill the entire request from each single warehouse)
+            params.append('requested_qty', currentItemData.requestedQty);
             if (currentItemData.requiredUom) {
                 params.append('required_uom', currentItemData.requiredUom);
             }
-            // Include allocated batch IDs so they're always shown for editing
+            // Include allocated batch IDs so they're always shown for editing (Set A)
             const allocatedBatchIds = Object.keys(currentAllocations);
             if (allocatedBatchIds.length > 0) {
                 params.append('allocated_batch_ids', allocatedBatchIds.join(','));

@@ -1,0 +1,271 @@
+When a Logistics Officer (LO) submits a relief package for approval, the Logistics Manager (LM) can open a drawer/panel for each item in that package to review and adjust which batches are used.
+
+You must implement/update the LM drawer logic on both backend querying and frontend display to follow the rules below.
+
+2. Batch Sets for the LM Drawer
+
+When the LM opens the drawer for a specific item in a specific relief package:
+
+2.1 Allocated Batches (Set A)
+
+For that (reliefpkg_id, item_id) pair:
+
+Get all (inventory_id, batch_id) where this package already has an allocation for that item.
+
+These are rows in reliefpkg_item (or equivalent allocation table) tied to this reliefpkg_id and item_id.
+
+Set A rule:
+
+These allocated batches must always be shown in the LM drawer, even if available = 0.
+
+Allocated batches are never hidden by truncation.
+
+2.2 Available Batches (Set B)
+
+For the same item_id, query itembatch (or equivalent batch table) to find available batches:
+
+Only include batches where:
+
+available = usable_qty - reserved_qty > 0
+
+These are potential batches the LM can use for adjustments (reallocations, top-ups, etc.).
+
+2.3 Union (Before Truncation)
+
+For each warehouse, conceptually compute:
+
+AllBatches = AllocatedBatches (Set A) ∪ AvailableBatches (Set B) for that warehouse.
+
+This union is used as the input set per warehouse before applying truncation rules.
+
+2.4 Batches NOT to Show
+
+Do NOT show any batch that:
+
+Has available <= 0
+
+AND is not part of Set A (i.e., it was never used for this package).
+
+In other words:
+
+Only allocated zero-available batches are shown.
+
+Zero-available batches that were never allocated to this package are hidden.
+
+3. Per-Warehouse Sorting (Same as Before)
+
+Sorting is applied per warehouse, after identifying which batches belong to that warehouse (from the union of Set A and Set B).
+
+For each warehouse:
+
+If the item can expire (can_expire_flag = TRUE):
+
+Sort batches by:
+
+Earliest expiry_date first (soonest to expire)
+
+Then by oldest batch_date (FIFO within same expiry)
+
+If the item does not expire (can_expire_flag = FALSE or equivalent):
+
+Sort batches by oldest batch_date first (pure FIFO).
+
+This sort order must be applied per warehouse before truncation rules.
+
+4. Per-Warehouse Truncation Rule (Same as Before)
+
+The LM must not see more batches than necessary for a given warehouse to be able to fill the item completely from that single warehouse, if they decided to.
+
+For each warehouse:
+
+4.1 Always Include Allocated Batches in that Warehouse
+
+Start with all allocated batches (Set A) for that (reliefpkg_id, item_id) in this warehouse.
+
+These batches:
+
+Must always appear in the LM drawer.
+
+Are excluded from truncation (never hidden), even if available = 0.
+
+4.2 Add Only Enough Extra Available Batches (Set B) to Reach Full Coverage
+
+For each warehouse:
+
+Define:
+
+RequestedQty = the requested quantity for this item_id on the relief request.
+
+AllocatedFromThisWarehouse = sum of quantities currently allocated from this warehouse for this item (sum over allocated batches in Set A for this warehouse).
+
+Compute potentialFromWarehouse:
+
+Initialize:
+
+potentialFromWarehouse = AllocatedFromThisWarehouse
+
+Create a list of available-only batches in this warehouse:
+
+These are the batches in Set B (available > 0) that are not already in Set A.
+
+Use the sorted order defined in Section 3.
+
+Iterate over these available-only batches in that order:
+
+For each batch:
+
+Add its available to potentialFromWarehouse.
+
+Add the batch to the display list for that warehouse.
+
+Stop adding more available-only batches for this warehouse as soon as:
+
+potentialFromWarehouse >= RequestedQty.
+
+Final result per warehouse:
+
+Always shown:
+
+All allocated batches in that warehouse (Set A, including those with available = 0).
+
+Additionally shown:
+
+Only the earliest/oldest available batches (Set B) needed so that:
+
+“If I used all of these (allocated + these extra ones), I could fill the entire requested quantity from this single warehouse.”
+
+Never shown:
+
+Extra available-only batches that come later in the sorted sequence once potentialFromWarehouse >= RequestedQty.
+
+This ensures that locally, the LM never sees more batches than needed to hypothetically fill the item from that warehouse, while still seeing all batches actually used by the LO.
+
+5. UX / Behaviour Requirements
+
+LM drawer UI must:
+
+Group batches by warehouse.
+
+Within each warehouse:
+
+Show batches in the sorted order after truncation.
+
+Clearly identify allocated vs extra available batches (e.g., visually or via labels).
+
+No existing pages, routes, or workflows must be removed or renamed.
+
+Existing LO behaviour and LO views must remain unchanged.
+
+Existing package approval flow must remain unchanged, aside from improved LM visibility/selection.
+
+6. Critical Constraint: Do NOT Break Anything
+
+Throughout this change:
+
+Do NOT:
+
+Change any database schema (no new tables, no altered columns, no dropped constraints).
+
+Break or modify existing business logic, workflows, or status transitions.
+
+Change any other user roles’ behaviour (LOs, warehouse, agencies, etc.).
+
+Remove any security features already implemented.
+
+The LM drawer logic must be implemented by:
+
+Adding or updating queries and server-side logic for batch selection.
+
+Updating only the necessary UI components for the LM drawer.
+
+Leaving all other system parts untouched.
+
+7. Preserve / Keep All Existing Security Fixes
+
+Ensure that this new logic and UI do not undo, weaken, or bypass any of the following security controls, which must remain in place:
+
+Content Security Policy (CSP)
+
+Strict CSP with whitelisted domains, nonce-based scripts/styles where applicable.
+
+Security Headers
+
+X-Content-Type-Options: nosniff
+
+Referrer-Policy: strict-origin-when-cross-origin (or stricter, if already in place).
+
+TLS/SSL Hardening
+
+Only TLS 1.2+ and TLS 1.3.
+
+No TLS_RSA_* key exchange suites; use ECDHE/CHACHA20, PFS-enabled ciphers.
+
+No SHA-1 cipher suites.
+
+Cookie Security
+
+Session/auth cookies have:
+
+Secure
+
+HttpOnly
+
+SameSite=Strict (or Lax if required for compatibility).
+
+Subresource Integrity (SRI)
+
+All CDN-loaded scripts/styles (Bootstrap, icons, etc.) keep valid integrity and crossorigin="anonymous" attributes.
+
+No Caching for Sensitive Pages
+
+Authenticated/sensitive pages include:
+
+Cache-Control: no-store, no-cache, must-revalidate
+
+Pragma: no-cache
+
+Expires: 0
+
+Password Field Autocomplete Disabled
+
+Password inputs already set to autocomplete="new-password" or autocomplete="off" remain unchanged.
+
+Static Directory Protection
+
+/static/ directory not directly browsable (no directory listing; 404 or equivalent for directory-only access).
+
+Info-Leaking Headers Removed
+
+Headers like X-Powered-By, detailed Server, framework versions, etc. remain removed or sanitized.
+
+No Debug Info in Production
+
+Debug mode disabled in production.
+
+Users see generic error pages; detailed errors go only to logs.
+
+Email Exposure Mitigated
+
+Public pages must keep email obfuscation or contact-form pattern; do not reintroduce raw, harvestable emails.
+
+Sensitive Data Not Allowed in Query String
+
+Sensitive parameters must remain POST-body only; do not add any new endpoints that accept sensitive body data via query string.
+
+All new changes must be fully compatible with and sit on top of this existing security posture.
+
+8. Validation
+
+Confirm with tests or sample data that:
+
+The LM sees:
+
+All allocated batches per warehouse.
+
+Only enough extra available batches per warehouse to hypothetically fill the requested quantity.
+
+Sorting and truncation obey the expiry/FIFO rules.
+
+No errors or behaviour changes for other roles and workflows.
+
+All security headers and protections still pass automated security scans.
