@@ -11,6 +11,15 @@ button[name="action"][value="save_draft"] {
     display: none !important;
 }
 
+/* CSP-Compliant Utility Classes for Dynamic Styling */
+.text-danger { color: #dc3545 !important; }
+.text-warning { color: #f57c00 !important; }
+.text-body { color: #212529 !important; }
+.bg-warning-light { background-color: #fff3cd !important; }
+.border-danger { border-color: #dc3545 !important; }
+.shadow-danger { box-shadow: 0 0 0 0.2rem rgba(220,53,69,.25) !important; }
+.row-hidden { display: none !important; }
+
 .page-header {
     display: flex;
     align-items: center;
@@ -846,7 +855,7 @@ function loadInventory(itemId, warehouseId) {
         })
         .catch(error => {
             stockElement.textContent = '?';
-            stockElement.style.color = '#dc3545';
+            stockElement.classList.add('text-danger');
             stockElement.title = 'Error loading stock';
             console.error('Inventory load error:', error);
         });
@@ -867,14 +876,17 @@ function updateWarehouseStock(itemId, warehouseId) {
     // Build tooltip with detailed breakdown
     const tooltip = `Usable: ${usableQty.toFixed(0)}, Reserved (other packages): ${reservedQty.toFixed(0)}, Available: ${originalAvailable.toFixed(0)}, Allocated (this package): ${allocated.toFixed(0)}, Remaining: ${remaining.toFixed(0)}`;
     
+    // Remove all color classes first
+    stockElement.classList.remove('text-danger', 'text-warning', 'text-body');
+    
     if (remaining === 0) {
-        stockElement.style.color = '#dc3545';
+        stockElement.classList.add('text-danger');
         stockElement.title = tooltip;
     } else if (allocated > 0) {
-        stockElement.style.color = '#f57c00';
+        stockElement.classList.add('text-warning');
         stockElement.title = tooltip;
     } else {
-        stockElement.style.color = '#212529';
+        stockElement.classList.add('text-body');
         stockElement.title = tooltip;
     }
 }
@@ -1141,9 +1153,9 @@ function filterItems() {
         
         // Show or hide row
         if (searchMatch && filterMatch) {
-            row.style.display = '';
+            row.classList.remove('row-hidden');
         } else {
-            row.style.display = 'none';
+            row.classList.add('row-hidden');
         }
     });
 }
@@ -1157,11 +1169,11 @@ function jumpToFirstUnallocated() {
         const totalAllocatedElement = document.getElementById(`total_${itemId}`);
         const totalAllocated = parseFloat(totalAllocatedElement.textContent || 0);
         
-        if (totalAllocated === 0 && row.style.display !== 'none') {
+        if (totalAllocated === 0 && !row.classList.contains('row-hidden')) {
             row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            row.style.backgroundColor = '#fff3cd';
+            row.classList.add('bg-warning-light');
             setTimeout(() => {
-                row.style.backgroundColor = '';
+                row.classList.remove('bg-warning-light');
             }, 2000);
             return;
         }
@@ -1186,11 +1198,9 @@ function validateAllAllocations() {
         
         if (allocated > availableQty) {
             valid = false;
-            input.style.borderColor = '#dc3545';
-            input.style.boxShadow = '0 0 0 0.2rem rgba(220,53,69,.25)';
+            input.classList.add('border-danger', 'shadow-danger');
         } else {
-            input.style.borderColor = '';
-            input.style.boxShadow = '';
+            input.classList.remove('border-danger', 'shadow-danger');
         }
     });
     
@@ -1204,11 +1214,12 @@ function validateAllAllocations() {
             totalAllocated += parseFloat(input.value || 0);
         });
         
+        const totalElement = document.getElementById(`total_${itemId}`);
         if (totalAllocated > requestedQty) {
             valid = false;
-            document.getElementById(`total_${itemId}`).style.color = '#dc3545';
+            totalElement.classList.add('text-danger');
         } else {
-            document.getElementById(`total_${itemId}`).style.color = '';
+            totalElement.classList.remove('text-danger');
         }
     });
     
