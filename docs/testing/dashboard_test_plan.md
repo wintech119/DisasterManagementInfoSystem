@@ -11,7 +11,7 @@ These accounts are created by running `python scripts/create_test_users.py`
 | test.agency@gmail.com | Agency Shelter | Agency Dashboard |
 | test.director@odpem.gov.jm | Director General | Director Dashboard |
 | test.inventory@odpem.gov.jm | Inventory Clerk | Inventory Dashboard |
-| admin@odpem.gov.jm | System Administrator | Admin Dashboard |
+| admin [at] odpem [dot] gov [dot] jm | System Administrator | Admin Dashboard |
 
 ## Test Execution Checklist
 
@@ -116,7 +116,7 @@ These accounts are created by running `python scripts/create_test_users.py`
 - [ ] Success alert shows "All good!" if no low stock items
 - [ ] No console errors
 
-### 5. Admin Dashboard Test (`admin@odpem.gov.jm`)
+### 5. Admin Dashboard Test (`admin [at] odpem [dot] gov [dot] jm`)
 **Route:** Should auto-route from `/` to admin dashboard
 
 - [ ] Login successful  

@@ -6,7 +6,7 @@ This guide provides comprehensive test scenarios for validating DRIMS role-based
 ## Test Accounts
 
 ### Admin Account
-- **Email:** `admin@odpem.gov.jm`
+- **Email:** `admin [at] odpem [dot] gov [dot] jm`
 - **Password:** `admin123`
 - **Roles:** System Administrator
 - **Expected Access:** Full system access to all features

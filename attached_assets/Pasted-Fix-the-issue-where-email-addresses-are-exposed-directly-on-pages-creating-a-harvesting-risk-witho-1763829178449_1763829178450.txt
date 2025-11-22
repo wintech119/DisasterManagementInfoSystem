@@ -1,0 +1,82 @@
+Fix the issue where email addresses are exposed directly on pages, creating a harvesting risk, without breaking any existing code, logic, workflows, behaviour, UI, or database schema.
+
+Goal
+
+Prevent email harvesting by removing or obfuscating exposed email addresses on public-facing pages.
+
+Keep all current contact flows and responsibilities intact.
+
+Requirements
+
+Identify exposed email addresses
+
+Search all templates, pages, and static content for hard-coded email addresses, especially on:
+
+Public pages (home, about, help, contact, footer, etc.).
+
+Any page not behind authentication.
+
+There are at least 4 instances based on the evidence; find and fix all of them.
+
+Replace direct email text with safer alternatives
+For each exposed email:
+
+Prefer one of the following approaches (whichever keeps the current behaviour but reduces harvesting risk):
+
+Option A – Contact form instead of direct email:
+
+Replace visible email@domain.com with:
+
+A “Contact Us” link or button that opens a contact form.
+
+The form should submit to the existing backend handler if one exists, or a simple new handler, without changing any existing workflows that rely on email contact.
+
+Option B – Obfuscate the email
+
+If the email must remain visible for users:
+
+Use text-based obfuscation, e.g.:
+
+support [at] example [dot] gov [dot] jm
+
+Or use minimal JavaScript obfuscation that:
+
+Builds the email string in the browser.
+
+Still renders a clickable mailto: link for users.
+
+Do not break any styling or layout.
+
+Do NOT break existing behaviour
+
+Do NOT:
+
+Change any business logic, workflows, or approval flows.
+
+Modify any database schema, tables, columns, triggers, or stored data.
+
+Break any existing links that are required for logged-in users or internal flows.
+
+Users must still:
+
+Be able to contact the right role/team (same addresses, just safer).
+
+See clear guidance on how to get support.
+
+Scope
+
+Focus on publicly accessible pages where email addresses are exposed to unauthenticated users and bots.
+
+If any email must remain exactly as-is for internal/admin pages behind login, you may leave those unchanged (lower harvesting risk), but public ones must be fixed.
+
+Validation / Outcome
+
+After implementation:
+
+Security scan should no longer detect raw email patterns on public pages.
+
+All contact flows must still work (users can still reach support/ODPEM/JAMICTA/etc.).
+
+No change to existing code logic, workflows, routing, or database behaviour; only the presentation/obfuscation of the email addresses is changed.
+
+Use this prompt to refactor the templates so emails are no longer trivially harvestable, while all real-world contact behaviour remains the same.

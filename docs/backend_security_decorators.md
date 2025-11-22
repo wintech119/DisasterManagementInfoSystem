@@ -195,7 +195,7 @@ def update_inventory_api():
 - `test.logistics@odpem.gov.jm` - Logistics features
 - `test.agency@gmail.com` - Agency features
 - `test.director@odpem.gov.jm` - Director features
-- `admin@odpem.gov.jm` - Full access
+- `admin [at] odpem [dot] gov [dot] jm` - Full access
 
 ### Expected Results
 | User Role | Route | Expected Result |
