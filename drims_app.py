@@ -14,6 +14,7 @@ from app.security.csp import init_csp
 from app.security.cache_control import init_cache_control
 from app.security.header_sanitization import init_header_sanitization
 from app.security.error_handling import init_error_handling
+from app.security.query_string_protection import init_query_string_protection
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -23,6 +24,7 @@ init_csp(app)
 init_cache_control(app)
 init_header_sanitization(app)
 init_error_handling(app)
+init_query_string_protection(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
