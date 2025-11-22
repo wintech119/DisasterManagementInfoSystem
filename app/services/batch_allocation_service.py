@@ -16,7 +16,7 @@ from app.db.models import Item, ItemBatch, Inventory, Warehouse
 
 def safe_decimal(value, default=Decimal("0")):
     """
-    Safely convert a value to Decimal, handling None, empty strings, and invalid values.
+    Safely convert a value to Decimal, handling None, empty strings, NaN, and invalid values.
     
     Args:
         value: The value to convert (can be None, Decimal, int, float, str)
@@ -28,9 +28,26 @@ def safe_decimal(value, default=Decimal("0")):
     if value is None:
         return default
     if isinstance(value, Decimal):
+        # Check if Decimal is NaN or Infinite
+        if value.is_nan() or value.is_infinite():
+            return default
         return value
+    # Check for float NaN
+    if isinstance(value, float):
+        import math
+        if math.isnan(value) or math.isinf(value):
+            return default
+    # Check for string "nan" or "inf"
+    if isinstance(value, str):
+        lower_val = value.lower().strip()
+        if lower_val in ('nan', 'inf', '-inf', 'infinity', '-infinity'):
+            return default
     try:
-        return Decimal(str(value))
+        result = Decimal(str(value))
+        # Double-check the result isn't NaN or Inf
+        if result.is_nan() or result.is_infinite():
+            return default
+        return result
     except (InvalidOperation, ValueError, TypeError):
         # Log for debugging if needed
         # import logging
@@ -241,7 +258,7 @@ class BatchAllocationService:
         
         # Allocate quantities
         allocations = []
-        remaining_qty = Decimal(str(requested_qty))
+        remaining_qty = safe_decimal(requested_qty)
         
         for batch in sorted_batches:
             if remaining_qty <= 0:
