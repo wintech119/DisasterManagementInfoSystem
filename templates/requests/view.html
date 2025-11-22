@@ -271,7 +271,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
+<script nonce="{{ csp_nonce() }}">
 // Submit form confirmation modal
 const submitRequestForm = document.getElementById('submitRequestForm');
 if (submitRequestForm) {

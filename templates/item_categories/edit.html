@@ -132,7 +132,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce() }}">
 // Character counter for comments
 document.addEventListener('DOMContentLoaded', function() {
     const commentsField = document.getElementById('comments_text');

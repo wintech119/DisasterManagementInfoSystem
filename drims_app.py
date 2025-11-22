@@ -10,11 +10,13 @@ import os
 from app.db import db, init_db
 from app.db.models import User, Role, Event, Warehouse, Item, Inventory, Agency, ReliefRqst
 from settings import Config
+from app.security.csp import init_csp
 
 app = Flask(__name__)
 app.config.from_object(Config)
 
 init_db(app)
+init_csp(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)

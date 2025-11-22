@@ -286,7 +286,7 @@
             Password strength: {{ strength|title }}
         </small>
     </div>
-    <style>
+    <style nonce="{{ csp_nonce() }}">
         .strength-bar {
             height: 4px;
             border-radius: 2px;

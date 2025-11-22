@@ -2,7 +2,7 @@
 
 {% block extra_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css') }}">
-<style>
+<style nonce="{{ csp_nonce() }}">
     .warehouse-field-disabled {
         background-color: #f8f9fa;
         opacity: 0.6;
@@ -293,8 +293,8 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="{{ url_for('static', filename='js/phone-mask.js') }}"></script>
-<script>
+<script  nonce="{{ csp_nonce() }}" src="{{ url_for('static', filename='js/phone-mask.js') }}"></script>
+<script nonce="{{ csp_nonce() }}">
 // Handle agency type and warehouse relationship
 document.addEventListener('DOMContentLoaded', function() {
     const agencyTypeSelect = document.getElementById('agency_type');

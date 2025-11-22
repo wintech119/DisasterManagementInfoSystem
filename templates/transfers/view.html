@@ -133,7 +133,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
+<script nonce="{{ csp_nonce() }}">
 // Execute transfer confirmation modal
 const executeTransferForm = document.getElementById('executeTransferForm');
 if (executeTransferForm) {

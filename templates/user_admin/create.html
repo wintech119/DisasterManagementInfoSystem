@@ -323,7 +323,7 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script>
+<script nonce="{{ csp_nonce() }}">
 // Auto-generate user_name from email
 function generateUserName() {
     const emailInput = document.getElementById('email');

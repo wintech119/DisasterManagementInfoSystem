@@ -2,7 +2,7 @@
 
 {% block extra_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css') }}">
-<style>
+<style nonce="{{ csp_nonce() }}">
     /* Print Styles */
     @media print {
         .no-print { display: none !important; }
@@ -510,7 +510,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce() }}">
 // Set current date/time for print footer
 const now = new Date();
 </script>

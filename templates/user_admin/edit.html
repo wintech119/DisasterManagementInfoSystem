@@ -6,7 +6,7 @@
 {% block extra_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/modern-ui.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/user-management-ui.css') }}">
-<style>
+<style nonce="{{ csp_nonce() }}">
     /* Modern Card Styling */
     .card {
         border-radius: 0.5rem;
@@ -443,7 +443,7 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script>
+<script nonce="{{ csp_nonce() }}">
 // Update user_name character count
 function updateUserNameCount() {
     const userNameInput = document.getElementById('user_name');

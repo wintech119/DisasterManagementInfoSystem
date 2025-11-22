@@ -78,7 +78,7 @@
     <a href="{{ url_for('transfers.list_transfers') }}" class="btn btn-secondary">Cancel</a>
 </form>
 
-<script>
+<script nonce="{{ csp_nonce() }}">
 document.getElementById('from_warehouse_id').addEventListener('change', checkAvailability);
 document.getElementById('item_id').addEventListener('change', checkAvailability);
 

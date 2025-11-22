@@ -166,8 +166,8 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="{{ url_for('static', filename='js/phone-mask.js') }}"></script>
-<script>
+<script  nonce="{{ csp_nonce() }}" src="{{ url_for('static', filename='js/phone-mask.js') }}"></script>
+<script nonce="{{ csp_nonce() }}">
 document.addEventListener('DOMContentLoaded', function() {
     const agencyTypeSelect = document.getElementById('agency_type');
     const warehouseSelect = document.getElementById('warehouse_id');

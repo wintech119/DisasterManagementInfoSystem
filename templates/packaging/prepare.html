@@ -5,7 +5,7 @@
 {% block extra_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/batch-drawer.css') }}">
-<style>
+<style nonce="{{ csp_nonce() }}">
 /* Hide Save Draft button from UI while keeping backend functionality intact */
 button[name="action"][value="save_draft"] {
     display: none !important;
@@ -770,7 +770,7 @@ button[name="action"][value="save_draft"] {
 </div>
 
 <!-- JavaScript for Modern Packaging UI -->
-<script>
+<script nonce="{{ csp_nonce() }}">
 document.addEventListener('DOMContentLoaded', function() {
     // Load inventory levels for all items
     loadAllInventory();
@@ -1236,7 +1236,7 @@ function confirmCancelPackage() {
 </script>
 
 {# Batch Allocation Module #}
-<script src="{{ url_for('static', filename='js/batch-allocation.js') }}"></script>
+<script  nonce="{{ csp_nonce() }}" src="{{ url_for('static', filename='js/batch-allocation.js') }}"></script>
 
 {# Batch Selection Drawer #}
 {% include 'packaging/_batch_drawer.html' %}

@@ -3,7 +3,7 @@
 {% block extra_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css') }}">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<style>
+<style nonce="{{ csp_nonce() }}">
 .item-card {
     border-left: 4px solid #009639;
     background-color: #ffffff;
@@ -429,7 +429,7 @@ input[type=number] {
     </form>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce() }}">
 // Auto-adjust usable quantity based on defective and expired quantities
 function autoAdjustUsableQty(itemId) {
     const usableInput = document.querySelector(`input[name="usable_qty_${itemId}"]`);
@@ -753,8 +753,8 @@ document.getElementById('intakeForm').addEventListener('submit', function(e) {
 });
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script>
+<script  nonce="{{ csp_nonce() }}" src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script nonce="{{ csp_nonce() }}">
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize all date pickers with YYYY-MM-DD format
     const dateInputs = document.querySelectorAll('.iso-date-picker');

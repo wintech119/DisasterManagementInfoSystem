@@ -123,7 +123,7 @@
     </form>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce() }}">
 function addItemRow() {
     const table = document.getElementById('itemsTable');
     const row = table.rows[0].cloneNode(true);

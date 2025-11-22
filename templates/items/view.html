@@ -319,7 +319,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
+<script nonce="{{ csp_nonce() }}">
 // Inactivate item confirmation modal
 const inactivateItemForm = document.getElementById('inactivateItemForm');
 if (inactivateItemForm) {

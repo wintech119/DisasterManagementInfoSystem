@@ -158,8 +158,8 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script>
+<script  nonce="{{ csp_nonce() }}" src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script nonce="{{ csp_nonce() }}">
 // Character counter function
 function updateCharCount(fieldId, counterId, maxLength) {
     const field = document.getElementById(fieldId);
