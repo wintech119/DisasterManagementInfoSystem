@@ -1,0 +1,86 @@
+Update the application so that sensitive body parameters are no longer accepted through the query string, and are only processed when sent in the POST body.
+This change must be implemented without breaking any existing system behaviour, workflows, business rules, UI, or database schema.
+
+Requirements
+
+Disallow sensitive parameters in the query string
+
+Identify all routes where sensitive data is currently accepted via query parameters (example: passwords, tokens, personal info, IDs, form submissions, donation details, request details, etc.).
+
+Reject or ignore these sensitive fields when supplied through GET query parameters.
+
+Sensitive fields must only be processed when delivered via:
+
+POST request body (e.g., form data, JSON body).
+
+If a user or integration accidentally uses a GET request, the system should:
+
+Return a safe, generic message OR
+
+Redirect them to the correct POST form
+
+But do NOT reveal sensitive details.
+
+No breaking changes to existing logic
+
+Do NOT modify:
+
+Database schema, tables, columns, triggers, or data.
+
+Business logic, roles, or workflows (e.g., donation workflow, relief request workflow, dispatch, packaging, approvals, etc.).
+
+Authentication behaviour.
+
+Any front-end UI or flow.
+
+Ensure:
+
+Existing forms that already submit via POST continue to work exactly the same.
+
+No page, redirect, or action breaks as a result of enforcing POST-only semantics.
+
+Implementation method
+
+Use one safe, centralized method:
+
+Add a request validation layer, middleware, or decorator that:
+
+Checks for sensitive parameters in request.args (query string).
+
+Ignores or blocks them with a secure response.
+
+Allows normal POST-based flow to continue unchanged.
+
+If framework allows, configure routes to explicitly force:
+
+methods=["POST"] for sensitive operations.
+
+Compatibility
+
+Ensure all existing frontend forms are already using POST.
+
+If any form incorrectly uses GET, update it to POST without altering:
+
+Field names
+
+Logic
+
+Validation
+
+Workflows
+
+Redirects
+
+Validation / Outcome
+
+After implementation:
+
+Security scan must confirm:
+
+Sensitive data can no longer be passed through the query string.
+
+Sensitive parameters in GET requests are ignored or rejected safely.
+
+All workflows must continue functioning exactly as before.
+
+No regression in login, donations, relief requests, dispatch, approvals, dashboards, etc.
