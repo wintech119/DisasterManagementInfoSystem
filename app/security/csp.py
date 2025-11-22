@@ -39,7 +39,7 @@ def build_csp_header():
         f"style-src 'self' 'nonce-{nonce}' https://cdn.jsdelivr.net",
         "img-src 'self' data: https:",
         "font-src 'self' https://cdn.jsdelivr.net data:",
-        "connect-src 'self'",
+        "connect-src 'self' https://cdn.jsdelivr.net",
         "frame-ancestors 'none'",
         "object-src 'none'",
         "base-uri 'self'",
