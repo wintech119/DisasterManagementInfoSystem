@@ -54,7 +54,18 @@ const BatchAllocation = (function() {
         if (elements.applyBtn) elements.applyBtn.addEventListener('click', applyAllocations);
         if (elements.overlay) elements.overlay.addEventListener('click', closeDrawer);
         
-        // Expose open function globally
+        // Event delegation for Select Batches buttons
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('.select-batches-btn');
+            if (btn) {
+                const itemId = parseInt(btn.dataset.itemId);
+                const itemName = btn.dataset.itemName || 'Unknown Item';
+                const requestedQty = parseFloat(btn.dataset.requestedQty);
+                openDrawer(itemId, itemName, requestedQty);
+            }
+        });
+        
+        // Expose open function globally (for backwards compatibility)
         window.openBatchDrawer = openDrawer;
     }
     
