@@ -498,7 +498,7 @@ class BatchAllocationService:
                     warehouse_cumulative_qty += available_qty
                     
                     # Check if allocated batches alone already meet remaining_qty
-                    if warehouse_cumulative_qty >= remaining_qty:
+                    if safe_decimal(warehouse_cumulative_qty) >= safe_decimal(remaining_qty):
                         warehouse_has_fulfilled = True
                     
                     continue
@@ -509,7 +509,7 @@ class BatchAllocationService:
                     warehouse_cumulative_qty += available_qty
                     
                     # Stop loading more batches once this warehouse can fulfill remaining_qty
-                    if warehouse_cumulative_qty >= remaining_qty:
+                    if safe_decimal(warehouse_cumulative_qty) >= safe_decimal(remaining_qty):
                         warehouse_has_fulfilled = True
         
         # Calculate total available and shortfall
