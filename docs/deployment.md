@@ -187,7 +187,19 @@ server {
 
 #### Step 6: Configure front-end server (nginx)
 
-This is the frontend webserver. The config below is just parts.
+**IMPORTANT: For production deployment, use the hardened TLS/SSL configuration.**
+
+See **[TLS/SSL Hardening Documentation](TLS_SSL_HARDENING.md)** for complete production-ready configuration with:
+- ✅ TLS 1.2 and TLS 1.3 only (no weak protocols)
+- ✅ Strong cipher suites with Perfect Forward Secrecy (ECDHE)
+- ✅ No RSA key exchange (ROBOT vulnerability mitigation)
+- ✅ No SHA-1 cipher suites
+- ✅ HSTS (HTTP Strict Transport Security)
+- ✅ Security headers and OCSP stapling
+
+**Production Configuration File**: `docs/nginx-tls-hardening.conf`
+
+For reference, here is a basic nginx config (NOT recommended for production):
 
 ```
 
@@ -226,4 +238,4 @@ server {
 
 ```
 
-You can finish up this frontend nginx config.
+**⚠️ WARNING**: The configuration above is incomplete and lacks TLS/SSL hardening. Always use the production configuration from `docs/nginx-tls-hardening.conf` for deployment.

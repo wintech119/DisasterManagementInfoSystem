@@ -1,0 +1,87 @@
+Harden the TLS/SSL configuration for this application to remove weak and deprecated cipher suites and protocols, without breaking any existing code, logic, workflows, behaviour, UI, or database schema.
+
+The goal is to ensure the app meets modern cybersecurity standards and eliminates support for weak ciphers, SHA-1, and RSA key exchange.
+
+Requirements
+
+Remove RSA key-exchange ciphers (ROBOT risk)
+
+Disable all RSA key exchange cipher suites, especially:
+
+TLS_RSA_WITH_AES_128_CBC_SHA
+
+And any other TLS_RSA_* suites.
+
+Configure the TLS stack (web server / reverse proxy / load balancer / hosting TLS settings) to use only ECDHE-based key exchange (e.g. ECDHE_RSA, ECDHE_ECDSA).
+
+Enforce strong protocols with Perfect Forward Secrecy (PFS)
+
+Only allow:
+
+TLS 1.2 and TLS 1.3.
+
+Explicitly disable:
+
+TLS 1.0
+
+TLS 1.1
+
+Cipher suites must provide Perfect Forward Secrecy, e.g.:
+
+TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+
+TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+
+TLS 1.3 defaults (e.g. AES-GCM and CHACHA20-POLY1305).
+
+Remove all SHA-1-based cipher suites
+
+Completely remove any cipher suites that use SHA-1, including but not limited to:
+
+..._SHA
+
+Only allow suites using SHA-256 or stronger (e.g. ..._SHA256, ..._SHA384) and TLS 1.3 modern AEAD ciphers.
+
+Maintain compatibility (no breakage)
+
+These changes must not:
+
+Change any application code, routes, logic, workflows, or business rules.
+
+Modify any database schema, tables, columns, triggers, or data.
+
+Break existing API endpoints or web UI behaviour.
+
+Ensure that:
+
+Modern browsers (Chrome, Edge, Firefox, Safari) and typical client libraries can still successfully connect.
+
+Existing integrations that already support TLS 1.2+ continue to work.
+
+Implementation scope
+
+Apply these changes in the TLS/SSL configuration layer only, e.g.:
+
+Web server (Nginx, Apache, Caddy, etc.)
+
+Reverse proxy or load balancer
+
+Hosting provider TLS configuration
+
+Do not change application-level code unless absolutely required for compatibility, and even then, preserve all logic and workflows.
+
+Validation / Outcome
+
+After the change:
+
+Security scans must show:
+
+No TLS_RSA_* cipher suites enabled.
+
+No SHA-1 cipher suites enabled.
+
+Only TLS 1.2 and TLS 1.3 enabled.
+
+Cipher suites in use provide Perfect Forward Secrecy.
+
+The application must behave exactly as before from a functional/user perspective, with the only difference being stronger TLS/SSL security.
