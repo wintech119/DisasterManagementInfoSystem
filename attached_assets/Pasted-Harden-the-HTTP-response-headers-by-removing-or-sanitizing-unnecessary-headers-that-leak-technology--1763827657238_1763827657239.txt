@@ -1,0 +1,89 @@
+Harden the HTTP response headers by removing or sanitizing unnecessary headers that leak technology/stack details, without breaking any existing code, logic, workflows, behaviour, UI, or database schema.
+
+Goal
+
+Prevent attackers from easily fingerprinting the tech stack by exposing framework, server, or version info in HTTP response headers.
+
+Requirements
+
+Identify and clean up info-leaking headers
+
+Find and either remove or neutralize headers such as (examples, adjust to what exists now):
+
+Server
+
+X-Powered-By
+
+X-AspNet-Version
+
+X-AspNetMvc-Version
+
+Any custom headers that reveal:
+
+Framework names
+
+Versions
+
+Internal infrastructure details
+
+For each:
+
+Prefer removing the header entirely.
+
+If removal is not possible, sanitize it to a generic non-sensitive value (e.g., Server: secure), with no version numbers.
+
+No breaking changes
+
+Do NOT:
+
+Change any application logic, routes, controllers, or services.
+
+Modify any business workflows or role behaviours.
+
+Change any authentication, authorization, or session handling.
+
+Modify any database schema, tables, columns, triggers, or data.
+
+Only adjust the HTTP headers at the framework or web server level.
+
+Implementation scope
+
+Apply changes in one centralized place such as:
+
+Web framework global response hook (e.g., Flask after_request, Express middleware, Django middleware).
+
+Web server / reverse proxy config (e.g., Nginx, Apache) if that’s where these headers are set.
+
+Hosting-level config (e.g., platform setting for Server / X-Powered-By).
+
+Ensure all responses (HTML, JSON, API, etc.) benefit from this hardening.
+
+Preserve required/standard headers
+
+Do not remove or alter essential headers that affect normal operation, such as:
+
+Content-Type
+
+Content-Length
+
+Set-Cookie
+
+CORS headers (if configured)
+
+Security headers already implemented (CSP, HSTS, X-Frame-Options, etc.)
+
+Validation / Outcome
+
+After implementation:
+
+Security scans must show:
+
+Previously flagged “unnecessary / info-leaking headers” are removed or sanitized.
+
+The application must behave exactly the same from a user perspective:
+
+All pages load correctly.
+
+All APIs work as before.
+
+No UI or workflow regression.
