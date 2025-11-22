@@ -95,4 +95,19 @@ document.addEventListener('DOMContentLoaded', function() {
             window.location.href = '?' + paramName + '=' + paramValue;
         }
     });
+    
+    // Toggle reason field visibility based on status selection (warehouses, agencies, etc.)
+    document.addEventListener('change', function(e) {
+        const select = e.target.closest('select[data-action="toggle-reason-field"]');
+        if (select) {
+            const reasonContainer = document.getElementById('reason_container');
+            if (reasonContainer) {
+                if (select.value === 'I') {
+                    reasonContainer.classList.remove('d-none');
+                } else {
+                    reasonContainer.classList.add('d-none');
+                }
+            }
+        }
+    });
 });

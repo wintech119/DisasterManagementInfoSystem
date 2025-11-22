@@ -274,7 +274,7 @@
                     <i class="bi bi-x-circle"></i>
                     Cancel
                 </button>
-                <button type="button" class="btn btn-warning" onclick="confirmInactivateItem()">
+                <button type="button" class="btn btn-warning" id="confirmInactivateBtn">
                     <i class="bi bi-x-circle"></i>
                     Yes, Inactivate Item
                 </button>
@@ -308,7 +308,7 @@
                     <i class="bi bi-x-circle"></i>
                     Cancel
                 </button>
-                <button type="button" class="btn btn-success" onclick="confirmReactivateItem()">
+                <button type="button" class="btn btn-success" id="confirmReactivateBtn">
                     <i class="bi bi-check-circle"></i>
                     Yes, Reactivate Item
                 </button>
@@ -320,44 +320,54 @@
 
 {% block scripts %}
 <script nonce="{{ csp_nonce() }}">
-// Inactivate item confirmation modal
+// Inactivate item confirmation modal - proper handler management
+let inactivateItemHandler;
 const inactivateItemForm = document.getElementById('inactivateItemForm');
 if (inactivateItemForm) {
-    inactivateItemForm.addEventListener('submit', function(e) {
+    inactivateItemHandler = function(e) {
         e.preventDefault();
         const modal = new bootstrap.Modal(document.getElementById('inactivateItemModal'));
         modal.show();
         return false;
+    };
+    inactivateItemForm.addEventListener('submit', inactivateItemHandler);
+}
+
+// Confirm inactivate button
+const confirmInactivateBtn = document.getElementById('confirmInactivateBtn');
+if (confirmInactivateBtn) {
+    confirmInactivateBtn.addEventListener('click', function() {
+        const form = document.getElementById('inactivateItemForm');
+        if (form && inactivateItemHandler) {
+            form.removeEventListener('submit', inactivateItemHandler);
+            form.submit();
+        }
     });
 }
 
-function confirmInactivateItem() {
-    console.log('Confirming inactivate item');
-    const form = document.getElementById('inactivateItemForm');
-    if (form) {
-        form.removeEventListener('submit', arguments.callee);
-        form.submit();
-    }
-}
-
-// Reactivate item confirmation modal
+// Reactivate item confirmation modal - proper handler management
+let reactivateItemHandler;
 const reactivateItemForm = document.getElementById('reactivateItemForm');
 if (reactivateItemForm) {
-    reactivateItemForm.addEventListener('submit', function(e) {
+    reactivateItemHandler = function(e) {
         e.preventDefault();
         const modal = new bootstrap.Modal(document.getElementById('reactivateItemModal'));
         modal.show();
         return false;
-    });
+    };
+    reactivateItemForm.addEventListener('submit', reactivateItemHandler);
 }
 
-function confirmReactivateItem() {
-    console.log('Confirming reactivate item');
-    const form = document.getElementById('reactivateItemForm');
-    if (form) {
-        form.removeEventListener('submit', arguments.callee);
-        form.submit();
-    }
+// Confirm reactivate button
+const confirmReactivateBtn = document.getElementById('confirmReactivateBtn');
+if (confirmReactivateBtn) {
+    confirmReactivateBtn.addEventListener('click', function() {
+        const form = document.getElementById('reactivateItemForm');
+        if (form && reactivateItemHandler) {
+            form.removeEventListener('submit', reactivateItemHandler);
+            form.submit();
+        }
+    });
 }
 </script>
 {% endblock %}

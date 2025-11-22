@@ -93,7 +93,7 @@
                                            value="{{ form_data.get('event_name') if form_data else '' }}"
                                            required 
                                            placeholder="e.g., Hurricane Gilbert 1988"
-                                           style="text-transform: uppercase;">
+                                           class="text-uppercase-input">
                                     <small class="form-text text-muted"><span id="event_name_count">0</span>/60 characters, auto-converted to uppercase</small>
                                     {% if errors and errors.get('event_name') %}
                                     <div class="text-danger small mt-1">{{ errors.get('event_name') }}</div>

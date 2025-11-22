@@ -45,7 +45,7 @@
                                     </label>
                                     <input type="text" class="form-control" id="agency_name" name="agency_name" 
                                            maxlength="120" value="{{ form_data.get('agency_name', agency.agency_name) }}" 
-                                           required style="text-transform: uppercase;">
+                                           required class="text-uppercase-input">
                                     <small class="form-text text-muted">Max 120 characters, must be unique</small>
                                     {% if errors and errors.get('agency_name') %}
                                     <div class="invalid-feedback d-block">{{ errors.get('agency_name') }}</div>
@@ -117,7 +117,7 @@
                                     <label for="contact_name" class="form-label">Contact Person <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="contact_name" name="contact_name" 
                                            maxlength="50" value="{{ form_data.get('contact_name', agency.contact_name) }}" 
-                                           required style="text-transform: uppercase;">
+                                           required class="text-uppercase-input">
                                 </div>
                                 <div class="col-md-4">
                                     <label for="phone_no" class="form-label">Phone Number <span class="text-danger">*</span></label>

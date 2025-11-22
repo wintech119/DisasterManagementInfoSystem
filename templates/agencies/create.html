@@ -51,7 +51,7 @@
                                            value="{{ form_data.get('agency_name', '') }}"
                                            required 
                                            placeholder="Enter agency name (will be converted to UPPERCASE)"
-                                           style="text-transform: uppercase;">
+                                           class="text-uppercase-input">
                                     <small class="form-text text-muted">Max 120 characters, auto-converted to UPPERCASE, must be unique</small>
                                     {% if errors and errors.get('agency_name') %}
                                     <div class="invalid-feedback d-block">{{ errors.get('agency_name') }}</div>
@@ -203,7 +203,7 @@
                                            value="{{ form_data.get('contact_name', '') }}"
                                            required 
                                            placeholder="Full name"
-                                           style="text-transform: uppercase;">
+                                           class="text-uppercase-input">
                                     <small class="form-text text-muted">Max 50 characters, auto-converted to UPPERCASE</small>
                                     {% if errors and errors.get('contact_name') %}
                                     <div class="invalid-feedback d-block">{{ errors.get('contact_name') }}</div>

@@ -97,7 +97,7 @@
                                            value="{{ event.event_name }}" 
                                            maxlength="60" 
                                            required 
-                                           style="text-transform: uppercase;"
+                                           class="text-uppercase-input"
                                            {% if event.status_code == 'C' %}disabled{% endif %}>
                                     <small class="form-text text-muted"><span id="event_name_count">0</span>/60 characters, auto-converted to uppercase</small>
                                 </div>

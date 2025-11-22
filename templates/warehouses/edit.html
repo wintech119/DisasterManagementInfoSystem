@@ -50,7 +50,7 @@
                                            name="warehouse_name" 
                                            value="{{ warehouse.warehouse_name }}"
                                            required 
-                                           style="text-transform: uppercase;">
+                                           class="text-uppercase-input">
                                     <small class="form-text text-muted">Auto-converted to uppercase</small>
                                     {% if errors and errors.get('warehouse_name') %}
                                     <div class="text-danger small mt-1">{{ errors.get('warehouse_name') }}</div>
@@ -159,7 +159,7 @@
                                            maxlength="50"
                                            value="{{ warehouse.contact_name }}"
                                            required
-                                           style="text-transform: uppercase;">
+                                           class="text-uppercase-input">
                                     <small class="form-text text-muted">Auto-converted to uppercase</small>
                                     {% if errors and errors.get('contact_name') %}
                                     <div class="text-danger small mt-1">{{ errors.get('contact_name') }}</div>
@@ -207,7 +207,7 @@
                                     <label for="status_code" class="form-label">
                                         Status <span class="text-danger">*</span>
                                     </label>
-                                    <select class="form-select" id="status_code" name="status_code" required onchange="toggleReasonField()">
+                                    <select class="form-select" id="status_code" name="status_code" required data-action="toggle-reason-field">
                                         <option value="A" {% if warehouse.status_code == 'A' %}selected{% endif %}>Active</option>
                                         <option value="I" {% if warehouse.status_code == 'I' %}selected{% endif %}>Inactive</option>
                                     </select>
@@ -215,7 +215,7 @@
                                     <div class="text-danger small mt-1">{{ errors.get('status_code') }}</div>
                                     {% endif %}
                                 </div>
-                                <div class="col-md-6" id="reason_container" style="display: {% if warehouse.status_code == 'I' %}block{% else %}none{% endif %};">
+                                <div class="col-md-6" id="reason_container" class="{% if warehouse.status_code != 'I' %}d-none{% endif %}">
                                     <label for="reason_desc" class="form-label">
                                         Reason for Inactivation <span class="text-danger">*</span>
                                     </label>

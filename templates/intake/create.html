@@ -66,7 +66,7 @@
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Items Received</h5>
-                <button type="button" class="btn btn-sm btn-primary" onclick="addItemRow()">
+                <button type="button" class="btn btn-sm btn-primary" id="addItemBtn">
                     <i class="bi bi-plus-circle"></i> Add Item
                 </button>
             </div>
@@ -105,7 +105,7 @@
                                            name="expired_qty[]" min="0" step="0.01" value="0">
                                 </td>
                                 <td>
-                                    <button type="button" class="btn btn-sm btn-danger" onclick="removeItemRow(this)">
+                                    <button type="button" class="btn btn-sm btn-danger" data-action="remove-row">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </td>
@@ -124,23 +124,35 @@
 </div>
 
 <script nonce="{{ csp_nonce() }}">
-function addItemRow() {
-    const table = document.getElementById('itemsTable');
-    const row = table.rows[0].cloneNode(true);
-    row.querySelectorAll('input, select').forEach(input => {
-        if (input.type === 'number') input.value = '0';
-        else input.value = '';
-    });
-    table.appendChild(row);
-}
-
-function removeItemRow(btn) {
-    const table = document.getElementById('itemsTable');
-    if (table.rows.length > 1) {
-        btn.closest('tr').remove();
-    } else {
-        alert('At least one item row is required');
+document.addEventListener('DOMContentLoaded', function() {
+    // Add item row button
+    const addItemBtn = document.getElementById('addItemBtn');
+    if (addItemBtn) {
+        addItemBtn.addEventListener('click', function() {
+            const table = document.getElementById('itemsTable');
+            const row = table.rows[0].cloneNode(true);
+            row.querySelectorAll('input, select').forEach(input => {
+                if (input.type === 'number') input.value = '0';
+                else input.value = '';
+            });
+            table.appendChild(row);
+        });
     }
-}
+    
+    // Remove row buttons - event delegation
+    const itemsTable = document.getElementById('itemsTable');
+    if (itemsTable) {
+        itemsTable.addEventListener('click', function(e) {
+            const removeBtn = e.target.closest('[data-action="remove-row"]');
+            if (removeBtn) {
+                if (itemsTable.rows.length > 1) {
+                    removeBtn.closest('tr').remove();
+                } else {
+                    alert('At least one item row is required');
+                }
+            }
+        });
+    }
+});
 </script>
 {% endblock %}

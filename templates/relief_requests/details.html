@@ -19,7 +19,7 @@
         <div class="alert-banner-content">
             Receipt confirmed for relief request RR-{{ '%06d'|format(request.reliefrqst_id) }}. Request is now completed.
         </div>
-        <button type="button" class="alert-banner-close" onclick="this.parentElement.remove()" aria-label="Close">
+        <button type="button" class="alert-banner-close" data-action="close-alert" aria-label="Close">
             <i class="bi bi-x"></i>
         </button>
     </div>

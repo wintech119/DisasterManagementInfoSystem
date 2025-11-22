@@ -15,9 +15,8 @@
             </a>
             {% if intake.status_code == 'I' %}
             <form method="POST" action="{{ url_for('intake.complete_intake', reliefpkg_id=intake.reliefpkg_id, inventory_id=intake.inventory_id) }}" 
-                  style="display: inline;">
-                <button type="submit" class="btn btn-success" 
-                        onclick="return confirm('Mark this intake as complete?')">
+                  class="d-inline" data-confirm="Mark this intake as complete?">
+                <button type="submit" class="btn btn-success">
                     <i class="bi bi-check-circle"></i> Mark Complete
                 </button>
             </form>

@@ -149,6 +149,7 @@
 .icon-xxl { font-size: 4rem !important; }
 .icon-xl { font-size: 3rem !important; }
 .icon-lg { font-size: 2.5rem !important; }
+.icon-md { font-size: 2rem !important; }
 
 /* === Table Column Width Utilities === */
 .w-10 { width: 10% !important; }
@@ -157,3 +158,9 @@
 .w-26 { width: 26% !important; }
 .w-30 { width: 30% !important; }
 .w-35 { width: 35% !important; }
+
+/* === Text Transform Utilities === */
+.text-uppercase-input { text-transform: uppercase !important; }
+
+/* === Max Width Utilities === */
+.max-w-250 { max-width: 250px !important; }

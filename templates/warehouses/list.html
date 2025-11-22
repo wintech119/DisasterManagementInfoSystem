@@ -132,7 +132,7 @@
                                 <span class="code-pill">{{ warehouse.warehouse_type }}</span>
                             </td>
                             <td>
-                                <div class="text-truncate" style="max-width: 250px;" title="{{ warehouse.address1_text }}">
+                                <div class="text-truncate max-w-250" title="{{ warehouse.address1_text }}">
                                     {{ warehouse.address1_text }}
                                 </div>
                                 <small class="text-muted">{{ warehouse.parish.parish_name if warehouse.parish else warehouse.parish_code }}</small>

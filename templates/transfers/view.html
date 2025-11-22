@@ -6,7 +6,7 @@
     <h2><i class="bi bi-arrow-left-right"></i> Transfer #{{ transfer.transfer_id }}</h2>
     <div>
         {% if transfer.status_code == 'P' %}
-        <form method="POST" action="{{ url_for('transfers.execute', transfer_id=transfer.transfer_id) }}" style="display: inline;" id="executeTransferForm">
+        <form method="POST" action="{{ url_for('transfers.execute', transfer_id=transfer.transfer_id) }}" class="d-inline" id="executeTransferForm">
             <button type="submit" class="btn btn-success">
                 <i class="bi bi-check-circle"></i> Execute Transfer
             </button>
@@ -122,7 +122,7 @@
                     <i class="bi bi-x-circle"></i>
                     Cancel
                 </button>
-                <button type="button" class="btn btn-success" onclick="confirmExecuteTransfer()">
+                <button type="button" class="btn btn-success" id="confirmExecuteBtn">
                     <i class="bi bi-check-circle"></i>
                     Yes, Execute Transfer
                 </button>
@@ -134,24 +134,29 @@
 
 {% block scripts %}
 <script nonce="{{ csp_nonce() }}">
-// Execute transfer confirmation modal
+// Execute transfer confirmation modal - proper handler management
+let executeTransferHandler;
 const executeTransferForm = document.getElementById('executeTransferForm');
 if (executeTransferForm) {
-    executeTransferForm.addEventListener('submit', function(e) {
+    executeTransferHandler = function(e) {
         e.preventDefault();
         const modal = new bootstrap.Modal(document.getElementById('executeTransferModal'));
         modal.show();
         return false;
-    });
+    };
+    executeTransferForm.addEventListener('submit', executeTransferHandler);
 }
 
-function confirmExecuteTransfer() {
-    console.log('Confirming execute transfer');
-    const form = document.getElementById('executeTransferForm');
-    if (form) {
-        form.removeEventListener('submit', arguments.callee);
-        form.submit();
-    }
+// Confirm execute button
+const confirmExecuteBtn = document.getElementById('confirmExecuteBtn');
+if (confirmExecuteBtn) {
+    confirmExecuteBtn.addEventListener('click', function() {
+        const form = document.getElementById('executeTransferForm');
+        if (form && executeTransferHandler) {
+            form.removeEventListener('submit', executeTransferHandler);
+            form.submit();
+        }
+    });
 }
 </script>
 {% endblock %}
