@@ -1851,21 +1851,10 @@ def get_item_batches(item_id):
     """
     try:
         # Get query parameters
-        remaining_qty_raw = request.args.get('remaining_qty', type=str)
+        remaining_qty = request.args.get('remaining_qty', type=float)
         required_uom = request.args.get('required_uom', type=str)
         allocated_batch_ids_str = request.args.get('allocated_batch_ids', type=str)
         current_allocations_str = request.args.get('current_allocations', type=str)
-        
-        # Handle NaN, null, empty string for remaining_qty
-        remaining_qty = None
-        if remaining_qty_raw and remaining_qty_raw.lower() not in ('nan', 'null', 'undefined', ''):
-            try:
-                remaining_qty = float(remaining_qty_raw)
-                # Check if the float is actually NaN
-                if remaining_qty != remaining_qty:  # NaN != NaN is True
-                    remaining_qty = None
-            except (ValueError, TypeError):
-                remaining_qty = None
         
         # Parse allocated batch IDs from comma-separated string
         allocated_batch_ids = []
