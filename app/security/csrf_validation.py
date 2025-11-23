@@ -32,6 +32,13 @@ def validate_origin_referer():
             # Use direct request values (not proxy headers)
             allowed_origins.add(f"{request.scheme}://{request.host}")
         
+        # REPLIT FIX: Allow both HTTP and HTTPS for the same host
+        # This handles the case where Replit's proxy uses HTTPS but Flask dev server uses HTTP
+        # Extract just the host part and add both protocols
+        current_host = request.host
+        allowed_origins.add(f"http://{current_host}")
+        allowed_origins.add(f"https://{current_host}")
+        
         # Add SERVER_NAME if configured
         server_name = current_app.config.get('SERVER_NAME')
         preferred_scheme = current_app.config.get('PREFERRED_URL_SCHEME', 'https')

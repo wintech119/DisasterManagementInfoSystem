@@ -4,6 +4,13 @@
 DMIS (Disaster Management Information System) is a web-based platform for the Government of Jamaica's ODPEM, designed to manage the entire lifecycle of disaster relief supplies. This includes inventory tracking, donation management, relief request processing, and distribution across multiple warehouses. The system aims to ensure compliance with government processes, support disaster event coordination, supply allocation, and provide robust user administration with Role-Based Access Control (RBAC). Its core purpose is to deliver a modern, efficient, and user-friendly solution for disaster preparedness and response, emphasizing security and comprehensive management capabilities such as inventory transfers, location tracking, analytics, and reporting.
 
 ## Recent Changes (November 23, 2025)
+- **CSRF Protocol Mismatch Fix for Replit Environment**:
+  - Fixed CSRF Origin validation error that blocked user management operations
+  - Updated `app/security/csrf_validation.py` to allow both HTTP and HTTPS protocols for the same host
+  - Resolves issue where Replit's HTTPS proxy caused validation failures with HTTP backend
+  - Admin users can now successfully create and modify user accounts
+  - Default custodian "Office of Disaster Preparedness and Emergency Management" added to database
+
 - **Relief Package Cancellation Workflow** (Architect-Validated):
   - Implemented safe cancellation workflow for relief packages with full reservation rollback
   - Created `cancel_relief_package()` service function in `app/services/inventory_reservation_service.py`:
