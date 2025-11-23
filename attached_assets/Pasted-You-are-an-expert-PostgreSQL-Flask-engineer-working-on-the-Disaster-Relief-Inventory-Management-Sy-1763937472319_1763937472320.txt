@@ -1,0 +1,118 @@
+You are an expert PostgreSQL + Flask engineer working on the Disaster Relief Inventory Management System (DRIMS/DMIS).
+A purge script already exists:
+
+/mnt/data/purge_database.sql
+
+This script performs a clean purge of all application data, resets all sequences, and maintains referential integrity. You must use this script without altering its logic, except for a single requirement:
+
+The system admin user admin@odpem.gov.jm must NOT be deleted or modified during the purge, so that login access remains intact for testing after the purge.
+
+---
+🎯 Your Mission
+
+Execute a clean purge of the database using the provided SQL script, while ensuring:
+
+❌ No changes to schema, migrations, constraints, logic, workflows, or permissions
+
+❌ No regressions to security (CSRF, CSP, cookies, headers, query guards)
+
+❌ No breakage of application behavior
+
+✅ Purge all business data
+
+✅ Reset all sequences
+
+✅ Preserve the system admin account: admin@odpem.gov.jm
+
+🔧 Required Update Before Executing the Script
+
+Modify execution logic so that the users table is purged except for the admin user.
+
+This means:
+
+1. If the script uses TRUNCATE on the users table:
+
+Instead of truncating, replace that one operation with:
+
+DELETE FROM users 
+WHERE email <> 'admin@odpem.gov.jm';
+
+
+BUT do not modify the script directly unless necessary — you may instead wrap or override that step in an execution wrapper.
+
+2. If roles, permissions, or relational tables reference users:
+
+Preserve integrity by also deleting only rows tied to non-admin users:
+
+Example:
+
+DELETE FROM user_roles WHERE user_id != (SELECT user_id FROM users WHERE email = 'admin@odpem.gov.jm');
+DELETE FROM user_permissions WHERE user_id != (SELECT user_id FROM users WHERE email = 'admin@odpem.gov.jm');
+
+3. All other tables (items, batches, requests, agencies, donations, etc.)
+
+Proceed with normal purge logic from the original script.
+
+🔐 Environment Safety Requirements
+
+Backup the database before purging
+
+Ensure the purge runs only in approved environments (staging/UAT/dev)
+
+Execute the script in a single transaction
+
+Do NOT remove or weaken any existing security controls
+
+The only retained data MUST be:
+
+System admin user
+
+System admin role relationships
+
+Password hash
+
+After purge, you must still be able to:
+
+Log in as admin@odpem.gov.jm
+
+Navigate the full app
+
+Create new data from a truly clean state
+
+✔️ Post-Purge Verification
+
+After running the purge:
+
+Confirm all main tables have 0 rows except users
+
+Confirm users contains exactly 1 row:
+
+email = admin@odpem.gov.jm
+
+Confirm foreign key tables referencing users have no orphaned rows
+
+Launch the app:
+
+Login using the admin account
+
+Validate CSRF tokens still generate
+
+Validate CSP headers still function
+
+Validate workflows operate normally with empty data
+
+Add a new item, request, or donation to confirm sequence resets
+
+📌 Final Instruction
+
+Use the existing script at:
+
+/mnt/data/purge_database.sql
+
+Run it with the override logic above so that:
+
+➖ All system data is purged
+
+➕ Admin user remains untouched
+
+This results in a clean, test-ready DRIMS instance with full functionality preserved and no risk of being locked out.
