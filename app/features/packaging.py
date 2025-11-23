@@ -1392,7 +1392,7 @@ def _submit_for_approval(relief_request, relief_request_version, package_version
                 import logging
                 logger = logging.getLogger(__name__)
                 
-                lm_users = NotificationService.get_active_users_by_role_codes(['LM'])
+                lm_users = NotificationService.get_active_users_by_role_codes(['LOGISTICS_MANAGER'])
                 logger.info(f'Found {len(lm_users)} Logistics Manager(s) to notify for relief request #{relief_request.reliefrqst_id}')
                 
                 if lm_users:
