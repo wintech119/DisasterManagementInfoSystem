@@ -3,6 +3,22 @@
 ## Overview
 DMIS (Disaster Management Information System) is a web-based platform for the Government of Jamaica's ODPEM, designed to manage the entire lifecycle of disaster relief supplies. This includes inventory tracking, donation management, relief request processing, and distribution across multiple warehouses. The system aims to ensure compliance with government processes, support disaster event coordination, supply allocation, and provide robust user administration with Role-Based Access Control (RBAC). Its core purpose is to deliver a modern, efficient, and user-friendly solution for disaster preparedness and response, emphasizing security and comprehensive management capabilities such as inventory transfers, location tracking, analytics, and reporting.
 
+## Recent Changes (November 24, 2025)
+- **Master Records Disappearing Fix**:
+  - Fixed intermittent issue where newly created warehouses/users appeared briefly then disappeared from list views
+  - **Warehouse Fix**: After creation, now redirects to list with `filter='all'` instead of detail view, ensuring new records are immediately visible regardless of previous filter state
+  - **User List Fix**: Added pageshow event listener to reset client-side filters when page is restored from browser back/forward cache
+  - Root cause: Browser back button preserved previous filter URLs (warehouses) or cached JavaScript state (users), causing new records to be filtered out
+  - Zero security regression: All CSP, CSRF, cache-control protections maintained
+  - Architect reviewed: No regressions, all security controls intact
+
+- **Duplicate Donation Items Fix**:
+  - Fixed bug where same item could be added multiple times to a single donation
+  - Added server-side validation to detect and prevent duplicate item_ids in donation form submissions
+  - Displays user-friendly error message showing item name when duplicates are detected
+  - Prevents database IntegrityError on donation_item table's composite primary key (donation_id, item_id)
+  - Zero regression; all existing donation functionality preserved
+
 ## User Preferences
 - **Communication style**: Simple, everyday language.
 - **UI/UX Requirements**:
