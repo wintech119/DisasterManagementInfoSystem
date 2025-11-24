@@ -1,0 +1,114 @@
+Update the existing PostgreSQL database used by the application with the following country/parish master data migration, using the script exactly as provided below.
+
+Do not break or change any existing application code, behaviour, UI, workflows, or business logic.
+
+Do not modify or drop any other tables, constraints, or data outside what is explicitly in this script.
+
+Apply these changes as a proper migration on the existing country and parish tables only.
+
+Ensure the citext extension is enabled in the database (e.g. CREATE EXTENSION IF NOT EXISTS citext;) before altering country_name to citext.
+
+Run the script in a safe way so the database schema remains consistent and the application continues to work as before, now with the enhanced country structure and seeded data.
+
+Use this exact SQL script:
+
+alter table country alter column country_name type citext;
+alter table country add constraint c_country_1 check(length(country_name) <= 120);
+
+alter table country
+	add column currency_code varchar(10) not null
+		constraint fk_country_currency references currency,
+	add column status_code char(1) not null
+		constraint c_country_2 check (status_code in ('A','I')),
+	add column create_by_id varchar(20) not null,
+	add column create_dtime timestamp(0) without time zone not null,
+	add column update_by_id varchar(20) not null,
+	add column update_dtime timestamp(0) without time zone not null,
+	add column version_nbr integer not null;
+create unique index uk_country on country(country_name);
+create index dk_country on country(currency_code);
+
+insert into country values ('840','United States','USD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('124','Canada','CAD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('826','United Kingdom','GBP','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('250','France','EUR','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('276','Germany','EUR','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('380','Italy','EUR','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('724','Spain','EUR','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('620','Portugal','EUR','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('372','Ireland','EUR','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('056','Belgium','EUR','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('528','Netherlands','EUR','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('040','Austria','EUR','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('300','Greece','EUR','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('208','Denmark','DKK','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('578','Norway','NOK','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('752','Sweden','SEK','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('246','Finland','EUR','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('352','Iceland','ISK','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('756','Switzerland','CHF','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('484','Mexico','MXN','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('392','Japan','JPY','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('156','China','CNY','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('410','South Korea','KRW','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('804','Ukraine','UAH','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('660','Anguilla','XCD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('028','Antigua and Barbuda','XCD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('533','Aruba','AWG','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('044','The Bahamas','BSD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('052','Barbados','BBD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('060','Bermuda','BMD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('535','Bonaire, Sint Eustatius and Saba','USD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('092','British Virgin Islands','USD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('136','Cayman Islands','KYD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('192','Cuba','CUP','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('531','Curaçao','XCG','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('212','Dominica','XCD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('214','Dominican Republic','DOP','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('308','Grenada','XCD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('312','Guadeloupe','EUR','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('388','Jamaica','JMD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('474','Martinique','EUR','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('500','Montserrat','XCD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('630','Puerto Rico','USD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('652','Saint Barthélemy','EUR','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('659','Saint Kitts and Nevis','XCD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('662','Saint Lucia','XCD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('663','Saint Martin','EUR','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('670','Saint Vincent and the Grenadines','XCD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('534','Sint Maarten','XCG','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('780','Trinidad and Tobago','TTD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('796','Turks and Caicos Islands','USD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('850','U.S. Virgin Islands','USD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('032','Argentina','ARS','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('068','Bolivia','BOB','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('076','Brazil','BRL','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('152','Chile','CLP','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('170','Colombia','COP','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('218','Ecuador','USD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('238','Falkland Islands','FKP','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('254','French Guiana','EUR','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('328','Guyana','GYD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('600','Paraguay','PYG','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('604','Peru','PEN','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('740','Suriname','SRD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('858','Uruguay','UYU','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('862','Venezuela','VED/VES','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+
+--
+--Parish table
+--
+insert into parish values ('01','Kingston');
+insert into parish values ('02','St. Andrew');
+insert into parish values ('03','St. Thomas');
+insert into parish values ('04','Portland');
+insert into parish values ('05','St. Mary');
+insert into parish values ('06','St. Ann');
+insert into parish values ('07','Trelawny');
+insert into parish values ('08','St. James');
+insert into parish values ('09','Hanover');
+insert into parish values ('10','Westmoreland');
+insert into parish values ('11','St. Elizabeth');
+insert into parish values ('12','Manchester');
+insert into parish values ('13','Clarendon');
+insert into parish values ('14','St. Catherine');
