@@ -23,11 +23,17 @@ DMIS (Disaster Management Information System) is a web-based platform for the Go
   - **reliefrqstitem_status**: 7 status codes (Requested, Unavailable, Waiting, Denied, Partial, Limited, Fulfilled)
   - **role**: 8 roles (SYSTEM_ADMINISTRATOR, LOGISTICS_MANAGER, LOGISTICS_OFFICER, MAIN_HUB_WAREHOUSE, SUB_HUB_WAREHOUSE, AGENCY_HUB, INVENTORY_CLERK, AUDITOR)
   - **permission**: 5 event permissions (EVENT.VIEW, EVENT.CREATE, EVENT.UPDATE, EVENT.CLOSE, EVENT.DELETE)
+- **System Administrator User Created**:
+  - Email: admin@odpem.gov.jm
+  - Password: admin123
+  - Role: SYSTEM_ADMINISTRATOR
+  - Status: Active
 - Application verified working after purge and restoration:
   - All workflows running correctly
   - All security features intact (CSP, CSRF, cookies, headers)
   - No schema changes or regressions
   - All lookup tables populated with reference data
+  - System admin user ready for login
   - Ready for operational data entry
 
 ### Login Page - Agency Registration Hidden
