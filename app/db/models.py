@@ -1054,11 +1054,17 @@ class ItemLocation(db.Model):
     location = db.relationship('Location', backref='item_locations')
 
 class DonationIntake(db.Model):
-    """Donation intake - receiving donations into warehouse inventory (AIDMGMT)"""
+    """Donation intake - receiving donations into warehouse inventory (AIDMGMT)
+    
+    Status Codes:
+        I = Incomplete
+        C = Completed
+        V = Verified
+    """
     __tablename__ = 'dnintake'
     
     donation_id = db.Column(db.Integer, db.ForeignKey('donation.donation_id'), primary_key=True)
-    inventory_id = db.Column(db.Integer, db.ForeignKey('inventory.inventory_id'), primary_key=True)
+    inventory_id = db.Column(db.Integer, db.ForeignKey('warehouse.warehouse_id'), primary_key=True)
     intake_date = db.Column(db.Date, nullable=False)
     comments_text = db.Column(db.String(255))
     status_code = db.Column(db.CHAR(1), nullable=False)
@@ -1070,11 +1076,17 @@ class DonationIntake(db.Model):
     verify_dtime = db.Column(db.DateTime)
     version_nbr = db.Column(db.Integer, nullable=False, default=1)
     
+    __table_args__ = (
+        db.CheckConstraint("intake_date <= CURRENT_DATE", name='c_dnintake_1'),
+        db.CheckConstraint("status_code IN ('I', 'C', 'V')", name='c_dnintake_2'),
+    )
+    
     donation = db.relationship('Donation', backref='intakes')
-    inventory = db.relationship('Inventory', backref='donation_intakes')
-    warehouse = db.relationship('Warehouse', 
-                                primaryjoin='DonationIntake.inventory_id==foreign(Warehouse.warehouse_id)',
-                                viewonly=True)
+    warehouse = db.relationship('Warehouse', foreign_keys=[inventory_id], backref='donation_intakes')
+    
+    __mapper_args__ = {
+        'version_id_col': version_nbr
+    }
 
 class DonationIntakeItem(db.Model):
     """Donation Intake Item - Batch-level intake tracking for donations
