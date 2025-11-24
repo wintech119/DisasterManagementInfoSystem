@@ -1,0 +1,87 @@
+Safely purge all data from the DRIMS database using the existing purge script at:
+
+/mnt/data/purge_database.sql
+
+Apply this script exactly as written to delete all rows and reset sequences, while:
+
+Not breaking any application code
+
+Not breaking any UI or navigation
+
+Not changing any workflows or business logic
+
+Not modifying any security fixes (CSP, headers, TLS, cookies, SRI, cache-control, POST-only rules, etc.)
+
+Retaining the full database schema and referential integrity (all tables, constraints, FKs must remain defined exactly as they are now)
+
+Requirements
+
+Use the provided purge script as-is
+
+Run the script in a single transaction (it already has BEGIN; ... COMMIT;).
+
+It must:
+
+TRUNCATE all data from child tables, then main entity tables, then lookup tables (in the correct order with CASCADE).
+
+Reset all sequences with ALTER SEQUENCE ... RESTART WITH 1;.
+
+Leave all tables, columns, constraints, and foreign keys intact.
+
+Environment safety
+
+This purge must be used only in non-production environments (dev/test/demo) unless an explicit, confirmed production maintenance activity is being done.
+
+Before running in any environment:
+
+Take a full database backup.
+
+Confirm that no active users are in the system.
+
+Do NOT change the script to alter schema
+
+Do not drop tables.
+
+Do not drop or change foreign keys, indexes, or constraints.
+
+Do not add or remove columns.
+
+Only run the script to delete data and reset sequences, preserving structure and RI.
+
+Application expectations after purge
+
+The app must still:
+
+Start normally.
+
+Show all screens, menus, and dashboards (but with empty data where appropriate).
+
+Allow new records to be created as usual after the purge.
+
+No errors should occur due to missing tables or broken foreign keys.
+
+Security non-regression
+
+Running this purge must not:
+
+Disable or modify CSP headers.
+
+Change any HTTP security headers.
+
+Alter TLS configuration or cookies.
+
+Affect login, session management, or role-based access.
+
+All security hardening must remain exactly as before.
+
+Verification
+
+After the script runs:
+
+Confirm that all public tables are empty (0 rows).
+
+Confirm that sequences restart from 1 for new inserts.
+
+Confirm that the application still runs with all features and workflows intact (but with no legacy data).
+
+Use the script at /mnt/data/purge_database.sql as the single source of truth for the purge and do not introduce any additional destructive SQL beyond what is already defined there.

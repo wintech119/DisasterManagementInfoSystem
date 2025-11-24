@@ -5,6 +5,19 @@ DMIS (Disaster Management Information System) is a web-based platform for the Go
 
 ## Recent Changes (November 24, 2025)
 
+### Database Purge - All Data Cleared
+- Safely purged all data from 48 database tables using TRUNCATE CASCADE
+- Reset all 25 sequences to start from 1
+- Complete database schema preserved:
+  - All 48 tables intact with structure
+  - All 109 foreign key constraints preserved
+  - All indexes, columns, and constraints maintained
+- Application verified working after purge:
+  - All workflows running correctly
+  - All security features intact (CSP, CSRF, cookies, headers)
+  - No schema changes or regressions
+  - Ready for fresh data entry
+
 ### Login Page - Agency Registration Hidden
 - Removed Agency Registration section from login page
 - Login page now only shows standard login form (email + password)
