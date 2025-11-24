@@ -321,11 +321,13 @@ class ItemCategory(db.Model):
     
     Defines categories for relief items with identity PK and unique category codes.
     Updated schema with category_id as primary key instead of category_code.
+    Supports GOODS and FUNDS category types for donation classification.
     """
     __tablename__ = 'itemcatg'
     __table_args__ = {'extend_existing': True}
     
     category_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    category_type = db.Column(db.CHAR(5), nullable=False, default='GOODS')
     category_code = db.Column(db.String(30), nullable=False, unique=True)
     category_desc = db.Column(db.String(60), nullable=False)
     comments_text = db.Column(db.Text)

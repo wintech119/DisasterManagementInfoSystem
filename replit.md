@@ -3,6 +3,30 @@
 ## Overview
 DMIS (Disaster Management Information System) is a web-based platform for the Government of Jamaica's ODPEM, designed to manage the entire lifecycle of disaster relief supplies. Its core purpose is to provide a modern, efficient, and user-friendly solution for disaster preparedness and response. Key capabilities include inventory tracking, donation management, relief request processing, and distribution across multiple warehouses, all while ensuring compliance with government processes and supporting disaster event coordination and supply allocation. The system emphasizes security, robust user administration with Role-Based Access Control (RBAC), inventory transfers, location tracking, analytics, and reporting.
 
+## Recent Changes (November 24, 2025)
+
+### Item Category Table Enhanced with GOODS/FUNDS Classification
+- **Schema Migration**: Added `category_type` column to `itemcatg` table
+  - New field: `category_type CHAR(5) NOT NULL` with check constraint for 'GOODS' or 'FUNDS'
+  - Default value: 'GOODS' (applied to all existing categories)
+  - All 9 existing categories (Food, Water, Hygiene, Medical, Shelter, Clothing, Construction, Tools, Other) classified as GOODS
+- **SQLAlchemy Model Updated**: `ItemCategory` model now includes `category_type` field
+- **Referential Integrity Preserved**: All existing data, constraints, and foreign key relationships maintained
+- **Migration Approach**: Safe ALTER TABLE operations only (no table recreation)
+- **Use Case**: Enables future support for FUNDS category types (monetary donations, financial assistance)
+- **Zero Breaking Changes**: All existing code, UI, workflows, and business logic continue functioning normally
+
+### Test Data Populated
+- **35 relief items** added to the `item` table across all 9 categories
+- Items include food, water, hygiene products, medical supplies, shelter materials, clothing, construction materials, tools, and other essential items
+- All items properly configured with:
+  - Valid SKU codes and item descriptions
+  - Appropriate units of measure (bottles, boxes, sacks, units, etc.)
+  - Reorder quantities for inventory management
+  - Expiration tracking enabled for perishables (FEFO)
+  - Batch tracking enabled for most items
+  - All items set to active status
+
 ## User Preferences
 - **Communication style**: Simple, everyday language.
 - **UI/UX Requirements**:
