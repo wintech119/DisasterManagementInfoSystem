@@ -1,0 +1,105 @@
+Update the existing donation_item table so that it matches the complete definition below.
+Use ALTER TABLE operations only.
+Do NOT drop and recreate the table if it contains data.
+Preserve all existing data.
+Ensure all new columns, constraints, and checks are added safely and incrementally.
+
+While making these changes:
+
+Do NOT break any existing application logic, UI, workflows, behaviours, stored data, or current CRUD operations.
+
+Do NOT change any other tables.
+
+Do NOT regress any of the existing security fixes (CSP, security headers, TLS, SRI, cookie flags, no-cache, POST-only sensitive params, autocomplete fixes, directory protections, error handling, etc.).
+
+Apply the following table definition by translating it into safe ALTER TABLE operations:
+
+create table donation_item
+(
+	donation_id integer not null
+		constraint fk_donation_item_donation references donation,
+	item_id integer not null
+		constraint fk_donation_item_item references item,
+
+	--Type of donation
+	donation_type char(5) not null
+		constraint c_donation_item_0 check (donation_type in ('GOODS','FUNDS')),
+		
+	--Quantity (goods) / number of instances (funds)
+	item_qty decimal(9,2) not null default 1.00
+		constraint c_donation_item_1a check (item_qty >= 0.00),
+
+	--Purchase cost (goods) or donated value (funds)
+	item_cost decimal(10,2) not null
+		constraint c_donation_item_1b check (item_cost >= 0.00),
+
+	--Total add-on costs
+	addon_cost decimal(10,2) not null
+		constraint c_donation_item_1c
+		check (
+			(addon_cost = 0.00 and donation_type = 'FUNDS')
+			or (addon_cost >= 0.00 and donation_type = 'GOODS')
+		),
+
+	--Unit of measure
+	uom_code varchar(25) not null
+		constraint fk_donation_item_unitofmeasure references unitofmeasure,
+
+	--Physical or pickup location
+	location_name text not null,
+
+	--Status
+	status_code char(1) not null default 'V'
+		constraint c_donation_item_2 check (status_code in ('P','V')),
+
+	--Comments
+	comments_text text,
+		
+	create_by_id varchar(20) not null,
+	create_dtime timestamp(0) without time zone not null,
+	update_by_id varchar(20) not null,
+	update_dtime timestamp(0) without time zone not null,
+	verify_by_id varchar(20) not null,
+	verify_dtime timestamp(0) without time zone not null,
+	version_nbr integer not null,
+
+	constraint c_donation_item_10 check (item_cost + addon_cost > 0.00),
+	constraint pk_donation_item primary key(donation_id,item_id)
+);
+
+
+Requirements:
+
+Use ALTER TABLE donation_item to:
+
+Add any missing columns
+
+Add missing constraints
+
+Add missing check conditions
+
+Add or update foreign keys
+
+Add default values where needed
+
+Ensure the composite PK (donation_id, item_id) exists
+
+Ensure no existing data becomes invalid (if needed, temporarily relax constraints during migration)
+
+Do NOT:
+
+Remove valid existing data
+
+Break foreign keys, triggers, or app workflows
+
+Drop and recreate the table if it has rows
+
+Change behaviours for existing donation flows or verification logic
+
+After completion:
+
+The table must match the structure above exactly.
+
+All existing app functionality for entering, verifying, and processing donations must continue to work normally.
+
+ALL previously implemented security hardening must remain fully intact.
