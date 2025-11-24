@@ -231,28 +231,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentSort = null;
     let currentSortDir = 'asc';
     
-    // Reset filter state on page show (handles browser back/forward cache)
-    window.addEventListener('pageshow', function(event) {
-        if (event.persisted) {
-            // Page was restored from bfcache, reset filter to 'all'
-            currentFilter = 'all';
-            filterTabs.forEach(t => {
-                t.classList.remove('active');
-                t.setAttribute('aria-selected', 'false');
-            });
-            const allTab = document.querySelector('.filter-tab[data-filter="all"]');
-            if (allTab) {
-                allTab.classList.add('active');
-                allTab.setAttribute('aria-selected', 'true');
-            }
-            // Clear search and role filter
-            if (searchInput) searchInput.value = '';
-            if (roleFilter) roleFilter.value = '';
-            // Show all rows
-            rows.forEach(row => row.style.display = '');
-        }
-    });
-    
     // Filter functionality
     filterTabs.forEach(tab => {
         tab.addEventListener('click', function() {

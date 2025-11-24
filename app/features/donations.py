@@ -113,7 +113,6 @@ def create_donation():
                     errors.append('Received date cannot be in the future')
             
             item_data = []
-            seen_item_ids = set()
             for key in request.form.keys():
                 if key.startswith('item_id_'):
                     item_num = key.split('_')[-1]
@@ -123,20 +122,6 @@ def create_donation():
                     item_comments = request.form.get(f'item_comments_{item_num}', '').strip()
                     
                     if item_id:
-                        try:
-                            item_id_int = int(item_id)
-                            
-                            if item_id_int in seen_item_ids:
-                                item = Item.query.get(item_id_int)
-                                item_name = item.item_name if item else f'Item #{item_id_int}'
-                                errors.append(f'{item_name} has been added multiple times. Each item can only be added once per donation.')
-                                continue
-                            
-                            seen_item_ids.add(item_id_int)
-                        except ValueError:
-                            errors.append(f'Invalid item ID for item #{item_num}')
-                            continue
-                        
                         quantity_value = None
                         if not quantity_str:
                             errors.append(f'Quantity is required for item #{item_num}')
@@ -151,12 +136,15 @@ def create_donation():
                         if not uom_id:
                             errors.append(f'UOM is required for item #{item_num}')
                         
-                        item_data.append({
-                            'item_id': item_id_int,
-                            'quantity': quantity_value,
-                            'uom_code': uom_id,
-                            'item_comments': item_comments
-                        })
+                        try:
+                            item_data.append({
+                                'item_id': int(item_id),
+                                'quantity': quantity_value,
+                                'uom_code': uom_id,
+                                'item_comments': item_comments
+                            })
+                        except ValueError as ve:
+                            errors.append(f'Invalid data for item #{item_num}: {str(ve)}')
             
             if not item_data:
                 errors.append('At least one donation item is required')

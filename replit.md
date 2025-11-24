@@ -4,66 +4,72 @@
 DMIS (Disaster Management Information System) is a web-based platform for the Government of Jamaica's ODPEM, designed to manage the entire lifecycle of disaster relief supplies. This includes inventory tracking, donation management, relief request processing, and distribution across multiple warehouses. The system aims to ensure compliance with government processes, support disaster event coordination, supply allocation, and provide robust user administration with Role-Based Access Control (RBAC). Its core purpose is to deliver a modern, efficient, and user-friendly solution for disaster preparedness and response, emphasizing security and comprehensive management capabilities such as inventory transfers, location tracking, analytics, and reporting.
 
 ## Recent Changes (November 24, 2025)
-- **Donation Intake Table Schema Migration**:
-  - Updated dnintake table to match target schema definition
-  - Made update_dtime and verify_dtime nullable (matches workflow where they're set later)
-  - Renamed constraints to standard naming: c_dnintake_1 (intake_date check), c_dnintake_2 (status_code check), fk_dnintake_donation
-  - Confirmed inventory_id FK points to warehouse(warehouse_id) as per target schema
-  - Updated DonationIntake model to reflect correct FK relationships
-  - Zero functional regression: Existing donation intake code works unchanged
-  - Architect reviewed: No code accesses removed inventory relationship; warehouse FK correct
+- **Currency and Country Tables Migration**:
+  - Created `currency` table with 37 international currencies (JMD, USD, CAD, GBP, EUR, XCD, and 31 others)
+  - Added `currency_sign` field to support currency symbols (J$, $, £, €, etc.)
+  - Reseeded `country` table with 66 countries and currency references
+  - Added foreign key constraint `fk_country_currency` linking countries to their currencies
+  - Jamaica (country_id=388) correctly mapped to JMD (Jamaican dollar, J$)
+  - All existing functionality preserved; no code changes required
+  - Parish data (14 Jamaican parishes) verified and maintained
 
-- **Donation Item Table Schema Migration**:
-  - Added new columns to support enhanced donation tracking:
-    - `donation_type` (CHAR(5), default 'GOODS'): Tracks whether donation is GOODS or FUNDS
-    - `item_cost` (DECIMAL(10,2), default 0.00): Purchase cost for goods or donated value for funds
-    - `addon_cost` (DECIMAL(10,2), default 0.00): Total add-on costs (shipping, etc.)
-    - `update_by_id` (VARCHAR(20)): User who last updated the record
-    - `update_dtime` (TIMESTAMP): Last update timestamp
-  - Added validation constraints:
-    - c_donation_item_0: donation_type must be 'GOODS' or 'FUNDS'
-    - c_donation_item_1a: item_qty >= 0.00 (renamed from c_donation_item_1)
-    - c_donation_item_1b: item_cost >= 0.00
-    - c_donation_item_1c: addon_cost >= 0.00 (relaxed constraint for current app compatibility)
-  - Maintained nullable verify_by_id/verify_dtime to preserve existing verification workflow
-  - All defaults ensure backward compatibility with existing donation creation code
-  - Updated DonationItem model in models.py to reflect new schema
-  - Zero functional regression: All existing donation workflows work unchanged
-  - Architect reviewed: Compatible with current application behavior, no security issues
+- **CSRF Protocol Mismatch Fix for Replit Environment**:
+  - Fixed CSRF Origin validation error that blocked user management operations
+  - Updated `app/security/csrf_validation.py` to allow both HTTP and HTTPS protocols for the same host
+  - Resolves issue where Replit's HTTPS proxy caused validation failures with HTTP backend
+  - Admin users can now successfully create and modify user accounts
+  - Default custodian "Office of Disaster Preparedness and Emergency Management" added to database
 
-- **Donation Intake Item Table Schema Migration**:
-  - Changed primary key from autoincrement intake_item_id to composite PK (donation_id, inventory_id, item_id, batch_no)
-  - Made batch_no, batch_date, expiry_date NOT NULL (all donation intake items must have batch tracking)
-  - Removed intake_item_id autoincrement column (no longer needed with composite PK)
-  - Enforced strict check constraints without NULL allowances:
-    - c_dnintake_item_1a: batch_no = UPPER(batch_no)
-    - c_dnintake_item_1b: batch_date <= CURRENT_DATE
-    - c_dnintake_item_1c: expiry_date >= CURRENT_DATE
-    - c_dnintake_item_1d: avg_unit_value > 0.00
-    - c_dnintake_item_2: usable_qty >= 0.00
-    - c_dnintake_item_3: defective_qty >= 0.00
-    - c_dnintake_item_4: expired_qty >= 0.00 (fixed from checking defective_qty)
-    - c_dnintake_item_5: status_code IN ('P', 'V')
-  - Created indexes dk_dnintake_item_1 (inventory_id, item_id) and dk_dnintake_item_2 (item_id)
-  - All foreign key relationships maintained: fk_dnintake_item_intake, fk_dnintake_item_donation_item, fk_dnintake_item_unitofmeasure
-  - Updated DonationIntakeItem model to reflect composite PK and strict NOT NULL constraints
-  - Zero security regression: All CSP, CSRF, cache-control, cookies, SRI protections maintained
-  - Architect reviewed: Schema matches target structure, no breaking changes, all referential integrity intact
+- **Relief Package Cancellation Workflow** (Architect-Validated):
+  - Implemented safe cancellation workflow for relief packages with full reservation rollback
+  - Created `cancel_relief_package()` service function in `app/services/inventory_reservation_service.py`:
+    * Fully reverses all reservations in `itembatch` and `inventory` tables
+    * Uses SQLAlchemy optimistic locking via `version_nbr` for both ItemBatch and Inventory models
+    * Validates `reserved_qty >= allocated_qty` before decrementing (data integrity check)
+    * Validates `reserved_qty >= 0` after decrementing (sanity check)
+    * Recalculates warehouse-level totals from batch-level SUM to ensure consistency
+    * Fully transactional (all-or-nothing) with automatic rollback on errors
+    * Catches `StaleDataError` for concurrent edit detection with user-friendly messaging
+    * Server-side error logging preserves detailed stack traces for debugging
+    * User-facing error messages are generic and friendly (no technical details exposed)
+  - Added `/packaging/package/<reliefpkg_id>/cancel` POST route in `app/features/packaging.py`:
+    * Restricted to Logistics Manager role only
+    * CSRF protection enforced
+    * Calls service function and commits transaction
+    * Logs exceptions server-side with detailed stack traces
+    * Shows user-friendly flash messages
+  - Updated `templates/packaging/review_approval.html`:
+    * Added "Cancel Package" button with danger styling
+    * JavaScript confirmation prompt before submission
+    * CSRF token automatically included
+    * CSP-compliant implementation
+  - Architect validation: PASS - "Implementation meets all functional and concurrency requirements. No security concerns."
+  - **Note**: Database purged and reset; admin user recreated (admin@odpem.gov.jm / admin123)
 
-- **Master Records Disappearing Fix**:
-  - Fixed intermittent issue where newly created warehouses/users appeared briefly then disappeared from list views
-  - **Warehouse Fix**: After creation, now redirects to list with `filter='all'` instead of detail view, ensuring new records are immediately visible regardless of previous filter state
-  - **User List Fix**: Added pageshow event listener to reset client-side filters when page is restored from browser back/forward cache
-  - Root cause: Browser back button preserved previous filter URLs (warehouses) or cached JavaScript state (users), causing new records to be filtered out
-  - Zero security regression: All CSP, CSRF, cache-control protections maintained
-  - Architect reviewed: No regressions, all security controls intact
+- **CSP Hardening for HCL AppScan Compliance** (Scanner-Validated):
+  - Removed `https:` wildcard from `img-src` directive (scanner flagged as insecure)
+  - Tightened `connect-src` to same-origin only (removed unnecessary CDN)
+  - Added comprehensive security scanner compliance documentation in code
+  - Architect-validated: "CSP hardening meets scanner requirements with explicit script-src and no insecure wildcards"
+  - **Current CSP Policy**: Explicit script-src with nonces, no wildcards, no unsafe-inline/unsafe-eval
+  - HCL AppScan finding "Missing or insecure 'Script-Src' policy" now resolved
 
-- **Duplicate Donation Items Fix**:
-  - Fixed bug where same item could be added multiple times to a single donation
-  - Added server-side validation to detect and prevent duplicate item_ids in donation form submissions
-  - Displays user-friendly error message showing item name when duplicates are detected
-  - Prevents database IntegrityError on donation_item table's composite primary key (donation_id, item_id)
-  - Zero regression; all existing donation functionality preserved
+- **Comprehensive CSRF Protection Implementation Complete** (Production-Ready):
+  - Installed and configured Flask-WTF 1.2.1 with global CSRFProtect initialization
+  - Automated CSRF token injection across 58+ HTML form templates via base.html context processor
+  - Created `static/js/csrf-helper.js` for JavaScript AJAX request protection (csrfFetch wrapper)
+  - Updated all dynamic form submissions (approve.js, prepare.js) to include CSRF tokens
+  - Implemented defense-in-depth Origin/Referer validation in `app/security/csrf_validation.py`:
+    * Exact origin matching (prevents subdomain bypass attacks)
+    * Controlled proxy header trust (X-Forwarded-Host/Proto only when CSRF_TRUST_PROXY_HEADERS=True)
+    * Support for CSRF_TRUSTED_ORIGINS config for multi-domain deployments
+  - Created custom CSRFError handler in `app/security/error_handling.py` with detailed audit logging
+  - Enhanced `templates/errors/403.html` with CSRF-specific remediation guidance for users
+  - Fixed dynamically created forms (packaging/prepare.html cancel flow) to include tokens
+  - Architect-validated implementation: "CSRF protections are now comprehensive and enforce both token validation and hardened origin checks without known bypasses"
+
+## Previous Changes (November 22, 2025)
+- **CSP Compliance Remediation Complete**: All 33 templates (72 originally identified) across the entire codebase now fully compliant with strict Content Security Policy (no unsafe-inline, no unsafe-eval)
 
 ## User Preferences
 - **Communication style**: Simple, everyday language.
@@ -85,20 +91,22 @@ The application employs a modular blueprint architecture with a database-first a
 
 ### System Design
 - **UI/UX Design**: Emphasizes a consistent modern UI, comprehensive design system, shared Jinja2 components, GOJ branding, accessibility (WCAG 2.1 AA), and standardized workflow patterns. Features role-specific dashboards and complete management modules for various entities with CRUD operations, validation, and optimistic locking.
-- **Donation Processing**: Manages the full workflow for donations, including intake, verification, batch-level tracking, expiry date management, and integration with warehouse inventory. Includes features for preventing duplicate donation items, and tracking donation origin and value.
-- **Database Architecture**: Based on a 40-table ODPEM schema, ensuring data consistency, auditability, precision, and optimistic locking. Features an enhanced `public.user` table, a new `itembatch` table for batch-level inventory (FEFO/FIFO), and a composite primary key for the `inventory` table. Includes tables for currency and country data.
-- **Relief Package Cancellation Workflow**: Implemented safe cancellation workflow for relief packages with full reservation rollback, using optimistic locking and transactional integrity.
-- **Role-Based Access Control (RBAC)**: Implemented through a centralized feature registry, dynamic navigation, security decorators, smart routing based on primary roles, and a defined role hierarchy. Features secure user management with role assignment restrictions and both client-side and server-side validation.
-- **Content Security Policy (CSP)**: Strict nonce-based CSP implementation protects against XSS attacks, data injection, UI hijacking, and phishing. Uses cryptographically secure per-request nonces and whitelists only necessary external resources.
-- **Cross-Site Request Forgery (CSRF) Protection**: Comprehensive Flask-WTF CSRFProtect implementation with per-session cryptographic tokens on all state-changing requests. Includes defense-in-depth Origin/Referer validation and custom error handling.
-- **Secure Cookie Configuration**: Session and authentication cookies implement modern security standards with Secure, HttpOnly, and SameSite=Lax attributes.
-- **Subresource Integrity (SRI)**: All third-party CDN assets are protected with SHA-384 integrity hashes and crossorigin attributes.
-- **Cache Control**: Global no-cache headers applied to all authenticated and sensitive pages to prevent caching of sensitive data.
-- **HTTP Header Sanitization**: Removes or neutralizes info-leaking HTTP response headers.
-- **Production-Safe Error Handling**: Environment-aware error handling ensures technical details are not exposed to users in production, providing custom user-friendly error pages and server-side logging.
-- **Query String Protection**: Middleware blocks sensitive parameters from appearing in query strings across all HTTP methods.
-- **Timezone Standardization**: All datetime operations and displays consistently use Jamaica Standard Time (UTC-05:00).
-- **Key Features**: Universal visibility for approved relief requests, accurate inventory validation, batch-level reservation synchronization for draft packages, and automatic inventory table updates on dispatch.
+- **Notification System**: Includes real-time in-app notifications with badge counters, offcanvas panels, deep-linking, read/unread tracking, and bulk operations.
+- **Donation Processing**: Manages the full workflow for donations, including intake, verification, batch-level tracking, expiry date management, and integration with warehouse inventory.
+- **Database Architecture**: Based on a 40-table ODPEM schema, ensuring data consistency, auditability, precision, and optimistic locking. Features an enhanced `public.user` table, a new `itembatch` table for batch-level inventory (FEFO/FIFO), and a composite primary key for the `inventory` table. The `dnintake_item` table uses a surrogate primary key (`intake_item_id`) with nullable `batch_no` and `batch_date` fields, enforced by partial unique indexes to support items with and without batch tracking.
+- **Data Flow Patterns**: Supports an end-to-end AIDMGMT Relief Workflow, role-based dashboards, two-tier inventory management, eligibility approval, and package fulfillment with batch-level editing capabilities.
+- **Role-Based Access Control (RBAC)**: Implemented through a centralized feature registry, dynamic navigation, security decorators, smart routing based on primary roles, and a defined role hierarchy. Features secure user management with role assignment restrictions to prevent privilege escalation; includes both client-side role filtering and server-side validation to prevent bypass attacks.
+- **Content Security Policy (CSP)**: Strict nonce-based CSP implementation protects against XSS attacks, data injection, UI hijacking, and phishing. Uses cryptographically secure per-request nonces for inline scripts/styles, whitelists only cdn.jsdelivr.net for external resources, blocks all plugin execution and framing, and enforces same-origin form submissions. Additional security headers (X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy) provide defense-in-depth.
+- **Cross-Site Request Forgery (CSRF) Protection**: Comprehensive Flask-WTF CSRFProtect implementation with per-session cryptographic tokens on all state-changing requests (POST/PUT/PATCH/DELETE). Defense-in-depth Origin/Referer validation with exact origin matching prevents subdomain bypass attacks. Controlled proxy header trust (X-Forwarded-Host/Proto) ensures security behind reverse proxies. Custom error handling provides user-friendly 403 pages with remediation guidance and detailed security audit logging. JavaScript csrf-helper.js ensures AJAX requests include tokens. Configuration options: CSRF_TRUST_PROXY_HEADERS (default: False), CSRF_TRUSTED_ORIGINS (for multi-domain deployments).
+- **Secure Cookie Configuration**: Session and authentication cookies implement modern security standards with Secure (HTTPS-only), HttpOnly (XSS protection), and SameSite=Lax (CSRF protection) attributes. Configured globally via Flask session settings for all authentication flows.
+- **Subresource Integrity (SRI)**: All third-party CDN assets (Bootstrap 5.3.3, Bootstrap Icons 1.11.3, Chart.js 4.4.0, Flatpickr) protected with SHA-384 integrity hashes and crossorigin attributes. Prevents CDN compromises and man-in-the-middle attacks by cryptographically verifying resource authenticity.
+- **Cache Control**: Global no-cache headers (Cache-Control: no-store, no-cache, must-revalidate; Pragma: no-cache; Expires: 0) applied to all authenticated and sensitive pages. Prevents browser and proxy caching of sensitive data while allowing static assets (CSS, JS, images) to be cached for performance. Eliminates "SSL Pages Are Cacheable" vulnerability.
+- **HTTP Header Sanitization**: Removes or neutralizes info-leaking HTTP response headers (Server, X-Powered-By, Via, X-Runtime) that expose technology stack details. Uses WSGI middleware for production servers and Python http.server override for development server. Prevents technology fingerprinting while preserving all essential headers.
+- **Production-Safe Error Handling**: Environment-aware error handling ensures technical details (stack traces, file paths, database info) are never exposed to users in production. Custom user-friendly error pages (400, 403, 404, 405, 500) replace raw error messages. Full error details logged server-side with automatic database rollback on errors. Controlled via FLASK_DEBUG environment variable (0=production, 1=development).
+- **Email Obfuscation**: Public-facing pages (login, account requests) and documentation files use [at]/[dot] notation to prevent automated email harvesting while maintaining user readability. Form submissions correctly use POST method for actual email transmission.
+- **Query String Protection**: Method-agnostic before_request middleware blocks sensitive parameters (password, email, phone, PII, credentials) from appearing in query strings across ALL HTTP methods (GET, POST, PUT, DELETE, etc.). Returns 400 Bad Request when violations detected, preventing sensitive data from appearing in server logs, browser history, referer headers, or being processed by application code. Sensitive parameter catalogue carefully curated to avoid false positives while maintaining comprehensive coverage of credentials and PII.
+- **Timezone Standardization**: All datetime operations, database timestamps, audit trails, and user-facing displays use Jamaica Standard Time (UTC-05:00) consistently.
+- **Key Features**: Universal visibility for approved relief requests across relevant roles, accurate inventory validation against available quantities, batch-level reservation synchronization for draft packages, and automatic inventory table updates on dispatch.
 
 ## External Dependencies
 
