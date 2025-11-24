@@ -24,6 +24,26 @@ import mimetypes
 donations_bp = Blueprint('donations', __name__, url_prefix='/donations')
 
 
+@donations_bp.route('/debug/items')
+@login_required
+@feature_required('donation_management')
+def debug_items():
+    """Debug endpoint to see all items"""
+    from app.db.models import ItemCategory
+    items = Item.query.filter_by(status_code='A').order_by(Item.item_name).all()
+    result = []
+    for item in items:
+        category = ItemCategory.query.filter_by(category_id=item.category_id).first()
+        result.append({
+            'item_id': item.item_id,
+            'item_name': item.item_name,
+            'sku_code': item.sku_code,
+            'category_code': category.category_code if category else 'N/A',
+            'category_type': category.category_type if category else 'N/A'
+        })
+    return jsonify({'total': len(result), 'items': result})
+
+
 def _get_adhoc_event():
     """Get the ADHOC event for default selection"""
     return Event.query.filter(Event.event_name.ilike('%ADHOC%')).first()
