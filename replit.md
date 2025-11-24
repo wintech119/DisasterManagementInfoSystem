@@ -16,31 +16,16 @@ DMIS (Disaster Management Information System) is a web-based platform for the Go
 - **Use Case**: Enables future support for FUNDS category types (monetary donations, financial assistance)
 - **Zero Breaking Changes**: All existing code, UI, workflows, and business logic continue functioning normally
 
-### Test Data Populated
+### Item Categories Configured
 
-**GOODS Items (35 items across 9 categories):**
-- Items include food, water, hygiene products, medical supplies, shelter materials, clothing, construction materials, tools, and other essential items
-- All items properly configured with:
-  - Valid SKU codes and item descriptions
-  - Appropriate units of measure (bottles, boxes, sacks, units, etc.)
-  - Reorder quantities for inventory management
-  - Expiration tracking enabled for perishables (FEFO)
-  - Batch tracking enabled for most items
-  - All items set to active status
+**10 Active Categories:**
+- **9 GOODS Categories**: Food, Water, Hygiene, Medical, Shelter, Clothing, Construction, Tools, Other
+- **1 FUNDS Category**: FUNDS (category_id=10, category_code='FUNDS', category_type='FUNDS')
 
-**FUNDS Items (8 items in 1 category):**
-- **New FUNDS category** created (category_id=10, category_code='FUNDS', category_type='FUNDS')
-- **8 financial assistance items** added for monetary donations:
-  - Emergency Cash Assistance (FND-001) - Direct cash assistance for disaster victims
-  - Housing Assistance Fund (FND-002) - Emergency housing and shelter repair aid
-  - Medical Expense Fund (FND-003) - Medical treatment and prescription coverage
-  - Education Support Fund (FND-004) - School fees and supplies assistance
-  - Food Voucher Fund (FND-005) - Vouchers for purchasing food and groceries
-  - Disaster Relief Grant (FND-006) - General purpose disaster recovery grant
-  - Transportation Assistance (FND-007) - Evacuation and relocation costs
-  - Utility Bill Assistance (FND-008) - Electricity, water, and gas bill help
-- All FUNDS items use 'UNIT' as unit of measure
-- FUNDS items configured for non-batched, non-expiring tracking (appropriate for monetary donations)
+**Item Table Status:**
+- Item table cleared and ready for data entry
+- All category infrastructure in place for both GOODS and FUNDS items
+- Dynamic donation workflow ready to handle both category types
 
 ### Dynamic GOODS/FUNDS Donation Workflow Implemented
 - **Category-Driven Behavior**: Donation form dynamically adapts based on item category type (GOODS/FUNDS)
