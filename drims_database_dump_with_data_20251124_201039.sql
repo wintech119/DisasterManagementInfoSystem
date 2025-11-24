@@ -1,0 +1,4731 @@
+--
+-- PostgreSQL database dump
+--
+
+\restrict QlgGGbpSAR8vLdCUDnHxRgIzhFHPq3DVwFNdZuWI2ozl3vaG0dloBWXySKQg3r1
+
+-- Dumped from database version 16.9 (415ebe8)
+-- Dumped by pg_dump version 16.10
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+ALTER TABLE IF EXISTS ONLY public.xfreturn_item DROP CONSTRAINT IF EXISTS xfreturn_item_xfreturn_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.xfreturn_item DROP CONSTRAINT IF EXISTS xfreturn_item_uom_code_fkey;
+ALTER TABLE IF EXISTS ONLY public.warehouse DROP CONSTRAINT IF EXISTS warehouse_parish_code_fkey;
+ALTER TABLE IF EXISTS ONLY public.warehouse DROP CONSTRAINT IF EXISTS warehouse_custodian_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.user_warehouse DROP CONSTRAINT IF EXISTS user_warehouse_warehouse_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.user_warehouse DROP CONSTRAINT IF EXISTS user_warehouse_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.user_warehouse DROP CONSTRAINT IF EXISTS user_warehouse_assigned_by_fkey;
+ALTER TABLE IF EXISTS ONLY public.user_role DROP CONSTRAINT IF EXISTS user_role_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.user_role DROP CONSTRAINT IF EXISTS user_role_role_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.user_role DROP CONSTRAINT IF EXISTS user_role_assigned_by_fkey;
+ALTER TABLE IF EXISTS ONLY public."user" DROP CONSTRAINT IF EXISTS user_assigned_warehouse_id_fkey;
+ALTER TABLE IF EXISTS ONLY public."user" DROP CONSTRAINT IF EXISTS user_agency_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.transfer_request DROP CONSTRAINT IF EXISTS transfer_request_to_warehouse_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.transfer_request DROP CONSTRAINT IF EXISTS transfer_request_reviewed_by_fkey;
+ALTER TABLE IF EXISTS ONLY public.transfer_request DROP CONSTRAINT IF EXISTS transfer_request_requested_by_fkey;
+ALTER TABLE IF EXISTS ONLY public.transfer_request DROP CONSTRAINT IF EXISTS transfer_request_item_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.transfer_request DROP CONSTRAINT IF EXISTS transfer_request_from_warehouse_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.transaction DROP CONSTRAINT IF EXISTS transaction_warehouse_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.transaction DROP CONSTRAINT IF EXISTS transaction_item_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.transaction DROP CONSTRAINT IF EXISTS transaction_event_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.transaction DROP CONSTRAINT IF EXISTS transaction_donor_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.rtintake DROP CONSTRAINT IF EXISTS rtintake_xfreturn_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.rtintake_item DROP CONSTRAINT IF EXISTS rtintake_item_uom_code_fkey;
+ALTER TABLE IF EXISTS ONLY public.rtintake_item DROP CONSTRAINT IF EXISTS rtintake_item_location3_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.rtintake_item DROP CONSTRAINT IF EXISTS rtintake_item_location2_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.rtintake_item DROP CONSTRAINT IF EXISTS rtintake_item_location1_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.reliefpkg DROP CONSTRAINT IF EXISTS reliefpkg_reliefrqst_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.relief_request_fulfillment_lock DROP CONSTRAINT IF EXISTS relief_request_fulfillment_lock_reliefrqst_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.relief_request_fulfillment_lock DROP CONSTRAINT IF EXISTS relief_request_fulfillment_lock_fulfiller_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.notification DROP CONSTRAINT IF EXISTS notification_warehouse_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.notification DROP CONSTRAINT IF EXISTS notification_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.notification DROP CONSTRAINT IF EXISTS notification_reliefrqst_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.item_location DROP CONSTRAINT IF EXISTS item_location_location_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.xfreturn DROP CONSTRAINT IF EXISTS fk_xfreturn_to_warehouse;
+ALTER TABLE IF EXISTS ONLY public.xfreturn_item DROP CONSTRAINT IF EXISTS fk_xfreturn_item_inventory;
+ALTER TABLE IF EXISTS ONLY public.xfreturn DROP CONSTRAINT IF EXISTS fk_xfreturn_fr_warehouse;
+ALTER TABLE IF EXISTS ONLY public.transfer DROP CONSTRAINT IF EXISTS fk_transfer_warehouse2;
+ALTER TABLE IF EXISTS ONLY public.transfer DROP CONSTRAINT IF EXISTS fk_transfer_warehouse1;
+ALTER TABLE IF EXISTS ONLY public.transfer_item DROP CONSTRAINT IF EXISTS fk_transfer_item_uom;
+ALTER TABLE IF EXISTS ONLY public.transfer_item DROP CONSTRAINT IF EXISTS fk_transfer_item_transfer;
+ALTER TABLE IF EXISTS ONLY public.transfer_item DROP CONSTRAINT IF EXISTS fk_transfer_item_item;
+ALTER TABLE IF EXISTS ONLY public.transfer_item DROP CONSTRAINT IF EXISTS fk_transfer_item_inventory;
+ALTER TABLE IF EXISTS ONLY public.transfer_item DROP CONSTRAINT IF EXISTS fk_transfer_item_batch;
+ALTER TABLE IF EXISTS ONLY public.transfer DROP CONSTRAINT IF EXISTS fk_transfer_event;
+ALTER TABLE IF EXISTS ONLY public.rtintake DROP CONSTRAINT IF EXISTS fk_rtintake_warehouse;
+ALTER TABLE IF EXISTS ONLY public.rtintake_item DROP CONSTRAINT IF EXISTS fk_rtintake_item_intake;
+ALTER TABLE IF EXISTS ONLY public.role_permission DROP CONSTRAINT IF EXISTS fk_role_permission_role;
+ALTER TABLE IF EXISTS ONLY public.role_permission DROP CONSTRAINT IF EXISTS fk_role_permission_perm;
+ALTER TABLE IF EXISTS ONLY public.reliefrqst DROP CONSTRAINT IF EXISTS fk_reliefrqst_reliefrqst_status;
+ALTER TABLE IF EXISTS ONLY public.reliefrqst_item DROP CONSTRAINT IF EXISTS fk_reliefrqst_item_reliefrqstitem_status;
+ALTER TABLE IF EXISTS ONLY public.reliefrqst_item DROP CONSTRAINT IF EXISTS fk_reliefrqst_item_reliefrqst;
+ALTER TABLE IF EXISTS ONLY public.reliefrqst_item DROP CONSTRAINT IF EXISTS fk_reliefrqst_item_item;
+ALTER TABLE IF EXISTS ONLY public.reliefrqst DROP CONSTRAINT IF EXISTS fk_reliefrqst_event;
+ALTER TABLE IF EXISTS ONLY public.reliefrqst DROP CONSTRAINT IF EXISTS fk_reliefrqst_agency;
+ALTER TABLE IF EXISTS ONLY public.reliefpkg DROP CONSTRAINT IF EXISTS fk_reliefpkg_warehouse;
+ALTER TABLE IF EXISTS ONLY public.reliefpkg_item DROP CONSTRAINT IF EXISTS fk_reliefpkg_item_unitofmeasure;
+ALTER TABLE IF EXISTS ONLY public.reliefpkg_item DROP CONSTRAINT IF EXISTS fk_reliefpkg_item_reliefpkg;
+ALTER TABLE IF EXISTS ONLY public.reliefpkg_item DROP CONSTRAINT IF EXISTS fk_reliefpkg_item_itembatch;
+ALTER TABLE IF EXISTS ONLY public.reliefpkg DROP CONSTRAINT IF EXISTS fk_reliefpkg_event;
+ALTER TABLE IF EXISTS ONLY public.reliefpkg DROP CONSTRAINT IF EXISTS fk_reliefpkg_agency;
+ALTER TABLE IF EXISTS ONLY public.location DROP CONSTRAINT IF EXISTS fk_location_warehouse;
+ALTER TABLE IF EXISTS ONLY public.itembatch DROP CONSTRAINT IF EXISTS fk_itembatch_warehouse;
+ALTER TABLE IF EXISTS ONLY public.itembatch DROP CONSTRAINT IF EXISTS fk_itembatch_unitofmeasure;
+ALTER TABLE IF EXISTS ONLY public.itembatch DROP CONSTRAINT IF EXISTS fk_itembatch_item;
+ALTER TABLE IF EXISTS ONLY public.item DROP CONSTRAINT IF EXISTS fk_item_unitofmeasure;
+ALTER TABLE IF EXISTS ONLY public.item_location DROP CONSTRAINT IF EXISTS fk_item_location_inventory;
+ALTER TABLE IF EXISTS ONLY public.item DROP CONSTRAINT IF EXISTS fk_item_itemcatg;
+ALTER TABLE IF EXISTS ONLY public.inventory DROP CONSTRAINT IF EXISTS fk_inventory_warehouse;
+ALTER TABLE IF EXISTS ONLY public.inventory DROP CONSTRAINT IF EXISTS fk_inventory_unitofmeasure;
+ALTER TABLE IF EXISTS ONLY public.inventory DROP CONSTRAINT IF EXISTS fk_inventory_item;
+ALTER TABLE IF EXISTS ONLY public.donation_item DROP CONSTRAINT IF EXISTS fk_donation_item_unitofmeasure;
+ALTER TABLE IF EXISTS ONLY public.donation_item DROP CONSTRAINT IF EXISTS fk_donation_item_item;
+ALTER TABLE IF EXISTS ONLY public.donation_item DROP CONSTRAINT IF EXISTS fk_donation_item_donation;
+ALTER TABLE IF EXISTS ONLY public.donation DROP CONSTRAINT IF EXISTS fk_donation_event;
+ALTER TABLE IF EXISTS ONLY public.donation DROP CONSTRAINT IF EXISTS fk_donation_donor;
+ALTER TABLE IF EXISTS ONLY public.donation_doc DROP CONSTRAINT IF EXISTS fk_donation_doc_donation;
+ALTER TABLE IF EXISTS ONLY public.donation DROP CONSTRAINT IF EXISTS fk_donation_custodian;
+ALTER TABLE IF EXISTS ONLY public.donation DROP CONSTRAINT IF EXISTS fk_donation_country;
+ALTER TABLE IF EXISTS ONLY public.dnintake_item DROP CONSTRAINT IF EXISTS fk_dnintake_item_unitofmeasure;
+ALTER TABLE IF EXISTS ONLY public.dnintake_item DROP CONSTRAINT IF EXISTS fk_dnintake_item_intake;
+ALTER TABLE IF EXISTS ONLY public.dnintake_item DROP CONSTRAINT IF EXISTS fk_dnintake_item_donation_item;
+ALTER TABLE IF EXISTS ONLY public.dnintake DROP CONSTRAINT IF EXISTS fk_dnintake_donation;
+ALTER TABLE IF EXISTS ONLY public.dbintake DROP CONSTRAINT IF EXISTS fk_dbintake_warehouse;
+ALTER TABLE IF EXISTS ONLY public.custodian DROP CONSTRAINT IF EXISTS fk_custodian_parish;
+ALTER TABLE IF EXISTS ONLY public.country DROP CONSTRAINT IF EXISTS fk_country_currency;
+ALTER TABLE IF EXISTS ONLY public.batchlocation DROP CONSTRAINT IF EXISTS fk_batchlocation_warehouse;
+ALTER TABLE IF EXISTS ONLY public.batchlocation DROP CONSTRAINT IF EXISTS fk_batchlocation_location;
+ALTER TABLE IF EXISTS ONLY public.batchlocation DROP CONSTRAINT IF EXISTS fk_batchlocation_itembatch;
+ALTER TABLE IF EXISTS ONLY public.batchlocation DROP CONSTRAINT IF EXISTS fk_batchlocation_inventory;
+ALTER TABLE IF EXISTS ONLY public.agency DROP CONSTRAINT IF EXISTS fk_agency_warehouse;
+ALTER TABLE IF EXISTS ONLY public.agency_account_request DROP CONSTRAINT IF EXISTS fk_aar_user;
+ALTER TABLE IF EXISTS ONLY public.agency_account_request DROP CONSTRAINT IF EXISTS fk_aar_updated_by;
+ALTER TABLE IF EXISTS ONLY public.agency_account_request DROP CONSTRAINT IF EXISTS fk_aar_created_by;
+ALTER TABLE IF EXISTS ONLY public.agency_account_request_audit DROP CONSTRAINT IF EXISTS fk_aar_audit_req;
+ALTER TABLE IF EXISTS ONLY public.agency_account_request DROP CONSTRAINT IF EXISTS fk_aar_agency;
+ALTER TABLE IF EXISTS ONLY public.agency_account_request_audit DROP CONSTRAINT IF EXISTS fk_aar_actor;
+ALTER TABLE IF EXISTS ONLY public.donor DROP CONSTRAINT IF EXISTS donor_country_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.distribution_package DROP CONSTRAINT IF EXISTS distribution_package_recipient_agency_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.distribution_package_item DROP CONSTRAINT IF EXISTS distribution_package_item_package_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.distribution_package_item DROP CONSTRAINT IF EXISTS distribution_package_item_item_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.distribution_package DROP CONSTRAINT IF EXISTS distribution_package_event_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.distribution_package DROP CONSTRAINT IF EXISTS distribution_package_assigned_warehouse_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.dbintake DROP CONSTRAINT IF EXISTS dbintake_reliefpkg_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.dbintake_item DROP CONSTRAINT IF EXISTS dbintake_item_uom_code_fkey;
+ALTER TABLE IF EXISTS ONLY public.dbintake_item DROP CONSTRAINT IF EXISTS dbintake_item_reliefpkg_id_inventory_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.dbintake_item DROP CONSTRAINT IF EXISTS dbintake_item_location3_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.dbintake_item DROP CONSTRAINT IF EXISTS dbintake_item_location2_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.dbintake_item DROP CONSTRAINT IF EXISTS dbintake_item_location1_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.agency DROP CONSTRAINT IF EXISTS agency_parish_code_fkey;
+ALTER TABLE IF EXISTS ONLY public.agency DROP CONSTRAINT IF EXISTS agency_ineligible_event_id_fkey;
+DROP TRIGGER IF EXISTS trg_user_set_updated_at ON public."user";
+DROP TRIGGER IF EXISTS trg_aar_set_updated_at ON public.agency_account_request;
+DROP INDEX IF EXISTS public.uk_user_username;
+DROP INDEX IF EXISTS public.uk_itembatch_inventory_batch_item;
+DROP INDEX IF EXISTS public.uk_itembatch_inventory_batch;
+DROP INDEX IF EXISTS public.uk_itembatch_1;
+DROP INDEX IF EXISTS public.uk_inventory_1;
+DROP INDEX IF EXISTS public.uk_dnintake_item_null_batch;
+DROP INDEX IF EXISTS public.uk_dnintake_item_batch;
+DROP INDEX IF EXISTS public.uk_country;
+DROP INDEX IF EXISTS public.uk_aar_active_email;
+DROP INDEX IF EXISTS public.ix_user_role_user_id;
+DROP INDEX IF EXISTS public.ix_user_role_role_id;
+DROP INDEX IF EXISTS public.ix_role_permission_role_id;
+DROP INDEX IF EXISTS public.ix_role_permission_perm_id;
+DROP INDEX IF EXISTS public.idx_transfer_item_item;
+DROP INDEX IF EXISTS public.idx_transfer_item_batch;
+DROP INDEX IF EXISTS public.idx_role_code;
+DROP INDEX IF EXISTS public.idx_notification_warehouse;
+DROP INDEX IF EXISTS public.idx_notification_user_status;
+DROP INDEX IF EXISTS public.idx_itemcostdef_type;
+DROP INDEX IF EXISTS public.idx_itemcostdef_status;
+DROP INDEX IF EXISTS public.idx_itemcatg_status_code;
+DROP INDEX IF EXISTS public.idx_fulfillment_lock_user;
+DROP INDEX IF EXISTS public.idx_fulfillment_lock_expires;
+DROP INDEX IF EXISTS public.idx_donation_doc_type;
+DROP INDEX IF EXISTS public.idx_donation_doc_donation_id;
+DROP INDEX IF EXISTS public.idx_distribution_package_warehouse;
+DROP INDEX IF EXISTS public.idx_distribution_package_item_package;
+DROP INDEX IF EXISTS public.idx_distribution_package_item_item;
+DROP INDEX IF EXISTS public.idx_distribution_package_event;
+DROP INDEX IF EXISTS public.idx_distribution_package_agency;
+DROP INDEX IF EXISTS public.dk_xfreturn_3;
+DROP INDEX IF EXISTS public.dk_xfreturn_2;
+DROP INDEX IF EXISTS public.dk_xfreturn_1;
+DROP INDEX IF EXISTS public.dk_user_agency_id;
+DROP INDEX IF EXISTS public.dk_transfer_3;
+DROP INDEX IF EXISTS public.dk_transfer_2;
+DROP INDEX IF EXISTS public.dk_transfer_1;
+DROP INDEX IF EXISTS public.dk_rtintake_item_2;
+DROP INDEX IF EXISTS public.dk_rtintake_item_1;
+DROP INDEX IF EXISTS public.dk_reliefrqst_item_2;
+DROP INDEX IF EXISTS public.dk_reliefrqst_3;
+DROP INDEX IF EXISTS public.dk_reliefrqst_2;
+DROP INDEX IF EXISTS public.dk_reliefrqst_1;
+DROP INDEX IF EXISTS public.dk_reliefpkg_item_3;
+DROP INDEX IF EXISTS public.dk_reliefpkg_item_2;
+DROP INDEX IF EXISTS public.dk_reliefpkg_item_1;
+DROP INDEX IF EXISTS public.dk_reliefpkg_3;
+DROP INDEX IF EXISTS public.dk_reliefpkg_1;
+DROP INDEX IF EXISTS public.dk_location_1;
+DROP INDEX IF EXISTS public.dk_itembatch_4;
+DROP INDEX IF EXISTS public.dk_itembatch_3;
+DROP INDEX IF EXISTS public.dk_itembatch_2;
+DROP INDEX IF EXISTS public.dk_itembatch_1;
+DROP INDEX IF EXISTS public.dk_item_location_1;
+DROP INDEX IF EXISTS public.dk_item_3;
+DROP INDEX IF EXISTS public.dk_item_2;
+DROP INDEX IF EXISTS public.dk_item_1;
+DROP INDEX IF EXISTS public.dk_inventory_1;
+DROP INDEX IF EXISTS public.dk_dnintake_item_2;
+DROP INDEX IF EXISTS public.dk_dnintake_item_1;
+DROP INDEX IF EXISTS public.dk_dbintake_item_2;
+DROP INDEX IF EXISTS public.dk_dbintake_item_1;
+DROP INDEX IF EXISTS public.dk_country;
+DROP INDEX IF EXISTS public.dk_batchlocation_1;
+DROP INDEX IF EXISTS public.dk_aar_status_created;
+DROP INDEX IF EXISTS public.dk_aar_audit_req_time;
+ALTER TABLE IF EXISTS ONLY public.xfreturn DROP CONSTRAINT IF EXISTS xfreturn_pkey;
+ALTER TABLE IF EXISTS ONLY public.warehouse DROP CONSTRAINT IF EXISTS warehouse_pkey;
+ALTER TABLE IF EXISTS ONLY public.user_warehouse DROP CONSTRAINT IF EXISTS user_warehouse_pkey;
+ALTER TABLE IF EXISTS ONLY public.user_role DROP CONSTRAINT IF EXISTS user_role_pkey;
+ALTER TABLE IF EXISTS ONLY public."user" DROP CONSTRAINT IF EXISTS user_pkey;
+ALTER TABLE IF EXISTS ONLY public."user" DROP CONSTRAINT IF EXISTS user_email_key;
+ALTER TABLE IF EXISTS ONLY public.permission DROP CONSTRAINT IF EXISTS uq_permission_resource_action;
+ALTER TABLE IF EXISTS ONLY public.itemcostdef DROP CONSTRAINT IF EXISTS uk_itemcostdef_1;
+ALTER TABLE IF EXISTS ONLY public.itemcatg DROP CONSTRAINT IF EXISTS uk_itemcatg_1;
+ALTER TABLE IF EXISTS ONLY public.item DROP CONSTRAINT IF EXISTS uk_item_3;
+ALTER TABLE IF EXISTS ONLY public.item DROP CONSTRAINT IF EXISTS uk_item_2;
+ALTER TABLE IF EXISTS ONLY public.item DROP CONSTRAINT IF EXISTS uk_item_1;
+ALTER TABLE IF EXISTS ONLY public.donor DROP CONSTRAINT IF EXISTS uk_donor_1;
+ALTER TABLE IF EXISTS ONLY public.custodian DROP CONSTRAINT IF EXISTS uk_custodian_1;
+ALTER TABLE IF EXISTS ONLY public.currency DROP CONSTRAINT IF EXISTS uk_currency;
+ALTER TABLE IF EXISTS ONLY public.agency DROP CONSTRAINT IF EXISTS uk_agency_1;
+ALTER TABLE IF EXISTS ONLY public.transfer_request DROP CONSTRAINT IF EXISTS transfer_request_pkey;
+ALTER TABLE IF EXISTS ONLY public.transaction DROP CONSTRAINT IF EXISTS transaction_pkey;
+ALTER TABLE IF EXISTS ONLY public.role DROP CONSTRAINT IF EXISTS role_pkey;
+ALTER TABLE IF EXISTS ONLY public.role DROP CONSTRAINT IF EXISTS role_code_key;
+ALTER TABLE IF EXISTS ONLY public.reliefpkg DROP CONSTRAINT IF EXISTS reliefpkg_pkey;
+ALTER TABLE IF EXISTS ONLY public.relief_request_fulfillment_lock DROP CONSTRAINT IF EXISTS relief_request_fulfillment_lock_pkey;
+ALTER TABLE IF EXISTS ONLY public.xfreturn_item DROP CONSTRAINT IF EXISTS pk_xfreturn_item;
+ALTER TABLE IF EXISTS ONLY public.unitofmeasure DROP CONSTRAINT IF EXISTS pk_unitofmeasure;
+ALTER TABLE IF EXISTS ONLY public.transfer_item DROP CONSTRAINT IF EXISTS pk_transfer_item;
+ALTER TABLE IF EXISTS ONLY public.transfer DROP CONSTRAINT IF EXISTS pk_transfer;
+ALTER TABLE IF EXISTS ONLY public.rtintake_item DROP CONSTRAINT IF EXISTS pk_rtintake_item;
+ALTER TABLE IF EXISTS ONLY public.rtintake DROP CONSTRAINT IF EXISTS pk_rtintake;
+ALTER TABLE IF EXISTS ONLY public.role_permission DROP CONSTRAINT IF EXISTS pk_role_permission;
+ALTER TABLE IF EXISTS ONLY public.reliefrqstitem_status DROP CONSTRAINT IF EXISTS pk_reliefrqstitem_status;
+ALTER TABLE IF EXISTS ONLY public.reliefrqst_status DROP CONSTRAINT IF EXISTS pk_reliefrqst_status;
+ALTER TABLE IF EXISTS ONLY public.reliefrqst_item DROP CONSTRAINT IF EXISTS pk_reliefrqst_item;
+ALTER TABLE IF EXISTS ONLY public.reliefrqst DROP CONSTRAINT IF EXISTS pk_reliefrqst;
+ALTER TABLE IF EXISTS ONLY public.reliefpkg_item DROP CONSTRAINT IF EXISTS pk_reliefpkg_item;
+ALTER TABLE IF EXISTS ONLY public.itemcatg DROP CONSTRAINT IF EXISTS pk_itemcatg;
+ALTER TABLE IF EXISTS ONLY public.itembatch DROP CONSTRAINT IF EXISTS pk_itembatch;
+ALTER TABLE IF EXISTS ONLY public.item DROP CONSTRAINT IF EXISTS pk_item;
+ALTER TABLE IF EXISTS ONLY public.inventory DROP CONSTRAINT IF EXISTS pk_inventory;
+ALTER TABLE IF EXISTS ONLY public.event DROP CONSTRAINT IF EXISTS pk_event;
+ALTER TABLE IF EXISTS ONLY public.donation_item DROP CONSTRAINT IF EXISTS pk_donation_item;
+ALTER TABLE IF EXISTS ONLY public.donation_doc DROP CONSTRAINT IF EXISTS pk_donation_doc;
+ALTER TABLE IF EXISTS ONLY public.donation DROP CONSTRAINT IF EXISTS pk_donation;
+ALTER TABLE IF EXISTS ONLY public.custodian DROP CONSTRAINT IF EXISTS pk_custodian;
+ALTER TABLE IF EXISTS ONLY public.currency DROP CONSTRAINT IF EXISTS pk_currency;
+ALTER TABLE IF EXISTS ONLY public.batchlocation DROP CONSTRAINT IF EXISTS pk_batchlocation;
+ALTER TABLE IF EXISTS ONLY public.itemcostdef DROP CONSTRAINT IF EXISTS pk_adnlitemcost;
+ALTER TABLE IF EXISTS ONLY public.permission DROP CONSTRAINT IF EXISTS permission_pkey;
+ALTER TABLE IF EXISTS ONLY public.parish DROP CONSTRAINT IF EXISTS parish_pkey;
+ALTER TABLE IF EXISTS ONLY public.notification DROP CONSTRAINT IF EXISTS notification_pkey;
+ALTER TABLE IF EXISTS ONLY public.location DROP CONSTRAINT IF EXISTS location_pkey;
+ALTER TABLE IF EXISTS ONLY public.item_location DROP CONSTRAINT IF EXISTS item_location_pkey;
+ALTER TABLE IF EXISTS ONLY public.donor DROP CONSTRAINT IF EXISTS donor_pkey;
+ALTER TABLE IF EXISTS ONLY public.dnintake DROP CONSTRAINT IF EXISTS dnintake_pkey;
+ALTER TABLE IF EXISTS ONLY public.dnintake_item DROP CONSTRAINT IF EXISTS dnintake_item_pkey;
+ALTER TABLE IF EXISTS ONLY public.distribution_package DROP CONSTRAINT IF EXISTS distribution_package_pkey;
+ALTER TABLE IF EXISTS ONLY public.distribution_package DROP CONSTRAINT IF EXISTS distribution_package_package_number_key;
+ALTER TABLE IF EXISTS ONLY public.distribution_package_item DROP CONSTRAINT IF EXISTS distribution_package_item_pkey;
+ALTER TABLE IF EXISTS ONLY public.dbintake DROP CONSTRAINT IF EXISTS dbintake_pkey;
+ALTER TABLE IF EXISTS ONLY public.dbintake_item DROP CONSTRAINT IF EXISTS dbintake_item_pkey;
+ALTER TABLE IF EXISTS ONLY public.country DROP CONSTRAINT IF EXISTS country_pkey;
+ALTER TABLE IF EXISTS ONLY public.agency DROP CONSTRAINT IF EXISTS agency_pkey;
+ALTER TABLE IF EXISTS ONLY public.agency_account_request DROP CONSTRAINT IF EXISTS agency_account_request_pkey;
+ALTER TABLE IF EXISTS ONLY public.agency_account_request_audit DROP CONSTRAINT IF EXISTS agency_account_request_audit_pkey;
+ALTER TABLE IF EXISTS public.xfreturn ALTER COLUMN xfreturn_id DROP DEFAULT;
+ALTER TABLE IF EXISTS public."user" ALTER COLUMN user_id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.transfer_request ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.transaction ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.role ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.notification ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.dnintake_item ALTER COLUMN intake_item_id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.distribution_package_item ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.distribution_package ALTER COLUMN id DROP DEFAULT;
+DROP SEQUENCE IF EXISTS public.xfreturn_xfreturn_id_seq;
+DROP TABLE IF EXISTS public.xfreturn_item;
+DROP TABLE IF EXISTS public.xfreturn;
+DROP TABLE IF EXISTS public.warehouse;
+DROP VIEW IF EXISTS public.v_status4reliefrqst_processed;
+DROP VIEW IF EXISTS public.v_status4reliefrqst_create;
+DROP VIEW IF EXISTS public.v_status4reliefrqst_action;
+DROP TABLE IF EXISTS public.user_warehouse;
+DROP TABLE IF EXISTS public.user_role;
+DROP SEQUENCE IF EXISTS public.user_id_seq;
+DROP TABLE IF EXISTS public."user";
+DROP TABLE IF EXISTS public.unitofmeasure;
+DROP SEQUENCE IF EXISTS public.transfer_request_id_seq;
+DROP TABLE IF EXISTS public.transfer_request;
+DROP TABLE IF EXISTS public.transfer_item;
+DROP TABLE IF EXISTS public.transfer;
+DROP SEQUENCE IF EXISTS public.transaction_id_seq;
+DROP TABLE IF EXISTS public.transaction;
+DROP TABLE IF EXISTS public.rtintake_item;
+DROP TABLE IF EXISTS public.rtintake;
+DROP TABLE IF EXISTS public.role_permission;
+DROP SEQUENCE IF EXISTS public.role_id_seq;
+DROP TABLE IF EXISTS public.role;
+DROP TABLE IF EXISTS public.reliefrqstitem_status;
+DROP TABLE IF EXISTS public.reliefrqst_status;
+DROP TABLE IF EXISTS public.reliefrqst_item;
+DROP TABLE IF EXISTS public.reliefrqst;
+DROP TABLE IF EXISTS public.reliefpkg_item;
+DROP TABLE IF EXISTS public.reliefpkg;
+DROP TABLE IF EXISTS public.relief_request_fulfillment_lock;
+DROP TABLE IF EXISTS public.permission;
+DROP TABLE IF EXISTS public.parish;
+DROP SEQUENCE IF EXISTS public.notification_id_seq;
+DROP TABLE IF EXISTS public.notification;
+DROP TABLE IF EXISTS public.location;
+DROP TABLE IF EXISTS public.itemcostdef;
+DROP TABLE IF EXISTS public.itemcatg;
+DROP TABLE IF EXISTS public.itembatch;
+DROP TABLE IF EXISTS public.item_location;
+DROP TABLE IF EXISTS public.item;
+DROP TABLE IF EXISTS public.inventory;
+DROP TABLE IF EXISTS public.event;
+DROP TABLE IF EXISTS public.donor;
+DROP TABLE IF EXISTS public.donation_item;
+DROP TABLE IF EXISTS public.donation_doc;
+DROP TABLE IF EXISTS public.donation;
+DROP SEQUENCE IF EXISTS public.dnintake_item_intake_item_id_seq;
+DROP TABLE IF EXISTS public.dnintake_item;
+DROP TABLE IF EXISTS public.dnintake;
+DROP SEQUENCE IF EXISTS public.distribution_package_item_id_seq;
+DROP TABLE IF EXISTS public.distribution_package_item;
+DROP SEQUENCE IF EXISTS public.distribution_package_id_seq;
+DROP TABLE IF EXISTS public.distribution_package;
+DROP TABLE IF EXISTS public.dbintake_item;
+DROP TABLE IF EXISTS public.dbintake;
+DROP TABLE IF EXISTS public.custodian;
+DROP TABLE IF EXISTS public.currency;
+DROP TABLE IF EXISTS public.country;
+DROP TABLE IF EXISTS public.batchlocation;
+DROP TABLE IF EXISTS public.agency_account_request_audit;
+DROP TABLE IF EXISTS public.agency_account_request;
+DROP TABLE IF EXISTS public.agency;
+DROP FUNCTION IF EXISTS public.set_updated_at();
+DROP EXTENSION IF EXISTS pgcrypto;
+DROP EXTENSION IF EXISTS citext;
+--
+-- Name: citext; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION citext; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION citext IS 'data type for case-insensitive character strings';
+
+
+--
+-- Name: pgcrypto; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION pgcrypto; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
+
+
+--
+-- Name: set_updated_at(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.set_updated_at() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    NEW.update_dtime := CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$;
+
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: agency; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.agency (
+    agency_id integer NOT NULL,
+    agency_name character varying(120) NOT NULL,
+    address1_text character varying(255) NOT NULL,
+    address2_text character varying(255),
+    parish_code character(2) NOT NULL,
+    contact_name character varying(50) NOT NULL,
+    phone_no character varying(20) NOT NULL,
+    email_text character varying(100),
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone NOT NULL,
+    version_nbr integer NOT NULL,
+    agency_type character varying(16) NOT NULL,
+    ineligible_event_id integer,
+    status_code character(1) NOT NULL,
+    warehouse_id integer,
+    CONSTRAINT agency_agency_name_check CHECK (((agency_name)::text = upper((agency_name)::text))),
+    CONSTRAINT agency_contact_name_check CHECK (((contact_name)::text = upper((contact_name)::text))),
+    CONSTRAINT c_agency_3 CHECK (((agency_type)::text = ANY ((ARRAY['DISTRIBUTOR'::character varying, 'SHELTER'::character varying])::text[]))),
+    CONSTRAINT c_agency_5 CHECK (((((agency_type)::text = 'SHELTER'::text) AND (warehouse_id IS NULL)) OR (((agency_type)::text <> 'SHELTER'::text) AND (warehouse_id IS NOT NULL)))),
+    CONSTRAINT c_agency_6 CHECK ((status_code = ANY (ARRAY['A'::bpchar, 'I'::bpchar])))
+);
+
+
+--
+-- Name: agency_account_request; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.agency_account_request (
+    request_id integer NOT NULL,
+    agency_name character varying(120) NOT NULL,
+    contact_name character varying(80) NOT NULL,
+    contact_phone character varying(20) NOT NULL,
+    contact_email public.citext NOT NULL,
+    reason_text character varying(255) NOT NULL,
+    agency_id integer,
+    user_id integer,
+    status_code character(1) NOT NULL,
+    status_reason character varying(255),
+    created_by_id integer NOT NULL,
+    created_at timestamp(0) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_by_id integer NOT NULL,
+    updated_at timestamp(0) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    version_nbr integer DEFAULT 1 NOT NULL,
+    CONSTRAINT c_aar_status CHECK ((status_code = ANY (ARRAY['S'::bpchar, 'R'::bpchar, 'A'::bpchar, 'D'::bpchar])))
+);
+
+
+--
+-- Name: agency_account_request_audit; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.agency_account_request_audit (
+    audit_id integer NOT NULL,
+    request_id integer NOT NULL,
+    event_type character varying(24) NOT NULL,
+    event_notes character varying(255),
+    actor_user_id integer NOT NULL,
+    event_dtime timestamp(0) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    version_nbr integer DEFAULT 1 NOT NULL
+);
+
+
+--
+-- Name: agency_account_request_audit_audit_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.agency_account_request_audit ALTER COLUMN audit_id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public.agency_account_request_audit_audit_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: agency_account_request_request_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.agency_account_request ALTER COLUMN request_id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public.agency_account_request_request_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: agency_agency_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.agency ALTER COLUMN agency_id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public.agency_agency_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: batchlocation; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.batchlocation (
+    inventory_id integer NOT NULL,
+    location_id integer NOT NULL,
+    batch_id integer NOT NULL,
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL
+);
+
+
+--
+-- Name: country; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.country (
+    country_id smallint NOT NULL,
+    country_name public.citext NOT NULL,
+    currency_code character varying(10) NOT NULL,
+    status_code character(1) NOT NULL,
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone NOT NULL,
+    version_nbr integer NOT NULL,
+    CONSTRAINT c_country_1 CHECK ((length((country_name)::text) <= 120)),
+    CONSTRAINT c_country_2 CHECK ((status_code = ANY (ARRAY['A'::bpchar, 'I'::bpchar])))
+);
+
+
+--
+-- Name: currency; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.currency (
+    currency_code character varying(10) NOT NULL,
+    currency_name public.citext NOT NULL,
+    currency_sign character varying(6) NOT NULL,
+    status_code character(1) NOT NULL,
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone NOT NULL,
+    version_nbr integer NOT NULL,
+    CONSTRAINT c_currency_1 CHECK ((status_code = ANY (ARRAY['A'::bpchar, 'I'::bpchar]))),
+    CONSTRAINT c_currency_1a CHECK ((length((currency_name)::text) <= 130))
+);
+
+
+--
+-- Name: custodian; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.custodian (
+    custodian_id integer NOT NULL,
+    custodian_name character varying(120) DEFAULT 'OFFICE OF DISASTER PREPAREDNESS AND EMERGENCY MANAGEMENT (ODPEM)'::character varying NOT NULL,
+    address1_text character varying(255) NOT NULL,
+    address2_text character varying(255),
+    parish_code character(2) NOT NULL,
+    contact_name character varying(50) NOT NULL,
+    phone_no character varying(20) NOT NULL,
+    email_text character varying(100),
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone NOT NULL,
+    version_nbr integer NOT NULL,
+    CONSTRAINT c_custodian_1 CHECK (((custodian_name)::text = upper((custodian_name)::text))),
+    CONSTRAINT c_custodian_3 CHECK (((contact_name)::text = upper((contact_name)::text)))
+);
+
+
+--
+-- Name: custodian_custodian_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.custodian ALTER COLUMN custodian_id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public.custodian_custodian_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: dbintake; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.dbintake (
+    reliefpkg_id integer NOT NULL,
+    inventory_id integer NOT NULL,
+    intake_date date NOT NULL,
+    comments_text character varying(255),
+    status_code character(1) NOT NULL,
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone,
+    verify_by_id character varying(20) NOT NULL,
+    verify_dtime timestamp(0) without time zone,
+    version_nbr integer NOT NULL,
+    CONSTRAINT dbintake_intake_date_check CHECK ((intake_date <= CURRENT_DATE)),
+    CONSTRAINT dbintake_status_code_check CHECK ((status_code = ANY (ARRAY['I'::bpchar, 'C'::bpchar, 'V'::bpchar])))
+);
+
+
+--
+-- Name: dbintake_item; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.dbintake_item (
+    reliefpkg_id integer NOT NULL,
+    inventory_id integer NOT NULL,
+    item_id integer NOT NULL,
+    usable_qty numeric(12,2) NOT NULL,
+    location1_id integer,
+    defective_qty numeric(12,2) NOT NULL,
+    location2_id integer,
+    expired_qty numeric(12,2) NOT NULL,
+    location3_id integer,
+    uom_code character varying(25) NOT NULL,
+    status_code character(1) NOT NULL,
+    comments_text character varying(255),
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone NOT NULL,
+    version_nbr integer NOT NULL,
+    CONSTRAINT dbintake_item_defective_qty_check CHECK ((defective_qty >= 0.00)),
+    CONSTRAINT dbintake_item_expired_qty_check CHECK ((expired_qty >= 0.00)),
+    CONSTRAINT dbintake_item_status_code_check CHECK ((status_code = ANY (ARRAY['P'::bpchar, 'V'::bpchar]))),
+    CONSTRAINT dbintake_item_usable_qty_check CHECK ((usable_qty >= 0.00))
+);
+
+
+--
+-- Name: distribution_package; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.distribution_package (
+    id integer NOT NULL,
+    package_number character varying(64) NOT NULL,
+    recipient_agency_id integer NOT NULL,
+    assigned_warehouse_id integer,
+    event_id integer,
+    status character varying(50) DEFAULT 'Draft'::character varying NOT NULL,
+    is_partial boolean DEFAULT false NOT NULL,
+    created_by character varying(200) NOT NULL,
+    approved_by character varying(200),
+    approved_at timestamp without time zone,
+    dispatched_by character varying(200),
+    dispatched_at timestamp without time zone,
+    delivered_at timestamp without time zone,
+    notes text,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+--
+-- Name: distribution_package_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.distribution_package_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: distribution_package_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.distribution_package_id_seq OWNED BY public.distribution_package.id;
+
+
+--
+-- Name: distribution_package_item; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.distribution_package_item (
+    id integer NOT NULL,
+    package_id integer NOT NULL,
+    item_id integer NOT NULL,
+    quantity numeric(12,2) NOT NULL,
+    notes text
+);
+
+
+--
+-- Name: distribution_package_item_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.distribution_package_item_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: distribution_package_item_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.distribution_package_item_id_seq OWNED BY public.distribution_package_item.id;
+
+
+--
+-- Name: dnintake; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.dnintake (
+    donation_id integer NOT NULL,
+    inventory_id integer NOT NULL,
+    intake_date date NOT NULL,
+    comments_text character varying(255),
+    status_code character(1) NOT NULL,
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone,
+    verify_by_id character varying(20) NOT NULL,
+    verify_dtime timestamp(0) without time zone,
+    version_nbr integer NOT NULL,
+    CONSTRAINT c_dnintake_1 CHECK ((intake_date <= CURRENT_DATE)),
+    CONSTRAINT c_dnintake_2 CHECK ((status_code = ANY (ARRAY['I'::bpchar, 'C'::bpchar, 'V'::bpchar])))
+);
+
+
+--
+-- Name: dnintake_item; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.dnintake_item (
+    donation_id integer NOT NULL,
+    inventory_id integer NOT NULL,
+    item_id integer NOT NULL,
+    batch_no character varying(20),
+    batch_date date,
+    expiry_date date,
+    uom_code character varying(25) NOT NULL,
+    avg_unit_value numeric(10,2) NOT NULL,
+    usable_qty numeric(12,2) NOT NULL,
+    defective_qty numeric(12,2) NOT NULL,
+    expired_qty numeric(12,2) NOT NULL,
+    status_code character(1) NOT NULL,
+    comments_text character varying(255),
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone NOT NULL,
+    version_nbr integer NOT NULL,
+    intake_item_id integer NOT NULL,
+    CONSTRAINT c_dnintake_item_1a CHECK (((batch_no)::text = upper((batch_no)::text))),
+    CONSTRAINT c_dnintake_item_1b CHECK ((batch_date <= CURRENT_DATE)),
+    CONSTRAINT c_dnintake_item_1c CHECK ((expiry_date >= CURRENT_DATE)),
+    CONSTRAINT c_dnintake_item_1d CHECK ((avg_unit_value > 0.00)),
+    CONSTRAINT c_dnintake_item_2 CHECK ((usable_qty >= 0.00)),
+    CONSTRAINT c_dnintake_item_3 CHECK ((defective_qty >= 0.00)),
+    CONSTRAINT c_dnintake_item_4 CHECK ((expired_qty >= 0.00)),
+    CONSTRAINT c_dnintake_item_5 CHECK ((status_code = ANY (ARRAY['P'::bpchar, 'V'::bpchar])))
+);
+
+
+--
+-- Name: dnintake_item_intake_item_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.dnintake_item_intake_item_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: dnintake_item_intake_item_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.dnintake_item_intake_item_id_seq OWNED BY public.dnintake_item.intake_item_id;
+
+
+--
+-- Name: donation; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.donation (
+    donation_id integer NOT NULL,
+    donor_id integer NOT NULL,
+    donation_desc text NOT NULL,
+    event_id integer NOT NULL,
+    custodian_id integer NOT NULL,
+    received_date date NOT NULL,
+    status_code character(1) NOT NULL,
+    comments_text text,
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    verify_by_id character varying(20) NOT NULL,
+    verify_dtime timestamp(0) without time zone NOT NULL,
+    version_nbr integer NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp without time zone NOT NULL,
+    origin_country_id smallint,
+    origin_address1_text character varying(255),
+    origin_address2_text character varying(255),
+    tot_donated_value numeric(12,2),
+    CONSTRAINT c_donation_1 CHECK ((received_date <= CURRENT_DATE)),
+    CONSTRAINT c_donation_2 CHECK ((status_code = ANY (ARRAY['E'::bpchar, 'V'::bpchar, 'P'::bpchar]))),
+    CONSTRAINT c_donation_2_value CHECK (((tot_donated_value IS NULL) OR (tot_donated_value > 0.00)))
+);
+
+
+--
+-- Name: donation_doc; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.donation_doc (
+    document_id integer NOT NULL,
+    donation_id integer NOT NULL,
+    document_type character varying(40) NOT NULL,
+    document_desc character varying(255) NOT NULL,
+    file_name character varying(80) NOT NULL,
+    file_type character varying(30) NOT NULL,
+    file_size character varying(20),
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone NOT NULL,
+    version_nbr integer NOT NULL,
+    CONSTRAINT c_donation_doc_1 CHECK (((file_type)::text = ANY ((ARRAY['application/pdf'::character varying, 'image/jpeg'::character varying])::text[])))
+);
+
+
+--
+-- Name: TABLE donation_doc; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.donation_doc IS 'Document attachments for donations (receipts, manifests, delivery notices)';
+
+
+--
+-- Name: COLUMN donation_doc.document_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.donation_doc.document_id IS 'Primary key - auto-generated document identifier';
+
+
+--
+-- Name: COLUMN donation_doc.donation_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.donation_doc.donation_id IS 'Foreign key to donation table';
+
+
+--
+-- Name: COLUMN donation_doc.document_type; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.donation_doc.document_type IS 'Type of document (Receipt, Manifest, Bill of materials, Delivery notice, etc.)';
+
+
+--
+-- Name: COLUMN donation_doc.document_desc; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.donation_doc.document_desc IS 'Description of document purpose and content';
+
+
+--
+-- Name: COLUMN donation_doc.file_name; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.donation_doc.file_name IS 'Original name of the uploaded file';
+
+
+--
+-- Name: COLUMN donation_doc.file_type; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.donation_doc.file_type IS 'MIME type of file (application/pdf or image/jpeg)';
+
+
+--
+-- Name: COLUMN donation_doc.file_size; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.donation_doc.file_size IS 'Size of file in MB';
+
+
+--
+-- Name: COLUMN donation_doc.version_nbr; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.donation_doc.version_nbr IS 'Optimistic locking version number';
+
+
+--
+-- Name: donation_doc_document_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.donation_doc ALTER COLUMN document_id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public.donation_doc_document_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: donation_donation_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.donation ALTER COLUMN donation_id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public.donation_donation_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: donation_item; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.donation_item (
+    donation_id integer NOT NULL,
+    item_id integer NOT NULL,
+    item_qty numeric(12,2) NOT NULL,
+    uom_code character varying(25) NOT NULL,
+    location_name text NOT NULL,
+    status_code character(1) DEFAULT 'V'::bpchar NOT NULL,
+    comments_text text,
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    verify_by_id character varying(20),
+    verify_dtime timestamp(0) without time zone,
+    version_nbr integer NOT NULL,
+    donation_type character(5) DEFAULT 'GOODS'::bpchar NOT NULL,
+    item_cost numeric(10,2) DEFAULT 0.00 NOT NULL,
+    addon_cost numeric(10,2) DEFAULT 0.00 NOT NULL,
+    update_by_id character varying(20) DEFAULT 'SYSTEM'::character varying NOT NULL,
+    update_dtime timestamp(0) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT c_donation_item_0 CHECK ((donation_type = ANY (ARRAY['GOODS'::bpchar, 'FUNDS'::bpchar]))),
+    CONSTRAINT c_donation_item_1a CHECK ((item_qty >= 0.00)),
+    CONSTRAINT c_donation_item_1b CHECK ((item_cost >= 0.00)),
+    CONSTRAINT c_donation_item_1c CHECK ((addon_cost >= 0.00)),
+    CONSTRAINT c_donation_item_2 CHECK ((status_code = ANY (ARRAY['P'::bpchar, 'V'::bpchar])))
+);
+
+
+--
+-- Name: donor; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.donor (
+    donor_id integer NOT NULL,
+    donor_name character varying(255) NOT NULL,
+    org_type_desc character varying(30),
+    address1_text character varying(255) NOT NULL,
+    address2_text character varying(255),
+    country_id smallint DEFAULT 388 NOT NULL,
+    phone_no character varying(20) NOT NULL,
+    email_text character varying(100),
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone NOT NULL,
+    version_nbr integer NOT NULL,
+    donor_code character varying(16) NOT NULL,
+    CONSTRAINT c_donor_1 CHECK (((donor_code)::text = upper((donor_code)::text))),
+    CONSTRAINT c_donor_2 CHECK (((donor_name)::text = upper((donor_name)::text))),
+    CONSTRAINT donor_donor_name_check CHECK (((donor_name)::text = upper((donor_name)::text)))
+);
+
+
+--
+-- Name: donor_donor_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.donor ALTER COLUMN donor_id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public.donor_donor_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: event; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.event (
+    event_id integer NOT NULL,
+    event_type character varying(16) NOT NULL,
+    start_date date NOT NULL,
+    event_name character varying(60) NOT NULL,
+    event_desc character varying(255) NOT NULL,
+    impact_desc text NOT NULL,
+    status_code character(1) NOT NULL,
+    closed_date date,
+    reason_desc character varying(255),
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone NOT NULL,
+    version_nbr integer NOT NULL,
+    CONSTRAINT c_event_1 CHECK (((event_type)::text = ANY ((ARRAY['STORM'::character varying, 'HURRICANE'::character varying, 'TORNADO'::character varying, 'FLOOD'::character varying, 'TSUNAMI'::character varying, 'FIRE'::character varying, 'EARTHQUAKE'::character varying, 'WAR'::character varying, 'EPIDEMIC'::character varying, 'ADHOC'::character varying])::text[]))),
+    CONSTRAINT c_event_2 CHECK ((start_date <= CURRENT_DATE)),
+    CONSTRAINT c_event_3 CHECK ((status_code = ANY (ARRAY['A'::bpchar, 'C'::bpchar]))),
+    CONSTRAINT c_event_4a CHECK ((((status_code = 'A'::bpchar) AND (closed_date IS NULL)) OR ((status_code = 'C'::bpchar) AND (closed_date IS NOT NULL)))),
+    CONSTRAINT c_event_4b CHECK ((((reason_desc IS NULL) AND (closed_date IS NULL)) OR ((reason_desc IS NOT NULL) AND (closed_date IS NOT NULL))))
+);
+
+
+--
+-- Name: event_event_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.event ALTER COLUMN event_id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public.event_event_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: inventory; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.inventory (
+    inventory_id integer NOT NULL,
+    item_id integer NOT NULL,
+    usable_qty numeric(12,2) NOT NULL,
+    reserved_qty numeric(12,2) NOT NULL,
+    defective_qty numeric(12,2) NOT NULL,
+    expired_qty numeric(12,2) NOT NULL,
+    uom_code character varying(25) NOT NULL,
+    last_verified_by character varying(20),
+    last_verified_date date,
+    status_code character(1) NOT NULL,
+    comments_text text,
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone NOT NULL,
+    version_nbr integer NOT NULL,
+    reorder_qty numeric(12,2) DEFAULT 0.00 NOT NULL,
+    CONSTRAINT c_inventory_1 CHECK ((usable_qty >= 0.00)),
+    CONSTRAINT c_inventory_2 CHECK ((reserved_qty <= usable_qty)),
+    CONSTRAINT c_inventory_3 CHECK ((defective_qty >= 0.00)),
+    CONSTRAINT c_inventory_4 CHECK ((expired_qty >= 0.00)),
+    CONSTRAINT c_inventory_5 CHECK ((reorder_qty >= 0.00)),
+    CONSTRAINT c_inventory_6 CHECK ((((last_verified_by IS NULL) AND (last_verified_date IS NULL)) OR ((last_verified_by IS NOT NULL) AND (last_verified_date IS NOT NULL)))),
+    CONSTRAINT c_inventory_7 CHECK ((status_code = ANY (ARRAY['A'::bpchar, 'U'::bpchar])))
+);
+
+
+--
+-- Name: item; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.item (
+    item_id integer NOT NULL,
+    item_code character varying(16) NOT NULL,
+    item_name character varying(60) NOT NULL,
+    sku_code character varying(30) NOT NULL,
+    category_id integer NOT NULL,
+    item_desc public.citext NOT NULL,
+    reorder_qty numeric(12,2) NOT NULL,
+    default_uom_code character varying(25) NOT NULL,
+    units_size_vary_flag boolean DEFAULT false NOT NULL,
+    usage_desc text,
+    storage_desc text,
+    is_batched_flag boolean DEFAULT true NOT NULL,
+    can_expire_flag boolean DEFAULT false NOT NULL,
+    issuance_order character varying(20) DEFAULT 'FIFO'::character varying NOT NULL,
+    comments_text text,
+    status_code character(1) NOT NULL,
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone NOT NULL,
+    version_nbr integer NOT NULL,
+    CONSTRAINT c_item_1a CHECK (((item_code)::text = upper((item_code)::text))),
+    CONSTRAINT c_item_1b CHECK (((item_name)::text = upper((item_name)::text))),
+    CONSTRAINT c_item_1c CHECK (((sku_code)::text = upper((sku_code)::text))),
+    CONSTRAINT c_item_1d CHECK ((reorder_qty > 0.00)),
+    CONSTRAINT c_item_3 CHECK ((status_code = ANY (ARRAY['A'::bpchar, 'I'::bpchar])))
+);
+
+
+--
+-- Name: item_location; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.item_location (
+    inventory_id integer NOT NULL,
+    item_id integer NOT NULL,
+    location_id integer NOT NULL,
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL
+);
+
+
+--
+-- Name: item_new_item_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.item ALTER COLUMN item_id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public.item_new_item_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: itembatch; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.itembatch (
+    batch_id integer NOT NULL,
+    inventory_id integer NOT NULL,
+    item_id integer NOT NULL,
+    batch_no character varying(20),
+    batch_date date,
+    expiry_date date,
+    usable_qty numeric(15,4) NOT NULL,
+    reserved_qty numeric(15,4) DEFAULT 0 NOT NULL,
+    defective_qty numeric(15,4) DEFAULT 0 NOT NULL,
+    expired_qty numeric(15,4) DEFAULT 0 NOT NULL,
+    uom_code character varying(25) NOT NULL,
+    size_spec character varying(30),
+    avg_unit_value numeric(10,2) DEFAULT 0.00 NOT NULL,
+    last_verified_by character varying(20),
+    last_verified_date date,
+    status_code character(1) NOT NULL,
+    comments_text text,
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone NOT NULL,
+    version_nbr integer DEFAULT 1 NOT NULL,
+    CONSTRAINT c_itembatch_1 CHECK (((batch_no)::text = upper((batch_no)::text))),
+    CONSTRAINT c_itembatch_2a CHECK ((usable_qty >= 0.00)),
+    CONSTRAINT c_itembatch_2b CHECK (((reserved_qty <= usable_qty) AND (reserved_qty >= 0.00))),
+    CONSTRAINT c_itembatch_2c CHECK ((defective_qty >= 0.00)),
+    CONSTRAINT c_itembatch_2d CHECK ((expired_qty >= 0.00)),
+    CONSTRAINT c_itembatch_3 CHECK ((avg_unit_value >= 0.00)),
+    CONSTRAINT c_itembatch_5 CHECK ((((last_verified_by IS NULL) AND (last_verified_date IS NULL)) OR ((last_verified_by IS NOT NULL) AND (last_verified_date IS NOT NULL)))),
+    CONSTRAINT c_itembatch_6 CHECK ((status_code = ANY (ARRAY['A'::bpchar, 'U'::bpchar])))
+);
+
+
+--
+-- Name: itembatch_batch_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.itembatch ALTER COLUMN batch_id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public.itembatch_batch_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: itemcatg; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.itemcatg (
+    category_id integer NOT NULL,
+    category_code character varying(30) NOT NULL,
+    category_desc character varying(60) NOT NULL,
+    comments_text text,
+    status_code character(1) NOT NULL,
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone NOT NULL,
+    version_nbr integer NOT NULL,
+    category_type character(5) DEFAULT 'GOODS'::bpchar NOT NULL,
+    CONSTRAINT c_itemcatg_0 CHECK ((category_type = ANY (ARRAY['GOODS'::bpchar, 'FUNDS'::bpchar]))),
+    CONSTRAINT c_itemcatg_1 CHECK (((category_code)::text = upper((category_code)::text))),
+    CONSTRAINT c_itemcatg_2 CHECK ((status_code = ANY (ARRAY['A'::bpchar, 'I'::bpchar])))
+);
+
+
+--
+-- Name: TABLE itemcatg; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.itemcatg IS 'Item Category master data table - defines categories for relief items';
+
+
+--
+-- Name: COLUMN itemcatg.category_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.itemcatg.category_id IS 'Primary key - auto-generated category identifier';
+
+
+--
+-- Name: COLUMN itemcatg.category_code; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.itemcatg.category_code IS 'Unique category code (uppercase) - business key';
+
+
+--
+-- Name: COLUMN itemcatg.category_desc; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.itemcatg.category_desc IS 'Description of the item category';
+
+
+--
+-- Name: COLUMN itemcatg.comments_text; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.itemcatg.comments_text IS 'Additional comments or notes about this category';
+
+
+--
+-- Name: COLUMN itemcatg.status_code; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.itemcatg.status_code IS 'Status: A=Active, I=Inactive';
+
+
+--
+-- Name: COLUMN itemcatg.version_nbr; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.itemcatg.version_nbr IS 'Optimistic locking version number';
+
+
+--
+-- Name: itemcatg_category_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.itemcatg ALTER COLUMN category_id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public.itemcatg_category_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: itemcostdef; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.itemcostdef (
+    cost_id integer NOT NULL,
+    cost_name public.citext NOT NULL,
+    cost_desc character varying(255) NOT NULL,
+    cost_type character(16) NOT NULL,
+    status_code character(1) NOT NULL,
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone NOT NULL,
+    version_nbr integer NOT NULL,
+    CONSTRAINT c_itemcostdef_1 CHECK ((length((cost_name)::text) <= 50)),
+    CONSTRAINT c_itemcostdef_2 CHECK ((cost_type = ANY (ARRAY['PURCHASE'::bpchar, 'ADDITIONAL'::bpchar]))),
+    CONSTRAINT c_itemcostdef_3 CHECK ((status_code = ANY (ARRAY['A'::bpchar, 'I'::bpchar])))
+);
+
+
+--
+-- Name: itemcostdef_cost_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.itemcostdef ALTER COLUMN cost_id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public.itemcostdef_cost_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: location; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.location (
+    location_id integer NOT NULL,
+    inventory_id integer NOT NULL,
+    location_desc character varying(255) NOT NULL,
+    status_code character(1) NOT NULL,
+    comments_text character varying(255),
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone NOT NULL,
+    version_nbr integer NOT NULL,
+    CONSTRAINT location_status_code_check CHECK ((status_code = ANY (ARRAY['O'::bpchar, 'C'::bpchar])))
+);
+
+
+--
+-- Name: location_location_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.location ALTER COLUMN location_id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public.location_location_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: notification; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.notification (
+    id integer NOT NULL,
+    user_id integer NOT NULL,
+    warehouse_id integer,
+    reliefrqst_id integer,
+    title character varying(200) NOT NULL,
+    message text NOT NULL,
+    type character varying(50) NOT NULL,
+    status character varying(20) DEFAULT 'unread'::character varying NOT NULL,
+    link_url character varying(500),
+    payload text,
+    is_archived boolean DEFAULT false NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+--
+-- Name: notification_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.notification_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: notification_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.notification_id_seq OWNED BY public.notification.id;
+
+
+--
+-- Name: parish; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.parish (
+    parish_code character(2) NOT NULL,
+    parish_name character varying(40) NOT NULL,
+    CONSTRAINT parish_parish_code_check CHECK (((parish_code ~ similar_to_escape('[0-9]*'::text)) AND (((parish_code)::integer >= 1) AND ((parish_code)::integer <= 14))))
+);
+
+
+--
+-- Name: permission; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.permission (
+    perm_id integer NOT NULL,
+    resource character varying(40) NOT NULL,
+    action character varying(32) NOT NULL,
+    create_by_id character varying(20) DEFAULT 'system'::character varying NOT NULL,
+    create_dtime timestamp(0) without time zone DEFAULT now() NOT NULL,
+    update_by_id character varying(20) DEFAULT 'system'::character varying NOT NULL,
+    update_dtime timestamp(0) without time zone DEFAULT now() NOT NULL,
+    version_nbr integer DEFAULT 1 NOT NULL
+);
+
+
+--
+-- Name: permission_perm_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.permission ALTER COLUMN perm_id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public.permission_perm_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: relief_request_fulfillment_lock; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.relief_request_fulfillment_lock (
+    reliefrqst_id integer NOT NULL,
+    fulfiller_user_id integer NOT NULL,
+    fulfiller_email character varying(100) NOT NULL,
+    acquired_at timestamp without time zone DEFAULT now() NOT NULL,
+    expires_at timestamp without time zone,
+    CONSTRAINT chk_expires_after_acquired CHECK (((expires_at IS NULL) OR (expires_at > acquired_at)))
+);
+
+
+--
+-- Name: TABLE relief_request_fulfillment_lock; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.relief_request_fulfillment_lock IS 'Tracks which user is currently preparing/packaging a relief request to ensure single fulfiller';
+
+
+--
+-- Name: COLUMN relief_request_fulfillment_lock.expires_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.relief_request_fulfillment_lock.expires_at IS 'Optional expiry time for automatic lock release';
+
+
+--
+-- Name: reliefpkg; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.reliefpkg (
+    reliefpkg_id integer NOT NULL,
+    to_inventory_id integer NOT NULL,
+    reliefrqst_id integer NOT NULL,
+    start_date date DEFAULT CURRENT_DATE NOT NULL,
+    dispatch_dtime timestamp(0) without time zone,
+    transport_mode character varying(255),
+    comments_text character varying(255),
+    status_code character(1) NOT NULL,
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone,
+    verify_by_id character varying(20),
+    verify_dtime timestamp(0) without time zone,
+    version_nbr integer NOT NULL,
+    received_by_id character varying(20),
+    received_dtime timestamp(0) without time zone,
+    agency_id integer NOT NULL,
+    tracking_no character(7) NOT NULL,
+    eligible_event_id integer,
+    CONSTRAINT c_reliefpkg_2 CHECK ((((dispatch_dtime IS NULL) AND (status_code <> 'D'::bpchar)) OR ((dispatch_dtime IS NOT NULL) AND (status_code = 'D'::bpchar)))),
+    CONSTRAINT c_reliefpkg_3 CHECK ((status_code = ANY (ARRAY['A'::bpchar, 'P'::bpchar, 'C'::bpchar, 'V'::bpchar, 'D'::bpchar, 'R'::bpchar]))),
+    CONSTRAINT reliefpkg_start_date_check CHECK ((start_date <= CURRENT_DATE))
+);
+
+
+--
+-- Name: reliefpkg_item; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.reliefpkg_item (
+    reliefpkg_id integer NOT NULL,
+    fr_inventory_id integer NOT NULL,
+    batch_id integer NOT NULL,
+    item_id integer NOT NULL,
+    item_qty numeric(15,4) NOT NULL,
+    uom_code character varying(25) NOT NULL,
+    reason_text character varying(255),
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone NOT NULL,
+    version_nbr integer DEFAULT 1 NOT NULL,
+    CONSTRAINT c_reliefpkg_item_1 CHECK ((item_qty >= 0.00))
+);
+
+
+--
+-- Name: reliefpkg_reliefpkg_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.reliefpkg ALTER COLUMN reliefpkg_id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public.reliefpkg_reliefpkg_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: reliefrqst; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.reliefrqst (
+    reliefrqst_id integer NOT NULL,
+    agency_id integer NOT NULL,
+    request_date date NOT NULL,
+    urgency_ind character(1) NOT NULL,
+    status_code smallint DEFAULT 0 NOT NULL,
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    review_by_id character varying(20),
+    review_dtime timestamp(0) without time zone,
+    action_by_id character varying(20),
+    action_dtime timestamp(0) without time zone,
+    version_nbr integer NOT NULL,
+    eligible_event_id integer,
+    rqst_notes_text text,
+    review_notes_text text,
+    tracking_no character varying(7) DEFAULT upper(substr(replace((gen_random_uuid())::text, '-'::text, ''::text), 1, 7)) NOT NULL,
+    status_reason_desc character varying(255),
+    receive_by_id character varying(20),
+    receive_dtime timestamp(0) without time zone,
+    CONSTRAINT c_reliefrqst_1 CHECK ((request_date <= CURRENT_DATE)),
+    CONSTRAINT c_reliefrqst_2 CHECK ((urgency_ind = ANY (ARRAY['L'::bpchar, 'M'::bpchar, 'H'::bpchar, 'C'::bpchar]))),
+    CONSTRAINT c_reliefrqst_3 CHECK (((status_reason_desc IS NOT NULL) OR ((status_reason_desc IS NULL) AND (status_code <> ALL (ARRAY[4, 6, 8]))))),
+    CONSTRAINT c_reliefrqst_4a CHECK ((((review_by_id IS NULL) AND (status_code < 2)) OR ((review_by_id IS NOT NULL) AND (status_code >= 2)))),
+    CONSTRAINT c_reliefrqst_4b CHECK ((((review_by_id IS NULL) AND (review_dtime IS NULL)) OR ((review_by_id IS NOT NULL) AND (review_dtime IS NOT NULL)))),
+    CONSTRAINT c_reliefrqst_5a CHECK ((((action_by_id IS NULL) AND (status_code < 4)) OR ((action_by_id IS NOT NULL) AND (status_code >= 4)))),
+    CONSTRAINT c_reliefrqst_5b CHECK ((((action_by_id IS NULL) AND (action_dtime IS NULL)) OR ((action_by_id IS NOT NULL) AND (action_dtime IS NOT NULL)))),
+    CONSTRAINT c_reliefrqst_6a CHECK ((((receive_by_id IS NULL) AND (status_code <> 9)) OR ((receive_by_id IS NOT NULL) AND (status_code = 9)))),
+    CONSTRAINT c_reliefrqst_6b CHECK ((((receive_by_id IS NULL) AND (receive_dtime IS NULL)) OR ((receive_by_id IS NOT NULL) AND (receive_dtime IS NOT NULL))))
+);
+
+
+--
+-- Name: reliefrqst_item; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.reliefrqst_item (
+    reliefrqst_id integer NOT NULL,
+    item_id integer NOT NULL,
+    request_qty numeric(12,2) NOT NULL,
+    issue_qty numeric(12,2) DEFAULT 0.00 NOT NULL,
+    urgency_ind character(1) NOT NULL,
+    rqst_reason_desc character varying(255),
+    required_by_date date,
+    status_code character(1) DEFAULT 'R'::bpchar NOT NULL,
+    status_reason_desc character varying(255),
+    action_by_id character varying(20),
+    action_dtime timestamp(0) without time zone,
+    version_nbr integer DEFAULT 1 NOT NULL,
+    CONSTRAINT c_reliefrqst_item_1 CHECK ((request_qty > 0.00)),
+    CONSTRAINT c_reliefrqst_item_2a CHECK ((((status_code = ANY (ARRAY['R'::bpchar, 'U'::bpchar, 'W'::bpchar, 'D'::bpchar])) AND (issue_qty = (0)::numeric)) OR ((status_code = ANY (ARRAY['P'::bpchar, 'L'::bpchar])) AND (issue_qty < request_qty)) OR ((status_code = 'F'::bpchar) AND (issue_qty = request_qty)))),
+    CONSTRAINT c_reliefrqst_item_3 CHECK ((urgency_ind = ANY (ARRAY['L'::bpchar, 'M'::bpchar, 'H'::bpchar, 'C'::bpchar]))),
+    CONSTRAINT c_reliefrqst_item_4 CHECK (((urgency_ind = ANY (ARRAY['L'::bpchar, 'M'::bpchar, 'C'::bpchar])) OR ((urgency_ind = 'H'::bpchar) AND (rqst_reason_desc IS NOT NULL) AND (TRIM(BOTH FROM rqst_reason_desc) <> ''::text)))),
+    CONSTRAINT c_reliefrqst_item_5 CHECK (((required_by_date IS NOT NULL) OR ((required_by_date IS NULL) AND (urgency_ind = ANY (ARRAY['L'::bpchar, 'M'::bpchar]))))),
+    CONSTRAINT c_reliefrqst_item_6a CHECK ((status_code = ANY (ARRAY['R'::bpchar, 'U'::bpchar, 'W'::bpchar, 'D'::bpchar, 'P'::bpchar, 'L'::bpchar, 'F'::bpchar]))),
+    CONSTRAINT c_reliefrqst_item_6b CHECK (((status_reason_desc IS NOT NULL) OR ((status_reason_desc IS NULL) AND (status_code <> ALL (ARRAY['D'::bpchar, 'L'::bpchar]))))),
+    CONSTRAINT c_reliefrqst_item_7 CHECK ((((action_by_id IS NULL) AND (status_code = 'R'::bpchar)) OR ((action_by_id IS NOT NULL) AND (status_code <> 'R'::bpchar)))),
+    CONSTRAINT c_reliefrqst_item_8 CHECK ((((action_by_id IS NULL) AND (action_dtime IS NULL)) OR ((action_by_id IS NOT NULL) AND (action_dtime IS NOT NULL))))
+);
+
+
+--
+-- Name: reliefrqst_reliefrqst_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.reliefrqst ALTER COLUMN reliefrqst_id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public.reliefrqst_reliefrqst_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: reliefrqst_status; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.reliefrqst_status (
+    status_code smallint NOT NULL,
+    status_desc character varying(30) NOT NULL,
+    is_active_flag boolean DEFAULT true NOT NULL,
+    reason_rqrd_flag boolean DEFAULT false NOT NULL
+);
+
+
+--
+-- Name: reliefrqstitem_status; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.reliefrqstitem_status (
+    status_code character(1) NOT NULL,
+    status_desc character varying(30) NOT NULL,
+    item_qty_rule character(2) NOT NULL,
+    active_flag boolean DEFAULT true NOT NULL,
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone NOT NULL,
+    version_nbr integer NOT NULL,
+    CONSTRAINT c_reliefrqstitem_status_2 CHECK ((item_qty_rule = ANY (ARRAY['EZ'::bpchar, 'GZ'::bpchar, 'ER'::bpchar])))
+);
+
+
+--
+-- Name: role; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.role (
+    id integer NOT NULL,
+    code character varying(50) NOT NULL,
+    name character varying(100) NOT NULL,
+    description text,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+--
+-- Name: role_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.role_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: role_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.role_id_seq OWNED BY public.role.id;
+
+
+--
+-- Name: role_permission; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.role_permission (
+    role_id integer NOT NULL,
+    perm_id integer NOT NULL,
+    scope_json jsonb,
+    create_by_id character varying(20) DEFAULT 'system'::character varying NOT NULL,
+    create_dtime timestamp(0) without time zone DEFAULT now() NOT NULL,
+    update_by_id character varying(20) DEFAULT 'system'::character varying NOT NULL,
+    update_dtime timestamp(0) without time zone DEFAULT now() NOT NULL,
+    version_nbr integer DEFAULT 1 NOT NULL
+);
+
+
+--
+-- Name: rtintake; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.rtintake (
+    xfreturn_id integer NOT NULL,
+    inventory_id integer NOT NULL,
+    intake_date date NOT NULL,
+    comments_text character varying(255),
+    status_code character(1) NOT NULL,
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone,
+    verify_by_id character varying(20) NOT NULL,
+    verify_dtime timestamp(0) without time zone,
+    version_nbr integer NOT NULL,
+    CONSTRAINT rtintake_intake_date_check CHECK ((intake_date <= CURRENT_DATE)),
+    CONSTRAINT rtintake_status_code_check CHECK ((status_code = ANY (ARRAY['I'::bpchar, 'C'::bpchar, 'V'::bpchar])))
+);
+
+
+--
+-- Name: rtintake_item; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.rtintake_item (
+    xfreturn_id integer NOT NULL,
+    inventory_id integer NOT NULL,
+    item_id integer NOT NULL,
+    usable_qty numeric(12,2) NOT NULL,
+    location1_id integer,
+    defective_qty numeric(12,2) NOT NULL,
+    location2_id integer,
+    expired_qty numeric(12,2) NOT NULL,
+    location3_id integer,
+    uom_code character varying(25) NOT NULL,
+    status_code character(1) NOT NULL,
+    comments_text character varying(255),
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone NOT NULL,
+    version_nbr integer NOT NULL,
+    CONSTRAINT rtintake_item_defective_qty_check CHECK ((defective_qty >= 0.00)),
+    CONSTRAINT rtintake_item_expired_qty_check CHECK ((expired_qty >= 0.00)),
+    CONSTRAINT rtintake_item_status_code_check CHECK ((status_code = ANY (ARRAY['P'::bpchar, 'V'::bpchar]))),
+    CONSTRAINT rtintake_item_usable_qty_check CHECK ((usable_qty >= 0.00))
+);
+
+
+--
+-- Name: transaction; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.transaction (
+    id integer NOT NULL,
+    item_id integer,
+    ttype character varying(8) NOT NULL,
+    qty numeric(12,2) NOT NULL,
+    warehouse_id integer,
+    donor_id integer,
+    event_id integer,
+    expiry_date date,
+    notes text,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    created_by character varying(200)
+);
+
+
+--
+-- Name: transaction_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.transaction_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: transaction_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.transaction_id_seq OWNED BY public.transaction.id;
+
+
+--
+-- Name: transfer; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.transfer (
+    transfer_id integer NOT NULL,
+    fr_inventory_id integer NOT NULL,
+    to_inventory_id integer NOT NULL,
+    eligible_event_id integer,
+    transfer_date date DEFAULT CURRENT_DATE NOT NULL,
+    reason_text character varying(255),
+    status_code character(1) NOT NULL,
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone,
+    verify_by_id character varying(20) NOT NULL,
+    verify_dtime timestamp(0) without time zone,
+    version_nbr integer NOT NULL,
+    CONSTRAINT c_transfer_1 CHECK ((transfer_date <= CURRENT_DATE)),
+    CONSTRAINT c_transfer_2 CHECK ((status_code = ANY (ARRAY['D'::bpchar, 'C'::bpchar, 'V'::bpchar, 'P'::bpchar])))
+);
+
+
+--
+-- Name: transfer_item; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.transfer_item (
+    transfer_id integer NOT NULL,
+    item_id integer NOT NULL,
+    batch_id integer NOT NULL,
+    inventory_id integer NOT NULL,
+    item_qty numeric(10,2) NOT NULL,
+    uom_code character varying(10) NOT NULL,
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone,
+    version_nbr integer DEFAULT 1 NOT NULL,
+    reason_text character varying(255),
+    CONSTRAINT c_transfer_item_1 CHECK ((item_qty > (0)::numeric))
+);
+
+
+--
+-- Name: transfer_request; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.transfer_request (
+    id integer NOT NULL,
+    from_warehouse_id integer NOT NULL,
+    to_warehouse_id integer NOT NULL,
+    item_id integer NOT NULL,
+    quantity numeric(12,2) NOT NULL,
+    status character varying(20) DEFAULT 'PENDING'::character varying NOT NULL,
+    requested_by integer,
+    requested_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    reviewed_by integer,
+    reviewed_at timestamp without time zone,
+    notes text
+);
+
+
+--
+-- Name: transfer_request_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.transfer_request_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: transfer_request_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.transfer_request_id_seq OWNED BY public.transfer_request.id;
+
+
+--
+-- Name: transfer_transfer_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.transfer ALTER COLUMN transfer_id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public.transfer_transfer_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: unitofmeasure; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.unitofmeasure (
+    uom_code character varying(25) NOT NULL,
+    uom_desc character varying(60) NOT NULL,
+    comments_text text,
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone NOT NULL,
+    version_nbr integer NOT NULL,
+    status_code character(1) DEFAULT 'A'::bpchar NOT NULL,
+    CONSTRAINT c_unitofmeasure_1 CHECK (((uom_code)::text = upper((uom_code)::text))),
+    CONSTRAINT c_unitofmeasure_2 CHECK ((status_code = ANY (ARRAY['A'::bpchar, 'I'::bpchar])))
+);
+
+
+--
+-- Name: user; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."user" (
+    user_id integer NOT NULL,
+    email character varying(200) NOT NULL,
+    password_hash character varying(256) NOT NULL,
+    first_name character varying(100),
+    last_name character varying(100),
+    full_name character varying(200),
+    is_active boolean DEFAULT true NOT NULL,
+    organization character varying(200),
+    job_title character varying(200),
+    phone character varying(50),
+    timezone character varying(50) DEFAULT 'America/Jamaica'::character varying NOT NULL,
+    language character varying(10) DEFAULT 'en'::character varying NOT NULL,
+    notification_preferences text,
+    assigned_warehouse_id integer,
+    last_login_at timestamp without time zone,
+    create_dtime timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    update_dtime timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    username character varying(60),
+    password_algo character varying(20) DEFAULT 'argon2id'::character varying NOT NULL,
+    mfa_enabled boolean DEFAULT false NOT NULL,
+    mfa_secret character varying(64),
+    failed_login_count smallint DEFAULT 0 NOT NULL,
+    lock_until_at timestamp(0) without time zone,
+    password_changed_at timestamp(0) without time zone,
+    agency_id integer,
+    status_code character(1) DEFAULT 'A'::bpchar NOT NULL,
+    version_nbr integer DEFAULT 1 NOT NULL,
+    user_name character varying(20) NOT NULL,
+    CONSTRAINT c_user_status_code CHECK ((status_code = ANY (ARRAY['A'::bpchar, 'I'::bpchar, 'L'::bpchar])))
+);
+
+
+--
+-- Name: user_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.user_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: user_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.user_id_seq OWNED BY public."user".user_id;
+
+
+--
+-- Name: user_role; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_role (
+    user_id integer NOT NULL,
+    role_id integer NOT NULL,
+    assigned_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    assigned_by integer,
+    create_by_id character varying(20) DEFAULT 'system'::character varying NOT NULL,
+    create_dtime timestamp(0) without time zone DEFAULT now() NOT NULL,
+    update_by_id character varying(20) DEFAULT 'system'::character varying NOT NULL,
+    update_dtime timestamp(0) without time zone DEFAULT now() NOT NULL,
+    version_nbr integer DEFAULT 1 NOT NULL
+);
+
+
+--
+-- Name: user_warehouse; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_warehouse (
+    user_id integer NOT NULL,
+    warehouse_id integer NOT NULL,
+    assigned_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    assigned_by integer
+);
+
+
+--
+-- Name: v_status4reliefrqst_action; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.v_status4reliefrqst_action AS
+ SELECT status_code,
+    status_desc,
+    reason_rqrd_flag
+   FROM public.reliefrqst_status
+  WHERE ((status_code = ANY (ARRAY[4, 5, 6, 7, 8])) AND (is_active_flag = true));
+
+
+--
+-- Name: v_status4reliefrqst_create; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.v_status4reliefrqst_create AS
+ SELECT status_code,
+    status_desc,
+    reason_rqrd_flag
+   FROM public.reliefrqst_status
+  WHERE ((status_code = ANY (ARRAY[0, 1, 2, 3])) AND (is_active_flag = true));
+
+
+--
+-- Name: v_status4reliefrqst_processed; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.v_status4reliefrqst_processed AS
+ SELECT status_code,
+    status_desc,
+    reason_rqrd_flag
+   FROM public.reliefrqst_status
+  WHERE ((status_code = ANY (ARRAY[4, 6, 7, 8])) AND (is_active_flag = true));
+
+
+--
+-- Name: warehouse; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.warehouse (
+    warehouse_id integer NOT NULL,
+    warehouse_name text NOT NULL,
+    warehouse_type character varying(10) NOT NULL,
+    address1_text character varying(255) NOT NULL,
+    address2_text character varying(255),
+    parish_code character(2) NOT NULL,
+    contact_name character varying(50) NOT NULL,
+    phone_no character varying(20) NOT NULL,
+    email_text character varying(100),
+    custodian_id integer NOT NULL,
+    status_code character(1) NOT NULL,
+    reason_desc character varying(255),
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone NOT NULL,
+    version_nbr integer NOT NULL,
+    CONSTRAINT warehouse_check CHECK ((((reason_desc IS NULL) AND (status_code = 'A'::bpchar)) OR ((reason_desc IS NOT NULL) AND (status_code = 'I'::bpchar)))),
+    CONSTRAINT warehouse_contact_name_check CHECK (((contact_name)::text = upper((contact_name)::text))),
+    CONSTRAINT warehouse_status_code_check CHECK ((status_code = ANY (ARRAY['A'::bpchar, 'I'::bpchar]))),
+    CONSTRAINT warehouse_warehouse_type_check CHECK (((warehouse_type)::text = ANY ((ARRAY['MAIN-HUB'::character varying, 'SUB-HUB'::character varying])::text[])))
+);
+
+
+--
+-- Name: warehouse_warehouse_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.warehouse ALTER COLUMN warehouse_id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public.warehouse_warehouse_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: xfreturn; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.xfreturn (
+    xfreturn_id integer NOT NULL,
+    fr_inventory_id integer NOT NULL,
+    to_inventory_id integer NOT NULL,
+    return_date date DEFAULT CURRENT_DATE NOT NULL,
+    reason_text character varying(255),
+    status_code character(1) NOT NULL,
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone,
+    verify_by_id character varying(20) NOT NULL,
+    verify_dtime timestamp(0) without time zone,
+    version_nbr integer NOT NULL,
+    CONSTRAINT xfreturn_return_date_check CHECK ((return_date <= CURRENT_DATE)),
+    CONSTRAINT xfreturn_status_code_check CHECK ((status_code = ANY (ARRAY['D'::bpchar, 'C'::bpchar, 'V'::bpchar])))
+);
+
+
+--
+-- Name: xfreturn_item; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.xfreturn_item (
+    xfreturn_id integer NOT NULL,
+    inventory_id integer NOT NULL,
+    item_id integer NOT NULL,
+    usable_qty numeric(12,2) NOT NULL,
+    defective_qty numeric(12,2) NOT NULL,
+    expired_qty numeric(12,2) NOT NULL,
+    uom_code character varying(25) NOT NULL,
+    reason_text character varying(255),
+    create_by_id character varying(20) NOT NULL,
+    create_dtime timestamp(0) without time zone NOT NULL,
+    update_by_id character varying(20) NOT NULL,
+    update_dtime timestamp(0) without time zone NOT NULL,
+    version_nbr integer NOT NULL,
+    CONSTRAINT xfreturn_item_defective_qty_check CHECK ((defective_qty >= 0.00)),
+    CONSTRAINT xfreturn_item_expired_qty_check CHECK ((expired_qty >= 0.00)),
+    CONSTRAINT xfreturn_item_usable_qty_check CHECK ((usable_qty >= 0.00))
+);
+
+
+--
+-- Name: xfreturn_xfreturn_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.xfreturn_xfreturn_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: xfreturn_xfreturn_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.xfreturn_xfreturn_id_seq OWNED BY public.xfreturn.xfreturn_id;
+
+
+--
+-- Name: distribution_package id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.distribution_package ALTER COLUMN id SET DEFAULT nextval('public.distribution_package_id_seq'::regclass);
+
+
+--
+-- Name: distribution_package_item id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.distribution_package_item ALTER COLUMN id SET DEFAULT nextval('public.distribution_package_item_id_seq'::regclass);
+
+
+--
+-- Name: dnintake_item intake_item_id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dnintake_item ALTER COLUMN intake_item_id SET DEFAULT nextval('public.dnintake_item_intake_item_id_seq'::regclass);
+
+
+--
+-- Name: notification id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notification ALTER COLUMN id SET DEFAULT nextval('public.notification_id_seq'::regclass);
+
+
+--
+-- Name: role id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.role ALTER COLUMN id SET DEFAULT nextval('public.role_id_seq'::regclass);
+
+
+--
+-- Name: transaction id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transaction ALTER COLUMN id SET DEFAULT nextval('public.transaction_id_seq'::regclass);
+
+
+--
+-- Name: transfer_request id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transfer_request ALTER COLUMN id SET DEFAULT nextval('public.transfer_request_id_seq'::regclass);
+
+
+--
+-- Name: user user_id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."user" ALTER COLUMN user_id SET DEFAULT nextval('public.user_id_seq'::regclass);
+
+
+--
+-- Name: xfreturn xfreturn_id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.xfreturn ALTER COLUMN xfreturn_id SET DEFAULT nextval('public.xfreturn_xfreturn_id_seq'::regclass);
+
+
+--
+-- Data for Name: agency; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: agency_account_request; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: agency_account_request_audit; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: batchlocation; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: country; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+INSERT INTO public.country VALUES (840, 'United States', 'USD', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (124, 'Canada', 'CAD', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (826, 'United Kingdom', 'GBP', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (250, 'France', 'EUR', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (276, 'Germany', 'EUR', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (380, 'Italy', 'EUR', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (724, 'Spain', 'EUR', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (620, 'Portugal', 'EUR', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (372, 'Ireland', 'EUR', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (56, 'Belgium', 'EUR', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (528, 'Netherlands', 'EUR', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (40, 'Austria', 'EUR', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (300, 'Greece', 'EUR', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (208, 'Denmark', 'DKK', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (578, 'Norway', 'NOK', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (752, 'Sweden', 'SEK', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (246, 'Finland', 'EUR', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (352, 'Iceland', 'ISK', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (756, 'Switzerland', 'CHF', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (484, 'Mexico', 'MXN', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (392, 'Japan', 'JPY', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (156, 'China', 'CNY', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (410, 'South Korea', 'KRW', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (804, 'Ukraine', 'UAH', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (660, 'Anguilla', 'XCD', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (28, 'Antigua and Barbuda', 'XCD', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (533, 'Aruba', 'AWG', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (44, 'The Bahamas', 'BSD', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (52, 'Barbados', 'BBD', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (60, 'Bermuda', 'BMD', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (535, 'Bonaire, Sint Eustatius and Saba', 'USD', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (92, 'British Virgin Islands', 'USD', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (136, 'Cayman Islands', 'KYD', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (192, 'Cuba', 'CUP', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (531, 'Curaçao', 'XCG', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (212, 'Dominica', 'XCD', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (214, 'Dominican Republic', 'DOP', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (308, 'Grenada', 'XCD', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (312, 'Guadeloupe', 'EUR', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (388, 'Jamaica', 'JMD', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (474, 'Martinique', 'EUR', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (500, 'Montserrat', 'XCD', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (630, 'Puerto Rico', 'USD', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (652, 'Saint Barthélemy', 'EUR', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (659, 'Saint Kitts and Nevis', 'XCD', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (662, 'Saint Lucia', 'XCD', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (663, 'Saint Martin', 'EUR', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (670, 'Saint Vincent and the Grenadines', 'XCD', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (534, 'Sint Maarten', 'XCG', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (780, 'Trinidad and Tobago', 'TTD', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (796, 'Turks and Caicos Islands', 'USD', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (850, 'U.S. Virgin Islands', 'USD', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (32, 'Argentina', 'ARS', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (68, 'Bolivia', 'BOB', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (76, 'Brazil', 'BRL', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (152, 'Chile', 'CLP', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (170, 'Colombia', 'COP', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (218, 'Ecuador', 'USD', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (238, 'Falkland Islands', 'FKP', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (254, 'French Guiana', 'EUR', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (328, 'Guyana', 'GYD', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (600, 'Paraguay', 'PYG', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (604, 'Peru', 'PEN', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (740, 'Suriname', 'SRD', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (858, 'Uruguay', 'UYU', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+INSERT INTO public.country VALUES (862, 'Venezuela', 'VED/VES', 'A', 'system', '2025-11-24 02:50:56', 'system', '2025-11-24 02:50:56', 0);
+
+
+--
+-- Data for Name: currency; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+INSERT INTO public.currency VALUES ('JMD', 'Jamaican dollar', 'J$', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('USD', 'US Dollar', '$', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('CAD', 'Canadian dollar', 'C$', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('GBP', 'Pound sterling', '£', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('EUR', 'Euro', '€', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('XCD', 'East Caribbean dollar', '$', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('JPY', 'Japanese yen', '¥', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('CNY', 'Chinese yuan', '元', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('BSD', 'Bahamian dollar', 'B$', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('BBD', 'Barbadian dollar', 'Bds$', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('KYD', 'Cayman Islands dollar', 'CI$', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('TTD', 'Trinidad and Tobago dollar', 'TT$', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('GYD', 'Guyanese dollar', 'G$', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('BMD', 'Bermudian dollar', '$', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('MXN', 'Mexican peso', '$', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('KRW', 'South Korean won', '₩', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('BRL', 'Brazilian real', 'R$', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('COP', 'Colombian peso', '$', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('DKK', 'Danish krone', 'kr', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('NOK', 'Norwegian krone', 'kr', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('SEK', 'Swedish krona', 'kr', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('ISK', 'Icelandic króna', 'kr', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('CHF', 'Swiss franc', 'Fr', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('UAH', 'Ukrainian hryvnia', '₴', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('AWG', 'Aruban florin', 'ƒ', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('CUP', 'Cuban peso', '₱', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('XCG', 'Caribbean guilder', 'Cg', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('DOP', 'Dominican peso', 'RD$', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('ARS', 'Argentine peso', '$', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('BOB', 'Bolivian boliviano', 'Bs', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('CLP', 'Chilean peso', '$', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('FKP', 'Falkland Islands pound', '£', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('PYG', 'Paraguayan guaraní', '₲', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('PEN', 'Peruvian sol', 'S/.', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('SRD', 'Surinamese dollar', 'Sr$', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('UYU', 'Uruguayan peso', '$U', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+INSERT INTO public.currency VALUES ('VED/VES', 'Venezuelan bolívar', 'Bs.', 'A', 'system', '2025-11-24 02:50:25', 'system', '2025-11-24 02:50:25', 0);
+
+
+--
+-- Data for Name: custodian; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+INSERT INTO public.custodian VALUES (1, 'OFFICE OF DISASTER PREPAREDNESS AND EMERGENCY MANAGEMENT (ODPEM)', '2 Haining Road', NULL, '01', 'DIRECTOR GENERAL', '876-928-5111', 'info@odpem.gov.jm', 'SYSTEM', '2025-11-24 02:54:59', 'SYSTEM', '2025-11-24 02:54:59', 1);
+
+
+--
+-- Data for Name: dbintake; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: dbintake_item; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: distribution_package; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: distribution_package_item; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: dnintake; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: dnintake_item; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: donation; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: donation_doc; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: donation_item; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: donor; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+INSERT INTO public.donor VALUES (1, 'FOOD FOR THE POOR', 'Non-Profitable Organization', 'Spanish Town Road', NULL, 388, '+1 (987) 900-9001', NULL, 'ADMIN', '2025-11-24 13:18:15', 'ADMIN', '2025-11-24 13:18:15', 1, 'FFP-0001');
+
+
+--
+-- Data for Name: event; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: inventory; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: item; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+INSERT INTO public.item VALUES (1, 'FOOD-001', 'CANNED BEANS', 'SKU-BEANS-001', 1, 'CANNED RED KIDNEY BEANS', 100.00, 'UNIT', false, 'EMERGENCY FOOD RATION', 'STORE IN COOL DRY PLACE', true, true, 'FEFO', NULL, 'A', 'admin', '2025-11-24 19:40:08', 'admin', '2025-11-24 19:40:08', 1);
+INSERT INTO public.item VALUES (2, 'FOOD-002', 'RICE (25KG)', 'SKU-RICE-25KG', 1, 'WHITE RICE 25KG SACK', 50.00, 'SACK', false, 'STAPLE FOOD FOR RELIEF DISTRIBUTION', 'STORE IN DRY VENTILATED AREA', true, false, 'FIFO', NULL, 'A', 'admin', '2025-11-24 19:40:08', 'admin', '2025-11-24 19:40:08', 1);
+INSERT INTO public.item VALUES (3, 'FOOD-003', 'COOKING OIL', 'SKU-OIL-001', 1, 'VEGETABLE COOKING OIL 1 LITRE', 75.00, 'BOTTLE', false, 'COOKING PURPOSES', 'STORE AWAY FROM DIRECT SUNLIGHT', true, true, 'FEFO', NULL, 'A', 'admin', '2025-11-24 19:40:08', 'admin', '2025-11-24 19:40:08', 1);
+INSERT INTO public.item VALUES (4, 'FOOD-004', 'FLOUR (10KG)', 'SKU-FLOUR-10KG', 1, 'ALL PURPOSE FLOUR 10KG BAG', 60.00, 'SACK', false, 'BAKING AND COOKING', 'KEEP DRY AND SEALED', true, true, 'FEFO', NULL, 'A', 'admin', '2025-11-24 19:40:08', 'admin', '2025-11-24 19:40:08', 1);
+INSERT INTO public.item VALUES (5, 'WATER-001', 'BOTTLED WATER 500ML', 'SKU-WATER-500ML', 2, 'PURIFIED DRINKING WATER 500ML', 500.00, 'BOTTLE', false, 'EMERGENCY DRINKING WATER', 'STORE IN COOL PLACE', true, true, 'FEFO', NULL, 'A', 'admin', '2025-11-24 19:40:08', 'admin', '2025-11-24 19:40:08', 1);
+INSERT INTO public.item VALUES (6, 'WATER-002', 'WATER PURIFICATION TABLETS', 'SKU-PURITAB-001', 2, 'WATER PURIFICATION TABLETS (100 PACK)', 100.00, 'BOX', false, 'WATER TREATMENT FOR EMERGENCY USE', 'KEEP DRY AND SEALED', true, true, 'FEFO', NULL, 'A', 'admin', '2025-11-24 19:40:08', 'admin', '2025-11-24 19:40:08', 1);
+INSERT INTO public.item VALUES (7, 'WATER-003', 'BOTTLED WATER 1 GALLON', 'SKU-WATER-1GAL', 2, 'PURIFIED DRINKING WATER 1 GALLON', 200.00, 'GALLON', false, 'EMERGENCY DRINKING WATER', 'STORE IN COOL PLACE', true, true, 'FEFO', NULL, 'A', 'admin', '2025-11-24 19:40:08', 'admin', '2025-11-24 19:40:08', 1);
+INSERT INTO public.item VALUES (8, 'HYGIENE-001', 'SOAP BARS', 'SKU-SOAP-001', 3, 'ANTIBACTERIAL SOAP BARS (PACK OF 3)', 150.00, 'BOX', false, 'PERSONAL HYGIENE', 'STORE IN DRY PLACE', true, false, 'FIFO', NULL, 'A', 'admin', '2025-11-24 19:40:08', 'admin', '2025-11-24 19:40:08', 1);
+INSERT INTO public.item VALUES (9, 'HYGIENE-002', 'TOOTHPASTE', 'SKU-TOOTHPASTE-001', 3, 'FLUORIDE TOOTHPASTE 100ML TUBE', 120.00, 'UNIT', false, 'DENTAL HYGIENE', 'STORE AT ROOM TEMPERATURE', true, true, 'FEFO', NULL, 'A', 'admin', '2025-11-24 19:40:08', 'admin', '2025-11-24 19:40:08', 1);
+INSERT INTO public.item VALUES (10, 'HYGIENE-003', 'SANITARY NAPKINS', 'SKU-SANITARY-001', 3, 'SANITARY NAPKINS (PACK OF 10)', 100.00, 'BOX', false, 'FEMININE HYGIENE', 'KEEP DRY AND CLEAN', true, false, 'FIFO', NULL, 'A', 'admin', '2025-11-24 19:40:08', 'admin', '2025-11-24 19:40:08', 1);
+INSERT INTO public.item VALUES (11, 'HYGIENE-004', 'HAND SANITIZER', 'SKU-SANITIZER-001', 3, 'HAND SANITIZER GEL 500ML', 80.00, 'BOTTLE', false, 'HAND DISINFECTION', 'STORE IN COOL PLACE', true, true, 'FEFO', NULL, 'A', 'admin', '2025-11-24 19:40:08', 'admin', '2025-11-24 19:40:08', 1);
+INSERT INTO public.item VALUES (12, 'MEDICAL-001', 'FIRST AID KIT', 'SKU-FIRSTAID-001', 4, 'COMPLETE FIRST AID KIT WITH BANDAGES AND SUPPLIES', 50.00, 'BOX', false, 'EMERGENCY MEDICAL CARE', 'STORE IN COOL DRY PLACE', true, true, 'FEFO', NULL, 'A', 'admin', '2025-11-24 19:40:36', 'admin', '2025-11-24 19:40:36', 1);
+INSERT INTO public.item VALUES (13, 'MEDICAL-002', 'PAIN RELIEF TABLETS', 'SKU-PAINKILLER-001', 4, 'PARACETAMOL 500MG (PACK OF 20)', 100.00, 'BOX', false, 'PAIN AND FEVER RELIEF', 'KEEP DRY AND AWAY FROM CHILDREN', true, true, 'FEFO', NULL, 'A', 'admin', '2025-11-24 19:40:36', 'admin', '2025-11-24 19:40:36', 1);
+INSERT INTO public.item VALUES (14, 'MEDICAL-003', 'BANDAGES', 'SKU-BANDAGE-001', 4, 'STERILE GAUZE BANDAGES 4 INCH (PACK OF 10)', 150.00, 'BOX', false, 'WOUND DRESSING', 'KEEP STERILE AND DRY', true, true, 'FEFO', NULL, 'A', 'admin', '2025-11-24 19:40:36', 'admin', '2025-11-24 19:40:36', 1);
+INSERT INTO public.item VALUES (15, 'MEDICAL-004', 'ANTISEPTIC SOLUTION', 'SKU-ANTISEPTIC-001', 4, 'ANTISEPTIC SOLUTION 500ML BOTTLE', 75.00, 'BOTTLE', false, 'WOUND CLEANING AND DISINFECTION', 'STORE AWAY FROM DIRECT SUNLIGHT', true, true, 'FEFO', NULL, 'A', 'admin', '2025-11-24 19:40:36', 'admin', '2025-11-24 19:40:36', 1);
+INSERT INTO public.item VALUES (16, 'SHELTER-001', 'TARPAULIN (12X15 FT)', 'SKU-TARP-12X15', 5, 'HEAVY DUTY TARPAULIN SHEET 12X15 FEET', 40.00, 'SHEET', false, 'TEMPORARY SHELTER AND COVERING', 'FOLD AND STORE IN DRY PLACE', false, false, 'FIFO', NULL, 'A', 'admin', '2025-11-24 19:40:36', 'admin', '2025-11-24 19:40:36', 1);
+INSERT INTO public.item VALUES (17, 'SHELTER-002', 'EMERGENCY TENT', 'SKU-TENT-4PERSON', 5, 'EMERGENCY RELIEF TENT (4 PERSON CAPACITY)', 20.00, 'UNIT', false, 'TEMPORARY HOUSING FOR DISPLACED FAMILIES', 'STORE IN ORIGINAL PACKAGING', false, false, 'FIFO', NULL, 'A', 'admin', '2025-11-24 19:40:36', 'admin', '2025-11-24 19:40:36', 1);
+INSERT INTO public.item VALUES (18, 'SHELTER-003', 'ROPE (100 METRES)', 'SKU-ROPE-100M', 5, 'NYLON ROPE 100 METRES ROLL', 30.00, 'UNIT', false, 'SECURING SHELTER AND GENERAL USE', 'KEEP DRY', false, false, 'FIFO', NULL, 'A', 'admin', '2025-11-24 19:40:36', 'admin', '2025-11-24 19:40:36', 1);
+INSERT INTO public.item VALUES (19, 'SHELTER-004', 'PLASTIC SHEETING', 'SKU-PLASTIC-ROLL', 5, 'HEAVY DUTY PLASTIC SHEETING 4M X 50M ROLL', 25.00, 'UNIT', false, 'WATERPROOF COVERING AND SHELTER LINING', 'STORE ROLLED IN DRY AREA', false, false, 'FIFO', NULL, 'A', 'admin', '2025-11-24 19:40:36', 'admin', '2025-11-24 19:40:36', 1);
+INSERT INTO public.item VALUES (20, 'CLOTHING-001', 'BLANKETS', 'SKU-BLANKET-001', 6, 'EMERGENCY RELIEF BLANKET (COTTON)', 100.00, 'UNIT', false, 'WARMTH AND COMFORT FOR DISPLACED PERSONS', 'STORE IN DRY PLACE', false, false, 'FIFO', NULL, 'A', 'admin', '2025-11-24 19:40:36', 'admin', '2025-11-24 19:40:36', 1);
+INSERT INTO public.item VALUES (21, 'CLOTHING-002', 'T-SHIRTS (ADULT LARGE)', 'SKU-TSHIRT-L', 6, 'COTTON T-SHIRT ADULT SIZE LARGE', 120.00, 'UNIT', false, 'BASIC CLOTHING FOR RELIEF DISTRIBUTION', 'STORE IN CLEAN DRY PLACE', false, false, 'FIFO', NULL, 'A', 'admin', '2025-11-24 19:40:36', 'admin', '2025-11-24 19:40:36', 1);
+INSERT INTO public.item VALUES (22, 'CLOTHING-003', 'MATTRESS (SINGLE)', 'SKU-MATTRESS-SGL', 6, 'FOAM MATTRESS SINGLE SIZE', 30.00, 'UNIT', false, 'SLEEPING ARRANGEMENT FOR SHELTERS', 'STORE FLAT OR ROLLED', false, false, 'FIFO', NULL, 'A', 'admin', '2025-11-24 19:40:36', 'admin', '2025-11-24 19:40:36', 1);
+INSERT INTO public.item VALUES (23, 'CONSTRUCT-001', 'CEMENT (50KG)', 'SKU-CEMENT-50KG', 7, 'PORTLAND CEMENT 50KG BAG', 100.00, 'SACK', false, 'BUILDING AND REPAIR WORK', 'KEEP DRY AND OFF GROUND', false, false, 'FIFO', NULL, 'A', 'admin', '2025-11-24 19:41:08', 'admin', '2025-11-24 19:41:08', 1);
+INSERT INTO public.item VALUES (24, 'CONSTRUCT-002', 'GALVANIZED ROOFING SHEETS', 'SKU-ROOF-ZINC', 7, 'GALVANIZED CORRUGATED ROOFING SHEET 8FT', 50.00, 'SHEET', false, 'ROOF REPAIR AND CONSTRUCTION', 'STACK FLAT AND KEEP DRY', false, false, 'FIFO', NULL, 'A', 'admin', '2025-11-24 19:41:08', 'admin', '2025-11-24 19:41:08', 1);
+INSERT INTO public.item VALUES (25, 'CONSTRUCT-003', 'LUMBER 2X4X8', 'SKU-LUMBER-2X4X8', 7, 'TREATED LUMBER 2 INCH X 4 INCH X 8 FEET', 80.00, 'UNIT', false, 'CONSTRUCTION AND FRAMING', 'STORE IN COVERED AREA', false, false, 'FIFO', NULL, 'A', 'admin', '2025-11-24 19:41:08', 'admin', '2025-11-24 19:41:08', 1);
+INSERT INTO public.item VALUES (26, 'CONSTRUCT-004', 'NAILS (5 LBS BOX)', 'SKU-NAILS-5LB', 7, 'COMMON WIRE NAILS 5 POUND BOX', 60.00, 'BOX', false, 'GENERAL CONSTRUCTION USE', 'KEEP DRY TO PREVENT RUST', false, false, 'FIFO', NULL, 'A', 'admin', '2025-11-24 19:41:08', 'admin', '2025-11-24 19:41:08', 1);
+INSERT INTO public.item VALUES (27, 'TOOLS-001', 'HAMMER', 'SKU-HAMMER-001', 8, 'CLAW HAMMER 16 OZ', 40.00, 'UNIT', false, 'CONSTRUCTION AND REPAIR WORK', 'STORE IN TOOLBOX', false, false, 'FIFO', NULL, 'A', 'admin', '2025-11-24 19:41:08', 'admin', '2025-11-24 19:41:08', 1);
+INSERT INTO public.item VALUES (28, 'TOOLS-002', 'SHOVEL', 'SKU-SHOVEL-001', 8, 'ROUND POINT SHOVEL WITH HANDLE', 30.00, 'UNIT', false, 'DIGGING AND EARTH MOVING', 'CLEAN AND STORE DRY', false, false, 'FIFO', NULL, 'A', 'admin', '2025-11-24 19:41:08', 'admin', '2025-11-24 19:41:08', 1);
+INSERT INTO public.item VALUES (29, 'TOOLS-003', 'WHEELBARROW', 'SKU-WHEELBARROW-001', 8, 'HEAVY DUTY WHEELBARROW 5 CUBIC FEET', 15.00, 'UNIT', false, 'MATERIAL TRANSPORT', 'STORE IN COVERED AREA', false, false, 'FIFO', NULL, 'A', 'admin', '2025-11-24 19:41:08', 'admin', '2025-11-24 19:41:08', 1);
+INSERT INTO public.item VALUES (30, 'TOOLS-004', 'FLASHLIGHT (LED)', 'SKU-FLASHLIGHT-001', 8, 'LED FLASHLIGHT WITH BATTERIES', 80.00, 'UNIT', false, 'EMERGENCY LIGHTING', 'STORE IN DRY PLACE', true, false, 'FIFO', NULL, 'A', 'admin', '2025-11-24 19:41:08', 'admin', '2025-11-24 19:41:08', 1);
+INSERT INTO public.item VALUES (31, 'OTHER-001', 'BATTERIES (AA 4 PACK)', 'SKU-BATTERY-AA4', 9, 'ALKALINE AA BATTERIES 4 PACK', 120.00, 'BOX', false, 'POWER FOR FLASHLIGHTS AND DEVICES', 'STORE IN COOL DRY PLACE', true, true, 'FEFO', NULL, 'A', 'admin', '2025-11-24 19:41:08', 'admin', '2025-11-24 19:41:08', 1);
+INSERT INTO public.item VALUES (32, 'OTHER-002', 'MATCHES (BOX OF 10)', 'SKU-MATCHES-001', 9, 'WATERPROOF MATCHES BOX OF 10 PACKS', 100.00, 'BOX', false, 'FIRE STARTING FOR COOKING', 'KEEP DRY AND AWAY FROM CHILDREN', true, false, 'FIFO', NULL, 'A', 'admin', '2025-11-24 19:41:08', 'admin', '2025-11-24 19:41:08', 1);
+INSERT INTO public.item VALUES (33, 'OTHER-003', 'CANDLES (PACK OF 6)', 'SKU-CANDLES-001', 9, 'EMERGENCY CANDLES PACK OF 6', 80.00, 'BOX', false, 'EMERGENCY LIGHTING', 'STORE IN COOL PLACE', true, false, 'FIFO', NULL, 'A', 'admin', '2025-11-24 19:41:08', 'admin', '2025-11-24 19:41:08', 1);
+INSERT INTO public.item VALUES (34, 'OTHER-004', 'GARBAGE BAGS (HEAVY DUTY)', 'SKU-GARBAGE-BAGS', 9, 'HEAVY DUTY GARBAGE BAGS 30 GALLON (ROLL OF 50)', 70.00, 'UNIT', false, 'WASTE DISPOSAL AND STORAGE', 'STORE IN DRY PLACE', false, false, 'FIFO', NULL, 'A', 'admin', '2025-11-24 19:41:08', 'admin', '2025-11-24 19:41:08', 1);
+INSERT INTO public.item VALUES (35, 'OTHER-005', 'PORTABLE STOVE', 'SKU-STOVE-PORTABLE', 9, 'PORTABLE GAS CAMPING STOVE', 25.00, 'UNIT', false, 'EMERGENCY COOKING', 'STORE IN VENTILATED AREA', false, false, 'FIFO', NULL, 'A', 'admin', '2025-11-24 19:41:08', 'admin', '2025-11-24 19:41:08', 1);
+
+
+--
+-- Data for Name: item_location; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: itembatch; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: itemcatg; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+INSERT INTO public.itemcatg VALUES (1, 'FOOD', 'Food Items', NULL, 'A', 'SYSTEM', '2025-11-24 02:54:55', 'SYSTEM', '2025-11-24 02:54:55', 1, 'GOODS');
+INSERT INTO public.itemcatg VALUES (2, 'WATER', 'Water and Beverages', NULL, 'A', 'SYSTEM', '2025-11-24 02:54:55', 'SYSTEM', '2025-11-24 02:54:55', 1, 'GOODS');
+INSERT INTO public.itemcatg VALUES (3, 'HYGIENE', 'Hygiene Products', NULL, 'A', 'SYSTEM', '2025-11-24 02:54:55', 'SYSTEM', '2025-11-24 02:54:55', 1, 'GOODS');
+INSERT INTO public.itemcatg VALUES (4, 'MEDICAL', 'Medical Supplies', NULL, 'A', 'SYSTEM', '2025-11-24 02:54:55', 'SYSTEM', '2025-11-24 02:54:55', 1, 'GOODS');
+INSERT INTO public.itemcatg VALUES (5, 'SHELTER', 'Shelter Materials', NULL, 'A', 'SYSTEM', '2025-11-24 02:54:55', 'SYSTEM', '2025-11-24 02:54:55', 1, 'GOODS');
+INSERT INTO public.itemcatg VALUES (6, 'CLOTHING', 'Clothing and Bedding', NULL, 'A', 'SYSTEM', '2025-11-24 02:54:55', 'SYSTEM', '2025-11-24 02:54:55', 1, 'GOODS');
+INSERT INTO public.itemcatg VALUES (7, 'CONSTRUCTION', 'Construction Materials', NULL, 'A', 'SYSTEM', '2025-11-24 02:54:55', 'SYSTEM', '2025-11-24 02:54:55', 1, 'GOODS');
+INSERT INTO public.itemcatg VALUES (8, 'TOOLS', 'Tools and Equipment', NULL, 'A', 'SYSTEM', '2025-11-24 02:54:55', 'SYSTEM', '2025-11-24 02:54:55', 1, 'GOODS');
+INSERT INTO public.itemcatg VALUES (9, 'OTHER', 'Other Items', NULL, 'A', 'SYSTEM', '2025-11-24 02:54:55', 'SYSTEM', '2025-11-24 02:54:55', 1, 'GOODS');
+
+
+--
+-- Data for Name: itemcostdef; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: location; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: notification; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: parish; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+INSERT INTO public.parish VALUES ('01', 'Kingston');
+INSERT INTO public.parish VALUES ('02', 'St. Andrew');
+INSERT INTO public.parish VALUES ('03', 'St. Thomas');
+INSERT INTO public.parish VALUES ('04', 'Portland');
+INSERT INTO public.parish VALUES ('05', 'St. Mary');
+INSERT INTO public.parish VALUES ('06', 'St. Ann');
+INSERT INTO public.parish VALUES ('07', 'Trelawny');
+INSERT INTO public.parish VALUES ('08', 'St. James');
+INSERT INTO public.parish VALUES ('09', 'Hanover');
+INSERT INTO public.parish VALUES ('10', 'Westmoreland');
+INSERT INTO public.parish VALUES ('11', 'St. Elizabeth');
+INSERT INTO public.parish VALUES ('12', 'Manchester');
+INSERT INTO public.parish VALUES ('13', 'Clarendon');
+INSERT INTO public.parish VALUES ('14', 'St. Catherine');
+
+
+--
+-- Data for Name: permission; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+INSERT INTO public.permission VALUES (1, 'EVENT', 'VIEW', 'SYSTEM', '2025-11-24 02:58:47', 'SYSTEM', '2025-11-24 02:58:47', 1);
+INSERT INTO public.permission VALUES (2, 'EVENT', 'CREATE', 'SYSTEM', '2025-11-24 02:58:47', 'SYSTEM', '2025-11-24 02:58:47', 1);
+INSERT INTO public.permission VALUES (3, 'EVENT', 'UPDATE', 'SYSTEM', '2025-11-24 02:58:47', 'SYSTEM', '2025-11-24 02:58:47', 1);
+INSERT INTO public.permission VALUES (4, 'EVENT', 'CLOSE', 'SYSTEM', '2025-11-24 02:58:47', 'SYSTEM', '2025-11-24 02:58:47', 1);
+INSERT INTO public.permission VALUES (5, 'EVENT', 'DELETE', 'SYSTEM', '2025-11-24 02:58:47', 'SYSTEM', '2025-11-24 02:58:47', 1);
+
+
+--
+-- Data for Name: relief_request_fulfillment_lock; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: reliefpkg; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: reliefpkg_item; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: reliefrqst; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: reliefrqst_item; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: reliefrqst_status; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+INSERT INTO public.reliefrqst_status VALUES (0, 'DRAFT', true, false);
+INSERT INTO public.reliefrqst_status VALUES (1, 'AWAITING APPROVAL', true, false);
+INSERT INTO public.reliefrqst_status VALUES (2, 'CANCELLED', true, false);
+INSERT INTO public.reliefrqst_status VALUES (3, 'SUBMITTED', true, false);
+INSERT INTO public.reliefrqst_status VALUES (4, 'DENIED', true, true);
+INSERT INTO public.reliefrqst_status VALUES (5, 'PART FILLED', true, false);
+INSERT INTO public.reliefrqst_status VALUES (6, 'CLOSED', true, true);
+INSERT INTO public.reliefrqst_status VALUES (7, 'FILLED', true, false);
+INSERT INTO public.reliefrqst_status VALUES (8, 'INELIGIBLE', true, true);
+
+
+--
+-- Data for Name: reliefrqstitem_status; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+INSERT INTO public.reliefrqstitem_status VALUES ('U', 'Unavailable', 'EZ', true, 'SYSTEM', '2025-11-24 02:56:07', 'SYSTEM', '2025-11-24 02:56:07', 1);
+INSERT INTO public.reliefrqstitem_status VALUES ('D', 'Denied', 'EZ', true, 'SYSTEM', '2025-11-24 02:56:07', 'SYSTEM', '2025-11-24 02:56:07', 1);
+INSERT INTO public.reliefrqstitem_status VALUES ('P', 'Partial', 'GZ', true, 'SYSTEM', '2025-11-24 02:56:07', 'SYSTEM', '2025-11-24 02:56:07', 1);
+INSERT INTO public.reliefrqstitem_status VALUES ('L', 'Limited', 'GZ', true, 'SYSTEM', '2025-11-24 02:56:07', 'SYSTEM', '2025-11-24 02:56:07', 1);
+INSERT INTO public.reliefrqstitem_status VALUES ('F', 'Fulfilled', 'ER', true, 'SYSTEM', '2025-11-24 02:56:07', 'SYSTEM', '2025-11-24 02:56:07', 1);
+INSERT INTO public.reliefrqstitem_status VALUES ('R', 'Requested', 'EZ', true, 'SYSTEM', '2025-11-24 02:56:07', 'system', '2025-11-24 03:20:26', 2);
+INSERT INTO public.reliefrqstitem_status VALUES ('W', 'Waiting', 'EZ', true, 'SYSTEM', '2025-11-24 02:56:07', 'system', '2025-11-24 03:20:26', 2);
+
+
+--
+-- Data for Name: role; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+INSERT INTO public.role VALUES (1, 'SYSTEM_ADMINISTRATOR', 'System Administrator', 'Full system access and configuration', '2025-11-24 02:55:42.931282');
+INSERT INTO public.role VALUES (2, 'LOGISTICS_MANAGER', 'Logistics Manager', 'Oversees all logistics operations', '2025-11-24 02:55:42.931282');
+INSERT INTO public.role VALUES (3, 'LOGISTICS_OFFICER', 'Logistics Officer', 'Manages inventory and fulfillment', '2025-11-24 02:55:42.931282');
+INSERT INTO public.role VALUES (4, 'MAIN_HUB_WAREHOUSE', 'Main Hub Warehouse', 'Main warehouse operations', '2025-11-24 02:55:42.931282');
+INSERT INTO public.role VALUES (5, 'SUB_HUB_WAREHOUSE', 'Sub Hub Warehouse', 'Sub-hub warehouse operations', '2025-11-24 02:55:42.931282');
+INSERT INTO public.role VALUES (6, 'AGENCY_HUB', 'Agency Hub', 'Agency requests and receipts', '2025-11-24 02:55:42.931282');
+INSERT INTO public.role VALUES (7, 'INVENTORY_CLERK', 'Inventory Clerk', 'Stock management', '2025-11-24 02:55:42.931282');
+INSERT INTO public.role VALUES (8, 'AUDITOR', 'Auditor', 'Compliance and audit access', '2025-11-24 02:55:42.931282');
+INSERT INTO public.role VALUES (9, 'CUSTODIAN', 'Custodian', 'Role responsible for managing disaster events and master data lifecycle in DRIMS', '2025-11-24 03:03:18.955817');
+
+
+--
+-- Data for Name: role_permission; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: rtintake; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: rtintake_item; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: transaction; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: transfer; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: transfer_item; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: transfer_request; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: unitofmeasure; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+INSERT INTO public.unitofmeasure VALUES ('UNIT', 'Individual units', NULL, 'SYSTEM', '2025-11-24 02:54:50', 'SYSTEM', '2025-11-24 02:54:50', 1, 'A');
+INSERT INTO public.unitofmeasure VALUES ('KG', 'Kilograms', NULL, 'SYSTEM', '2025-11-24 02:54:50', 'SYSTEM', '2025-11-24 02:54:50', 1, 'A');
+INSERT INTO public.unitofmeasure VALUES ('LITRE', 'Litres', NULL, 'SYSTEM', '2025-11-24 02:54:50', 'SYSTEM', '2025-11-24 02:54:50', 1, 'A');
+INSERT INTO public.unitofmeasure VALUES ('BOX', 'Boxes', NULL, 'SYSTEM', '2025-11-24 02:54:50', 'SYSTEM', '2025-11-24 02:54:50', 1, 'A');
+INSERT INTO public.unitofmeasure VALUES ('SACK', 'Sacks', NULL, 'SYSTEM', '2025-11-24 02:54:50', 'SYSTEM', '2025-11-24 02:54:50', 1, 'A');
+INSERT INTO public.unitofmeasure VALUES ('BOTTLE', 'Bottles', NULL, 'SYSTEM', '2025-11-24 02:54:50', 'SYSTEM', '2025-11-24 02:54:50', 1, 'A');
+INSERT INTO public.unitofmeasure VALUES ('GALLON', 'Gallons', NULL, 'SYSTEM', '2025-11-24 02:54:50', 'SYSTEM', '2025-11-24 02:54:50', 1, 'A');
+INSERT INTO public.unitofmeasure VALUES ('METRE', 'Metres', NULL, 'SYSTEM', '2025-11-24 02:54:50', 'SYSTEM', '2025-11-24 02:54:50', 1, 'A');
+INSERT INTO public.unitofmeasure VALUES ('SHEET', 'Sheets', NULL, 'SYSTEM', '2025-11-24 02:54:50', 'SYSTEM', '2025-11-24 02:54:50', 1, 'A');
+
+
+--
+-- Data for Name: user; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+INSERT INTO public."user" VALUES (1, 'admin@odpem.gov.jm', 'scrypt:32768:8:1$tw5i5qADic8YJpSt$e7e234d2febee94551bf5b8f3f2a065faefefb5f4a00f73c5c66f3c02ce3c3eb68a340372989f7bff2fb5e67e3ec5b7149282dc65011b19e8dc8e811da413a02', 'System', 'Administrator', 'System Administrator', true, 'OFFICE OF DISASTER PREPAREDNESS AND EMERGENCY MANAGEMENT (ODPEM)', 'System Administrator', NULL, 'America/Jamaica', 'en', NULL, NULL, NULL, '2025-11-24 03:00:14.938854', '2025-11-24 03:03:25.800858', NULL, 'scrypt', false, NULL, 0, NULL, NULL, NULL, 'A', 2, 'ADMIN');
+
+
+--
+-- Data for Name: user_role; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+INSERT INTO public.user_role VALUES (1, 1, '2025-11-23 22:04:21.14037', NULL, 'system', '2025-11-23 22:04:21', 'system', '2025-11-23 22:04:21', 1);
+INSERT INTO public.user_role VALUES (1, 2, '2025-11-23 22:04:21.140393', NULL, 'system', '2025-11-23 22:04:21', 'system', '2025-11-23 22:04:21', 1);
+INSERT INTO public.user_role VALUES (1, 9, '2025-11-23 22:04:21.140408', NULL, 'system', '2025-11-23 22:04:21', 'system', '2025-11-23 22:04:21', 1);
+
+
+--
+-- Data for Name: user_warehouse; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: warehouse; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: xfreturn; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: xfreturn_item; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Name: agency_account_request_audit_audit_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.agency_account_request_audit_audit_id_seq', 1, false);
+
+
+--
+-- Name: agency_account_request_request_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.agency_account_request_request_id_seq', 1, false);
+
+
+--
+-- Name: agency_agency_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.agency_agency_id_seq', 1, false);
+
+
+--
+-- Name: custodian_custodian_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.custodian_custodian_id_seq', 1, true);
+
+
+--
+-- Name: distribution_package_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.distribution_package_id_seq', 1, false);
+
+
+--
+-- Name: distribution_package_item_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.distribution_package_item_id_seq', 1, false);
+
+
+--
+-- Name: dnintake_item_intake_item_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.dnintake_item_intake_item_id_seq', 1, false);
+
+
+--
+-- Name: donation_doc_document_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.donation_doc_document_id_seq', 1, false);
+
+
+--
+-- Name: donation_donation_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.donation_donation_id_seq', 1, false);
+
+
+--
+-- Name: donor_donor_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.donor_donor_id_seq', 1, true);
+
+
+--
+-- Name: event_event_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.event_event_id_seq', 1, false);
+
+
+--
+-- Name: item_new_item_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.item_new_item_id_seq', 35, true);
+
+
+--
+-- Name: itembatch_batch_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.itembatch_batch_id_seq', 1, false);
+
+
+--
+-- Name: itemcatg_category_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.itemcatg_category_id_seq', 9, true);
+
+
+--
+-- Name: itemcostdef_cost_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.itemcostdef_cost_id_seq', 1, false);
+
+
+--
+-- Name: location_location_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.location_location_id_seq', 1, false);
+
+
+--
+-- Name: notification_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.notification_id_seq', 1, false);
+
+
+--
+-- Name: permission_perm_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.permission_perm_id_seq', 5, true);
+
+
+--
+-- Name: reliefpkg_reliefpkg_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.reliefpkg_reliefpkg_id_seq', 1, false);
+
+
+--
+-- Name: reliefrqst_reliefrqst_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.reliefrqst_reliefrqst_id_seq', 1, false);
+
+
+--
+-- Name: role_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.role_id_seq', 9, true);
+
+
+--
+-- Name: transaction_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.transaction_id_seq', 1, false);
+
+
+--
+-- Name: transfer_request_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.transfer_request_id_seq', 1, false);
+
+
+--
+-- Name: transfer_transfer_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.transfer_transfer_id_seq', 1, false);
+
+
+--
+-- Name: user_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.user_id_seq', 1, true);
+
+
+--
+-- Name: warehouse_warehouse_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.warehouse_warehouse_id_seq', 1, false);
+
+
+--
+-- Name: xfreturn_xfreturn_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.xfreturn_xfreturn_id_seq', 1, false);
+
+
+--
+-- Name: agency_account_request_audit agency_account_request_audit_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.agency_account_request_audit
+    ADD CONSTRAINT agency_account_request_audit_pkey PRIMARY KEY (audit_id);
+
+
+--
+-- Name: agency_account_request agency_account_request_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.agency_account_request
+    ADD CONSTRAINT agency_account_request_pkey PRIMARY KEY (request_id);
+
+
+--
+-- Name: agency agency_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.agency
+    ADD CONSTRAINT agency_pkey PRIMARY KEY (agency_id);
+
+
+--
+-- Name: country country_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.country
+    ADD CONSTRAINT country_pkey PRIMARY KEY (country_id);
+
+
+--
+-- Name: dbintake_item dbintake_item_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dbintake_item
+    ADD CONSTRAINT dbintake_item_pkey PRIMARY KEY (reliefpkg_id, inventory_id, item_id);
+
+
+--
+-- Name: dbintake dbintake_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dbintake
+    ADD CONSTRAINT dbintake_pkey PRIMARY KEY (reliefpkg_id, inventory_id);
+
+
+--
+-- Name: distribution_package_item distribution_package_item_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.distribution_package_item
+    ADD CONSTRAINT distribution_package_item_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: distribution_package distribution_package_package_number_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.distribution_package
+    ADD CONSTRAINT distribution_package_package_number_key UNIQUE (package_number);
+
+
+--
+-- Name: distribution_package distribution_package_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.distribution_package
+    ADD CONSTRAINT distribution_package_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: dnintake_item dnintake_item_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dnintake_item
+    ADD CONSTRAINT dnintake_item_pkey PRIMARY KEY (intake_item_id);
+
+
+--
+-- Name: dnintake dnintake_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dnintake
+    ADD CONSTRAINT dnintake_pkey PRIMARY KEY (donation_id, inventory_id);
+
+
+--
+-- Name: donor donor_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.donor
+    ADD CONSTRAINT donor_pkey PRIMARY KEY (donor_id);
+
+
+--
+-- Name: item_location item_location_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.item_location
+    ADD CONSTRAINT item_location_pkey PRIMARY KEY (item_id, location_id);
+
+
+--
+-- Name: location location_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.location
+    ADD CONSTRAINT location_pkey PRIMARY KEY (location_id);
+
+
+--
+-- Name: notification notification_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notification
+    ADD CONSTRAINT notification_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: parish parish_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.parish
+    ADD CONSTRAINT parish_pkey PRIMARY KEY (parish_code);
+
+
+--
+-- Name: permission permission_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.permission
+    ADD CONSTRAINT permission_pkey PRIMARY KEY (perm_id);
+
+
+--
+-- Name: itemcostdef pk_adnlitemcost; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.itemcostdef
+    ADD CONSTRAINT pk_adnlitemcost PRIMARY KEY (cost_id);
+
+
+--
+-- Name: batchlocation pk_batchlocation; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.batchlocation
+    ADD CONSTRAINT pk_batchlocation PRIMARY KEY (inventory_id, location_id, batch_id);
+
+
+--
+-- Name: currency pk_currency; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.currency
+    ADD CONSTRAINT pk_currency PRIMARY KEY (currency_code);
+
+
+--
+-- Name: custodian pk_custodian; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.custodian
+    ADD CONSTRAINT pk_custodian PRIMARY KEY (custodian_id);
+
+
+--
+-- Name: donation pk_donation; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.donation
+    ADD CONSTRAINT pk_donation PRIMARY KEY (donation_id);
+
+
+--
+-- Name: donation_doc pk_donation_doc; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.donation_doc
+    ADD CONSTRAINT pk_donation_doc PRIMARY KEY (document_id);
+
+
+--
+-- Name: donation_item pk_donation_item; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.donation_item
+    ADD CONSTRAINT pk_donation_item PRIMARY KEY (donation_id, item_id);
+
+
+--
+-- Name: event pk_event; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.event
+    ADD CONSTRAINT pk_event PRIMARY KEY (event_id);
+
+
+--
+-- Name: inventory pk_inventory; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.inventory
+    ADD CONSTRAINT pk_inventory PRIMARY KEY (inventory_id, item_id);
+
+
+--
+-- Name: item pk_item; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.item
+    ADD CONSTRAINT pk_item PRIMARY KEY (item_id);
+
+
+--
+-- Name: itembatch pk_itembatch; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.itembatch
+    ADD CONSTRAINT pk_itembatch PRIMARY KEY (batch_id);
+
+
+--
+-- Name: itemcatg pk_itemcatg; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.itemcatg
+    ADD CONSTRAINT pk_itemcatg PRIMARY KEY (category_id);
+
+
+--
+-- Name: reliefpkg_item pk_reliefpkg_item; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reliefpkg_item
+    ADD CONSTRAINT pk_reliefpkg_item PRIMARY KEY (reliefpkg_id, fr_inventory_id, batch_id, item_id);
+
+
+--
+-- Name: reliefrqst pk_reliefrqst; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reliefrqst
+    ADD CONSTRAINT pk_reliefrqst PRIMARY KEY (reliefrqst_id);
+
+
+--
+-- Name: reliefrqst_item pk_reliefrqst_item; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reliefrqst_item
+    ADD CONSTRAINT pk_reliefrqst_item PRIMARY KEY (reliefrqst_id, item_id);
+
+
+--
+-- Name: reliefrqst_status pk_reliefrqst_status; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reliefrqst_status
+    ADD CONSTRAINT pk_reliefrqst_status PRIMARY KEY (status_code);
+
+
+--
+-- Name: reliefrqstitem_status pk_reliefrqstitem_status; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reliefrqstitem_status
+    ADD CONSTRAINT pk_reliefrqstitem_status PRIMARY KEY (status_code);
+
+
+--
+-- Name: role_permission pk_role_permission; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.role_permission
+    ADD CONSTRAINT pk_role_permission PRIMARY KEY (role_id, perm_id);
+
+
+--
+-- Name: rtintake pk_rtintake; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.rtintake
+    ADD CONSTRAINT pk_rtintake PRIMARY KEY (xfreturn_id, inventory_id);
+
+
+--
+-- Name: rtintake_item pk_rtintake_item; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.rtintake_item
+    ADD CONSTRAINT pk_rtintake_item PRIMARY KEY (xfreturn_id, inventory_id, item_id);
+
+
+--
+-- Name: transfer pk_transfer; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transfer
+    ADD CONSTRAINT pk_transfer PRIMARY KEY (transfer_id);
+
+
+--
+-- Name: transfer_item pk_transfer_item; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transfer_item
+    ADD CONSTRAINT pk_transfer_item PRIMARY KEY (transfer_id, item_id, batch_id);
+
+
+--
+-- Name: unitofmeasure pk_unitofmeasure; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.unitofmeasure
+    ADD CONSTRAINT pk_unitofmeasure PRIMARY KEY (uom_code);
+
+
+--
+-- Name: xfreturn_item pk_xfreturn_item; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.xfreturn_item
+    ADD CONSTRAINT pk_xfreturn_item PRIMARY KEY (xfreturn_id, inventory_id, item_id);
+
+
+--
+-- Name: relief_request_fulfillment_lock relief_request_fulfillment_lock_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.relief_request_fulfillment_lock
+    ADD CONSTRAINT relief_request_fulfillment_lock_pkey PRIMARY KEY (reliefrqst_id);
+
+
+--
+-- Name: reliefpkg reliefpkg_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reliefpkg
+    ADD CONSTRAINT reliefpkg_pkey PRIMARY KEY (reliefpkg_id);
+
+
+--
+-- Name: role role_code_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.role
+    ADD CONSTRAINT role_code_key UNIQUE (code);
+
+
+--
+-- Name: role role_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.role
+    ADD CONSTRAINT role_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: transaction transaction_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transaction
+    ADD CONSTRAINT transaction_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: transfer_request transfer_request_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transfer_request
+    ADD CONSTRAINT transfer_request_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: agency uk_agency_1; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.agency
+    ADD CONSTRAINT uk_agency_1 UNIQUE (agency_name);
+
+
+--
+-- Name: currency uk_currency; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.currency
+    ADD CONSTRAINT uk_currency UNIQUE (currency_name);
+
+
+--
+-- Name: custodian uk_custodian_1; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.custodian
+    ADD CONSTRAINT uk_custodian_1 UNIQUE (custodian_name);
+
+
+--
+-- Name: donor uk_donor_1; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.donor
+    ADD CONSTRAINT uk_donor_1 UNIQUE (donor_name);
+
+
+--
+-- Name: item uk_item_1; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.item
+    ADD CONSTRAINT uk_item_1 UNIQUE (item_code);
+
+
+--
+-- Name: item uk_item_2; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.item
+    ADD CONSTRAINT uk_item_2 UNIQUE (item_name);
+
+
+--
+-- Name: item uk_item_3; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.item
+    ADD CONSTRAINT uk_item_3 UNIQUE (sku_code);
+
+
+--
+-- Name: itemcatg uk_itemcatg_1; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.itemcatg
+    ADD CONSTRAINT uk_itemcatg_1 UNIQUE (category_code);
+
+
+--
+-- Name: itemcostdef uk_itemcostdef_1; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.itemcostdef
+    ADD CONSTRAINT uk_itemcostdef_1 UNIQUE (cost_name);
+
+
+--
+-- Name: permission uq_permission_resource_action; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.permission
+    ADD CONSTRAINT uq_permission_resource_action UNIQUE (resource, action);
+
+
+--
+-- Name: user user_email_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."user"
+    ADD CONSTRAINT user_email_key UNIQUE (email);
+
+
+--
+-- Name: user user_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."user"
+    ADD CONSTRAINT user_pkey PRIMARY KEY (user_id);
+
+
+--
+-- Name: user_role user_role_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_role
+    ADD CONSTRAINT user_role_pkey PRIMARY KEY (user_id, role_id);
+
+
+--
+-- Name: user_warehouse user_warehouse_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_warehouse
+    ADD CONSTRAINT user_warehouse_pkey PRIMARY KEY (user_id, warehouse_id);
+
+
+--
+-- Name: warehouse warehouse_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.warehouse
+    ADD CONSTRAINT warehouse_pkey PRIMARY KEY (warehouse_id);
+
+
+--
+-- Name: xfreturn xfreturn_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.xfreturn
+    ADD CONSTRAINT xfreturn_pkey PRIMARY KEY (xfreturn_id);
+
+
+--
+-- Name: dk_aar_audit_req_time; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_aar_audit_req_time ON public.agency_account_request_audit USING btree (request_id, event_dtime);
+
+
+--
+-- Name: dk_aar_status_created; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_aar_status_created ON public.agency_account_request USING btree (status_code, created_at);
+
+
+--
+-- Name: dk_batchlocation_1; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_batchlocation_1 ON public.batchlocation USING btree (batch_id, location_id);
+
+
+--
+-- Name: dk_country; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_country ON public.country USING btree (currency_code);
+
+
+--
+-- Name: dk_dbintake_item_1; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_dbintake_item_1 ON public.dbintake_item USING btree (inventory_id, item_id);
+
+
+--
+-- Name: dk_dbintake_item_2; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_dbintake_item_2 ON public.dbintake_item USING btree (item_id);
+
+
+--
+-- Name: dk_dnintake_item_1; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_dnintake_item_1 ON public.dnintake_item USING btree (inventory_id, item_id);
+
+
+--
+-- Name: dk_dnintake_item_2; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_dnintake_item_2 ON public.dnintake_item USING btree (item_id);
+
+
+--
+-- Name: dk_inventory_1; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_inventory_1 ON public.inventory USING btree (item_id);
+
+
+--
+-- Name: dk_item_1; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_item_1 ON public.item USING btree (item_desc);
+
+
+--
+-- Name: dk_item_2; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_item_2 ON public.item USING btree (category_id);
+
+
+--
+-- Name: dk_item_3; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_item_3 ON public.item USING btree (sku_code);
+
+
+--
+-- Name: dk_item_location_1; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_item_location_1 ON public.item_location USING btree (inventory_id, location_id);
+
+
+--
+-- Name: dk_itembatch_1; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_itembatch_1 ON public.itembatch USING btree (item_id, inventory_id);
+
+
+--
+-- Name: dk_itembatch_2; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_itembatch_2 ON public.itembatch USING btree (batch_no, inventory_id);
+
+
+--
+-- Name: dk_itembatch_3; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_itembatch_3 ON public.itembatch USING btree (item_id, expiry_date) WHERE ((status_code = 'A'::bpchar) AND (expiry_date IS NOT NULL));
+
+
+--
+-- Name: dk_itembatch_4; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_itembatch_4 ON public.itembatch USING btree (item_id, batch_date) WHERE (status_code = 'A'::bpchar);
+
+
+--
+-- Name: dk_location_1; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_location_1 ON public.location USING btree (inventory_id);
+
+
+--
+-- Name: dk_reliefpkg_1; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_reliefpkg_1 ON public.reliefpkg USING btree (start_date);
+
+
+--
+-- Name: dk_reliefpkg_3; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_reliefpkg_3 ON public.reliefpkg USING btree (to_inventory_id);
+
+
+--
+-- Name: dk_reliefpkg_item_1; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_reliefpkg_item_1 ON public.reliefpkg_item USING btree (fr_inventory_id, item_id);
+
+
+--
+-- Name: dk_reliefpkg_item_2; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_reliefpkg_item_2 ON public.reliefpkg_item USING btree (item_id);
+
+
+--
+-- Name: dk_reliefpkg_item_3; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_reliefpkg_item_3 ON public.reliefpkg_item USING btree (batch_id);
+
+
+--
+-- Name: dk_reliefrqst_1; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_reliefrqst_1 ON public.reliefrqst USING btree (agency_id, request_date);
+
+
+--
+-- Name: dk_reliefrqst_2; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_reliefrqst_2 ON public.reliefrqst USING btree (request_date, status_code);
+
+
+--
+-- Name: dk_reliefrqst_3; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_reliefrqst_3 ON public.reliefrqst USING btree (status_code, urgency_ind);
+
+
+--
+-- Name: dk_reliefrqst_item_2; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_reliefrqst_item_2 ON public.reliefrqst_item USING btree (item_id, urgency_ind);
+
+
+--
+-- Name: dk_rtintake_item_1; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_rtintake_item_1 ON public.rtintake_item USING btree (inventory_id, item_id);
+
+
+--
+-- Name: dk_rtintake_item_2; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_rtintake_item_2 ON public.rtintake_item USING btree (item_id);
+
+
+--
+-- Name: dk_transfer_1; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_transfer_1 ON public.transfer USING btree (transfer_date);
+
+
+--
+-- Name: dk_transfer_2; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_transfer_2 ON public.transfer USING btree (fr_inventory_id);
+
+
+--
+-- Name: dk_transfer_3; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_transfer_3 ON public.transfer USING btree (to_inventory_id);
+
+
+--
+-- Name: dk_user_agency_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_user_agency_id ON public."user" USING btree (agency_id);
+
+
+--
+-- Name: dk_xfreturn_1; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_xfreturn_1 ON public.xfreturn USING btree (return_date);
+
+
+--
+-- Name: dk_xfreturn_2; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_xfreturn_2 ON public.xfreturn USING btree (fr_inventory_id);
+
+
+--
+-- Name: dk_xfreturn_3; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dk_xfreturn_3 ON public.xfreturn USING btree (to_inventory_id);
+
+
+--
+-- Name: idx_distribution_package_agency; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_distribution_package_agency ON public.distribution_package USING btree (recipient_agency_id);
+
+
+--
+-- Name: idx_distribution_package_event; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_distribution_package_event ON public.distribution_package USING btree (event_id);
+
+
+--
+-- Name: idx_distribution_package_item_item; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_distribution_package_item_item ON public.distribution_package_item USING btree (item_id);
+
+
+--
+-- Name: idx_distribution_package_item_package; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_distribution_package_item_package ON public.distribution_package_item USING btree (package_id);
+
+
+--
+-- Name: idx_distribution_package_warehouse; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_distribution_package_warehouse ON public.distribution_package USING btree (assigned_warehouse_id);
+
+
+--
+-- Name: idx_donation_doc_donation_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_donation_doc_donation_id ON public.donation_doc USING btree (donation_id);
+
+
+--
+-- Name: idx_donation_doc_type; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_donation_doc_type ON public.donation_doc USING btree (document_type);
+
+
+--
+-- Name: idx_fulfillment_lock_expires; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_fulfillment_lock_expires ON public.relief_request_fulfillment_lock USING btree (expires_at) WHERE (expires_at IS NOT NULL);
+
+
+--
+-- Name: idx_fulfillment_lock_user; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_fulfillment_lock_user ON public.relief_request_fulfillment_lock USING btree (fulfiller_user_id);
+
+
+--
+-- Name: idx_itemcatg_status_code; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_itemcatg_status_code ON public.itemcatg USING btree (status_code);
+
+
+--
+-- Name: idx_itemcostdef_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_itemcostdef_status ON public.itemcostdef USING btree (status_code);
+
+
+--
+-- Name: idx_itemcostdef_type; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_itemcostdef_type ON public.itemcostdef USING btree (cost_type);
+
+
+--
+-- Name: idx_notification_user_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_notification_user_status ON public.notification USING btree (user_id, status, created_at);
+
+
+--
+-- Name: idx_notification_warehouse; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_notification_warehouse ON public.notification USING btree (warehouse_id, created_at);
+
+
+--
+-- Name: idx_role_code; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_role_code ON public.role USING btree (code);
+
+
+--
+-- Name: idx_transfer_item_batch; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_transfer_item_batch ON public.transfer_item USING btree (inventory_id, batch_id);
+
+
+--
+-- Name: idx_transfer_item_item; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_transfer_item_item ON public.transfer_item USING btree (item_id);
+
+
+--
+-- Name: ix_role_permission_perm_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_role_permission_perm_id ON public.role_permission USING btree (perm_id);
+
+
+--
+-- Name: ix_role_permission_role_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_role_permission_role_id ON public.role_permission USING btree (role_id);
+
+
+--
+-- Name: ix_user_role_role_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_user_role_role_id ON public.user_role USING btree (role_id);
+
+
+--
+-- Name: ix_user_role_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_user_role_user_id ON public.user_role USING btree (user_id);
+
+
+--
+-- Name: uk_aar_active_email; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uk_aar_active_email ON public.agency_account_request USING btree (lower((contact_email)::text)) WHERE (status_code = ANY (ARRAY['S'::bpchar, 'R'::bpchar]));
+
+
+--
+-- Name: uk_country; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uk_country ON public.country USING btree (country_name);
+
+
+--
+-- Name: uk_dnintake_item_batch; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uk_dnintake_item_batch ON public.dnintake_item USING btree (donation_id, inventory_id, item_id, batch_no) WHERE (batch_no IS NOT NULL);
+
+
+--
+-- Name: uk_dnintake_item_null_batch; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uk_dnintake_item_null_batch ON public.dnintake_item USING btree (donation_id, inventory_id, item_id) WHERE (batch_no IS NULL);
+
+
+--
+-- Name: uk_inventory_1; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uk_inventory_1 ON public.inventory USING btree (item_id, inventory_id) WHERE (usable_qty > 0.00);
+
+
+--
+-- Name: uk_itembatch_1; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uk_itembatch_1 ON public.itembatch USING btree (inventory_id, batch_no, item_id);
+
+
+--
+-- Name: uk_itembatch_inventory_batch; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uk_itembatch_inventory_batch ON public.itembatch USING btree (inventory_id, batch_id);
+
+
+--
+-- Name: uk_itembatch_inventory_batch_item; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uk_itembatch_inventory_batch_item ON public.itembatch USING btree (inventory_id, batch_id, item_id);
+
+
+--
+-- Name: uk_user_username; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uk_user_username ON public."user" USING btree (username);
+
+
+--
+-- Name: agency_account_request trg_aar_set_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_aar_set_updated_at BEFORE UPDATE ON public.agency_account_request FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+
+--
+-- Name: user trg_user_set_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_user_set_updated_at BEFORE UPDATE ON public."user" FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+
+--
+-- Name: agency agency_ineligible_event_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.agency
+    ADD CONSTRAINT agency_ineligible_event_id_fkey FOREIGN KEY (ineligible_event_id) REFERENCES public.event(event_id);
+
+
+--
+-- Name: agency agency_parish_code_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.agency
+    ADD CONSTRAINT agency_parish_code_fkey FOREIGN KEY (parish_code) REFERENCES public.parish(parish_code);
+
+
+--
+-- Name: dbintake_item dbintake_item_location1_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dbintake_item
+    ADD CONSTRAINT dbintake_item_location1_id_fkey FOREIGN KEY (location1_id) REFERENCES public.location(location_id);
+
+
+--
+-- Name: dbintake_item dbintake_item_location2_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dbintake_item
+    ADD CONSTRAINT dbintake_item_location2_id_fkey FOREIGN KEY (location2_id) REFERENCES public.location(location_id);
+
+
+--
+-- Name: dbintake_item dbintake_item_location3_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dbintake_item
+    ADD CONSTRAINT dbintake_item_location3_id_fkey FOREIGN KEY (location3_id) REFERENCES public.location(location_id);
+
+
+--
+-- Name: dbintake_item dbintake_item_reliefpkg_id_inventory_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dbintake_item
+    ADD CONSTRAINT dbintake_item_reliefpkg_id_inventory_id_fkey FOREIGN KEY (reliefpkg_id, inventory_id) REFERENCES public.dbintake(reliefpkg_id, inventory_id);
+
+
+--
+-- Name: dbintake_item dbintake_item_uom_code_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dbintake_item
+    ADD CONSTRAINT dbintake_item_uom_code_fkey FOREIGN KEY (uom_code) REFERENCES public.unitofmeasure(uom_code);
+
+
+--
+-- Name: dbintake dbintake_reliefpkg_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dbintake
+    ADD CONSTRAINT dbintake_reliefpkg_id_fkey FOREIGN KEY (reliefpkg_id) REFERENCES public.reliefpkg(reliefpkg_id);
+
+
+--
+-- Name: distribution_package distribution_package_assigned_warehouse_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.distribution_package
+    ADD CONSTRAINT distribution_package_assigned_warehouse_id_fkey FOREIGN KEY (assigned_warehouse_id) REFERENCES public.warehouse(warehouse_id);
+
+
+--
+-- Name: distribution_package distribution_package_event_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.distribution_package
+    ADD CONSTRAINT distribution_package_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.event(event_id);
+
+
+--
+-- Name: distribution_package_item distribution_package_item_item_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.distribution_package_item
+    ADD CONSTRAINT distribution_package_item_item_id_fkey FOREIGN KEY (item_id) REFERENCES public.item(item_id);
+
+
+--
+-- Name: distribution_package_item distribution_package_item_package_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.distribution_package_item
+    ADD CONSTRAINT distribution_package_item_package_id_fkey FOREIGN KEY (package_id) REFERENCES public.distribution_package(id) ON DELETE CASCADE;
+
+
+--
+-- Name: distribution_package distribution_package_recipient_agency_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.distribution_package
+    ADD CONSTRAINT distribution_package_recipient_agency_id_fkey FOREIGN KEY (recipient_agency_id) REFERENCES public.agency(agency_id);
+
+
+--
+-- Name: donor donor_country_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.donor
+    ADD CONSTRAINT donor_country_id_fkey FOREIGN KEY (country_id) REFERENCES public.country(country_id);
+
+
+--
+-- Name: agency_account_request_audit fk_aar_actor; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.agency_account_request_audit
+    ADD CONSTRAINT fk_aar_actor FOREIGN KEY (actor_user_id) REFERENCES public."user"(user_id);
+
+
+--
+-- Name: agency_account_request fk_aar_agency; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.agency_account_request
+    ADD CONSTRAINT fk_aar_agency FOREIGN KEY (agency_id) REFERENCES public.agency(agency_id);
+
+
+--
+-- Name: agency_account_request_audit fk_aar_audit_req; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.agency_account_request_audit
+    ADD CONSTRAINT fk_aar_audit_req FOREIGN KEY (request_id) REFERENCES public.agency_account_request(request_id);
+
+
+--
+-- Name: agency_account_request fk_aar_created_by; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.agency_account_request
+    ADD CONSTRAINT fk_aar_created_by FOREIGN KEY (created_by_id) REFERENCES public."user"(user_id);
+
+
+--
+-- Name: agency_account_request fk_aar_updated_by; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.agency_account_request
+    ADD CONSTRAINT fk_aar_updated_by FOREIGN KEY (updated_by_id) REFERENCES public."user"(user_id);
+
+
+--
+-- Name: agency_account_request fk_aar_user; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.agency_account_request
+    ADD CONSTRAINT fk_aar_user FOREIGN KEY (user_id) REFERENCES public."user"(user_id);
+
+
+--
+-- Name: agency fk_agency_warehouse; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.agency
+    ADD CONSTRAINT fk_agency_warehouse FOREIGN KEY (warehouse_id) REFERENCES public.warehouse(warehouse_id);
+
+
+--
+-- Name: batchlocation fk_batchlocation_inventory; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.batchlocation
+    ADD CONSTRAINT fk_batchlocation_inventory FOREIGN KEY (inventory_id, batch_id) REFERENCES public.itembatch(inventory_id, batch_id);
+
+
+--
+-- Name: batchlocation fk_batchlocation_itembatch; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.batchlocation
+    ADD CONSTRAINT fk_batchlocation_itembatch FOREIGN KEY (batch_id) REFERENCES public.itembatch(batch_id);
+
+
+--
+-- Name: batchlocation fk_batchlocation_location; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.batchlocation
+    ADD CONSTRAINT fk_batchlocation_location FOREIGN KEY (location_id) REFERENCES public.location(location_id);
+
+
+--
+-- Name: batchlocation fk_batchlocation_warehouse; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.batchlocation
+    ADD CONSTRAINT fk_batchlocation_warehouse FOREIGN KEY (inventory_id) REFERENCES public.warehouse(warehouse_id);
+
+
+--
+-- Name: country fk_country_currency; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.country
+    ADD CONSTRAINT fk_country_currency FOREIGN KEY (currency_code) REFERENCES public.currency(currency_code);
+
+
+--
+-- Name: custodian fk_custodian_parish; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.custodian
+    ADD CONSTRAINT fk_custodian_parish FOREIGN KEY (parish_code) REFERENCES public.parish(parish_code);
+
+
+--
+-- Name: dbintake fk_dbintake_warehouse; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dbintake
+    ADD CONSTRAINT fk_dbintake_warehouse FOREIGN KEY (inventory_id) REFERENCES public.warehouse(warehouse_id);
+
+
+--
+-- Name: dnintake fk_dnintake_donation; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dnintake
+    ADD CONSTRAINT fk_dnintake_donation FOREIGN KEY (donation_id) REFERENCES public.donation(donation_id);
+
+
+--
+-- Name: dnintake_item fk_dnintake_item_donation_item; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dnintake_item
+    ADD CONSTRAINT fk_dnintake_item_donation_item FOREIGN KEY (donation_id, item_id) REFERENCES public.donation_item(donation_id, item_id);
+
+
+--
+-- Name: dnintake_item fk_dnintake_item_intake; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dnintake_item
+    ADD CONSTRAINT fk_dnintake_item_intake FOREIGN KEY (donation_id, inventory_id) REFERENCES public.dnintake(donation_id, inventory_id);
+
+
+--
+-- Name: dnintake_item fk_dnintake_item_unitofmeasure; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dnintake_item
+    ADD CONSTRAINT fk_dnintake_item_unitofmeasure FOREIGN KEY (uom_code) REFERENCES public.unitofmeasure(uom_code);
+
+
+--
+-- Name: donation fk_donation_country; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.donation
+    ADD CONSTRAINT fk_donation_country FOREIGN KEY (origin_country_id) REFERENCES public.country(country_id);
+
+
+--
+-- Name: donation fk_donation_custodian; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.donation
+    ADD CONSTRAINT fk_donation_custodian FOREIGN KEY (custodian_id) REFERENCES public.custodian(custodian_id);
+
+
+--
+-- Name: donation_doc fk_donation_doc_donation; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.donation_doc
+    ADD CONSTRAINT fk_donation_doc_donation FOREIGN KEY (donation_id) REFERENCES public.donation(donation_id);
+
+
+--
+-- Name: donation fk_donation_donor; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.donation
+    ADD CONSTRAINT fk_donation_donor FOREIGN KEY (donor_id) REFERENCES public.donor(donor_id);
+
+
+--
+-- Name: donation fk_donation_event; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.donation
+    ADD CONSTRAINT fk_donation_event FOREIGN KEY (event_id) REFERENCES public.event(event_id);
+
+
+--
+-- Name: donation_item fk_donation_item_donation; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.donation_item
+    ADD CONSTRAINT fk_donation_item_donation FOREIGN KEY (donation_id) REFERENCES public.donation(donation_id);
+
+
+--
+-- Name: donation_item fk_donation_item_item; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.donation_item
+    ADD CONSTRAINT fk_donation_item_item FOREIGN KEY (item_id) REFERENCES public.item(item_id);
+
+
+--
+-- Name: donation_item fk_donation_item_unitofmeasure; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.donation_item
+    ADD CONSTRAINT fk_donation_item_unitofmeasure FOREIGN KEY (uom_code) REFERENCES public.unitofmeasure(uom_code);
+
+
+--
+-- Name: inventory fk_inventory_item; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.inventory
+    ADD CONSTRAINT fk_inventory_item FOREIGN KEY (item_id) REFERENCES public.item(item_id);
+
+
+--
+-- Name: inventory fk_inventory_unitofmeasure; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.inventory
+    ADD CONSTRAINT fk_inventory_unitofmeasure FOREIGN KEY (uom_code) REFERENCES public.unitofmeasure(uom_code);
+
+
+--
+-- Name: inventory fk_inventory_warehouse; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.inventory
+    ADD CONSTRAINT fk_inventory_warehouse FOREIGN KEY (inventory_id) REFERENCES public.warehouse(warehouse_id);
+
+
+--
+-- Name: item fk_item_itemcatg; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.item
+    ADD CONSTRAINT fk_item_itemcatg FOREIGN KEY (category_id) REFERENCES public.itemcatg(category_id);
+
+
+--
+-- Name: item_location fk_item_location_inventory; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.item_location
+    ADD CONSTRAINT fk_item_location_inventory FOREIGN KEY (inventory_id, item_id) REFERENCES public.inventory(inventory_id, item_id);
+
+
+--
+-- Name: item fk_item_unitofmeasure; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.item
+    ADD CONSTRAINT fk_item_unitofmeasure FOREIGN KEY (default_uom_code) REFERENCES public.unitofmeasure(uom_code);
+
+
+--
+-- Name: itembatch fk_itembatch_item; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.itembatch
+    ADD CONSTRAINT fk_itembatch_item FOREIGN KEY (item_id) REFERENCES public.item(item_id);
+
+
+--
+-- Name: itembatch fk_itembatch_unitofmeasure; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.itembatch
+    ADD CONSTRAINT fk_itembatch_unitofmeasure FOREIGN KEY (uom_code) REFERENCES public.unitofmeasure(uom_code);
+
+
+--
+-- Name: itembatch fk_itembatch_warehouse; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.itembatch
+    ADD CONSTRAINT fk_itembatch_warehouse FOREIGN KEY (inventory_id) REFERENCES public.warehouse(warehouse_id);
+
+
+--
+-- Name: location fk_location_warehouse; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.location
+    ADD CONSTRAINT fk_location_warehouse FOREIGN KEY (inventory_id) REFERENCES public.warehouse(warehouse_id);
+
+
+--
+-- Name: reliefpkg fk_reliefpkg_agency; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reliefpkg
+    ADD CONSTRAINT fk_reliefpkg_agency FOREIGN KEY (agency_id) REFERENCES public.agency(agency_id);
+
+
+--
+-- Name: reliefpkg fk_reliefpkg_event; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reliefpkg
+    ADD CONSTRAINT fk_reliefpkg_event FOREIGN KEY (eligible_event_id) REFERENCES public.event(event_id);
+
+
+--
+-- Name: reliefpkg_item fk_reliefpkg_item_itembatch; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reliefpkg_item
+    ADD CONSTRAINT fk_reliefpkg_item_itembatch FOREIGN KEY (fr_inventory_id, batch_id, item_id) REFERENCES public.itembatch(inventory_id, batch_id, item_id);
+
+
+--
+-- Name: reliefpkg_item fk_reliefpkg_item_reliefpkg; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reliefpkg_item
+    ADD CONSTRAINT fk_reliefpkg_item_reliefpkg FOREIGN KEY (reliefpkg_id) REFERENCES public.reliefpkg(reliefpkg_id);
+
+
+--
+-- Name: reliefpkg_item fk_reliefpkg_item_unitofmeasure; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reliefpkg_item
+    ADD CONSTRAINT fk_reliefpkg_item_unitofmeasure FOREIGN KEY (uom_code) REFERENCES public.unitofmeasure(uom_code);
+
+
+--
+-- Name: reliefpkg fk_reliefpkg_warehouse; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reliefpkg
+    ADD CONSTRAINT fk_reliefpkg_warehouse FOREIGN KEY (to_inventory_id) REFERENCES public.warehouse(warehouse_id);
+
+
+--
+-- Name: reliefrqst fk_reliefrqst_agency; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reliefrqst
+    ADD CONSTRAINT fk_reliefrqst_agency FOREIGN KEY (agency_id) REFERENCES public.agency(agency_id);
+
+
+--
+-- Name: reliefrqst fk_reliefrqst_event; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reliefrqst
+    ADD CONSTRAINT fk_reliefrqst_event FOREIGN KEY (eligible_event_id) REFERENCES public.event(event_id);
+
+
+--
+-- Name: reliefrqst_item fk_reliefrqst_item_item; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reliefrqst_item
+    ADD CONSTRAINT fk_reliefrqst_item_item FOREIGN KEY (item_id) REFERENCES public.item(item_id);
+
+
+--
+-- Name: reliefrqst_item fk_reliefrqst_item_reliefrqst; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reliefrqst_item
+    ADD CONSTRAINT fk_reliefrqst_item_reliefrqst FOREIGN KEY (reliefrqst_id) REFERENCES public.reliefrqst(reliefrqst_id);
+
+
+--
+-- Name: reliefrqst_item fk_reliefrqst_item_reliefrqstitem_status; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reliefrqst_item
+    ADD CONSTRAINT fk_reliefrqst_item_reliefrqstitem_status FOREIGN KEY (status_code) REFERENCES public.reliefrqstitem_status(status_code);
+
+
+--
+-- Name: reliefrqst fk_reliefrqst_reliefrqst_status; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reliefrqst
+    ADD CONSTRAINT fk_reliefrqst_reliefrqst_status FOREIGN KEY (status_code) REFERENCES public.reliefrqst_status(status_code);
+
+
+--
+-- Name: role_permission fk_role_permission_perm; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.role_permission
+    ADD CONSTRAINT fk_role_permission_perm FOREIGN KEY (perm_id) REFERENCES public.permission(perm_id);
+
+
+--
+-- Name: role_permission fk_role_permission_role; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.role_permission
+    ADD CONSTRAINT fk_role_permission_role FOREIGN KEY (role_id) REFERENCES public.role(id);
+
+
+--
+-- Name: rtintake_item fk_rtintake_item_intake; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.rtintake_item
+    ADD CONSTRAINT fk_rtintake_item_intake FOREIGN KEY (xfreturn_id, inventory_id) REFERENCES public.rtintake(xfreturn_id, inventory_id);
+
+
+--
+-- Name: rtintake fk_rtintake_warehouse; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.rtintake
+    ADD CONSTRAINT fk_rtintake_warehouse FOREIGN KEY (inventory_id) REFERENCES public.warehouse(warehouse_id);
+
+
+--
+-- Name: transfer fk_transfer_event; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transfer
+    ADD CONSTRAINT fk_transfer_event FOREIGN KEY (eligible_event_id) REFERENCES public.event(event_id);
+
+
+--
+-- Name: transfer_item fk_transfer_item_batch; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transfer_item
+    ADD CONSTRAINT fk_transfer_item_batch FOREIGN KEY (inventory_id, batch_id) REFERENCES public.itembatch(inventory_id, batch_id);
+
+
+--
+-- Name: transfer_item fk_transfer_item_inventory; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transfer_item
+    ADD CONSTRAINT fk_transfer_item_inventory FOREIGN KEY (inventory_id, item_id) REFERENCES public.inventory(inventory_id, item_id);
+
+
+--
+-- Name: transfer_item fk_transfer_item_item; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transfer_item
+    ADD CONSTRAINT fk_transfer_item_item FOREIGN KEY (item_id) REFERENCES public.item(item_id);
+
+
+--
+-- Name: transfer_item fk_transfer_item_transfer; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transfer_item
+    ADD CONSTRAINT fk_transfer_item_transfer FOREIGN KEY (transfer_id) REFERENCES public.transfer(transfer_id) ON DELETE CASCADE;
+
+
+--
+-- Name: transfer_item fk_transfer_item_uom; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transfer_item
+    ADD CONSTRAINT fk_transfer_item_uom FOREIGN KEY (uom_code) REFERENCES public.unitofmeasure(uom_code);
+
+
+--
+-- Name: transfer fk_transfer_warehouse1; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transfer
+    ADD CONSTRAINT fk_transfer_warehouse1 FOREIGN KEY (fr_inventory_id) REFERENCES public.warehouse(warehouse_id);
+
+
+--
+-- Name: transfer fk_transfer_warehouse2; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transfer
+    ADD CONSTRAINT fk_transfer_warehouse2 FOREIGN KEY (to_inventory_id) REFERENCES public.warehouse(warehouse_id);
+
+
+--
+-- Name: xfreturn fk_xfreturn_fr_warehouse; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.xfreturn
+    ADD CONSTRAINT fk_xfreturn_fr_warehouse FOREIGN KEY (fr_inventory_id) REFERENCES public.warehouse(warehouse_id);
+
+
+--
+-- Name: xfreturn_item fk_xfreturn_item_inventory; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.xfreturn_item
+    ADD CONSTRAINT fk_xfreturn_item_inventory FOREIGN KEY (inventory_id, item_id) REFERENCES public.inventory(inventory_id, item_id);
+
+
+--
+-- Name: xfreturn fk_xfreturn_to_warehouse; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.xfreturn
+    ADD CONSTRAINT fk_xfreturn_to_warehouse FOREIGN KEY (to_inventory_id) REFERENCES public.warehouse(warehouse_id);
+
+
+--
+-- Name: item_location item_location_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.item_location
+    ADD CONSTRAINT item_location_location_id_fkey FOREIGN KEY (location_id) REFERENCES public.location(location_id);
+
+
+--
+-- Name: notification notification_reliefrqst_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notification
+    ADD CONSTRAINT notification_reliefrqst_id_fkey FOREIGN KEY (reliefrqst_id) REFERENCES public.reliefrqst(reliefrqst_id);
+
+
+--
+-- Name: notification notification_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notification
+    ADD CONSTRAINT notification_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(user_id);
+
+
+--
+-- Name: notification notification_warehouse_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notification
+    ADD CONSTRAINT notification_warehouse_id_fkey FOREIGN KEY (warehouse_id) REFERENCES public.warehouse(warehouse_id);
+
+
+--
+-- Name: relief_request_fulfillment_lock relief_request_fulfillment_lock_fulfiller_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.relief_request_fulfillment_lock
+    ADD CONSTRAINT relief_request_fulfillment_lock_fulfiller_user_id_fkey FOREIGN KEY (fulfiller_user_id) REFERENCES public."user"(user_id) ON DELETE CASCADE;
+
+
+--
+-- Name: relief_request_fulfillment_lock relief_request_fulfillment_lock_reliefrqst_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.relief_request_fulfillment_lock
+    ADD CONSTRAINT relief_request_fulfillment_lock_reliefrqst_id_fkey FOREIGN KEY (reliefrqst_id) REFERENCES public.reliefrqst(reliefrqst_id) ON DELETE CASCADE;
+
+
+--
+-- Name: reliefpkg reliefpkg_reliefrqst_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reliefpkg
+    ADD CONSTRAINT reliefpkg_reliefrqst_id_fkey FOREIGN KEY (reliefrqst_id) REFERENCES public.reliefrqst(reliefrqst_id);
+
+
+--
+-- Name: rtintake_item rtintake_item_location1_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.rtintake_item
+    ADD CONSTRAINT rtintake_item_location1_id_fkey FOREIGN KEY (location1_id) REFERENCES public.location(location_id);
+
+
+--
+-- Name: rtintake_item rtintake_item_location2_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.rtintake_item
+    ADD CONSTRAINT rtintake_item_location2_id_fkey FOREIGN KEY (location2_id) REFERENCES public.location(location_id);
+
+
+--
+-- Name: rtintake_item rtintake_item_location3_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.rtintake_item
+    ADD CONSTRAINT rtintake_item_location3_id_fkey FOREIGN KEY (location3_id) REFERENCES public.location(location_id);
+
+
+--
+-- Name: rtintake_item rtintake_item_uom_code_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.rtintake_item
+    ADD CONSTRAINT rtintake_item_uom_code_fkey FOREIGN KEY (uom_code) REFERENCES public.unitofmeasure(uom_code);
+
+
+--
+-- Name: rtintake rtintake_xfreturn_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.rtintake
+    ADD CONSTRAINT rtintake_xfreturn_id_fkey FOREIGN KEY (xfreturn_id) REFERENCES public.xfreturn(xfreturn_id);
+
+
+--
+-- Name: transaction transaction_donor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transaction
+    ADD CONSTRAINT transaction_donor_id_fkey FOREIGN KEY (donor_id) REFERENCES public.donor(donor_id);
+
+
+--
+-- Name: transaction transaction_event_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transaction
+    ADD CONSTRAINT transaction_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.event(event_id);
+
+
+--
+-- Name: transaction transaction_item_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transaction
+    ADD CONSTRAINT transaction_item_id_fkey FOREIGN KEY (item_id) REFERENCES public.item(item_id);
+
+
+--
+-- Name: transaction transaction_warehouse_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transaction
+    ADD CONSTRAINT transaction_warehouse_id_fkey FOREIGN KEY (warehouse_id) REFERENCES public.warehouse(warehouse_id);
+
+
+--
+-- Name: transfer_request transfer_request_from_warehouse_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transfer_request
+    ADD CONSTRAINT transfer_request_from_warehouse_id_fkey FOREIGN KEY (from_warehouse_id) REFERENCES public.warehouse(warehouse_id);
+
+
+--
+-- Name: transfer_request transfer_request_item_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transfer_request
+    ADD CONSTRAINT transfer_request_item_id_fkey FOREIGN KEY (item_id) REFERENCES public.item(item_id);
+
+
+--
+-- Name: transfer_request transfer_request_requested_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transfer_request
+    ADD CONSTRAINT transfer_request_requested_by_fkey FOREIGN KEY (requested_by) REFERENCES public."user"(user_id);
+
+
+--
+-- Name: transfer_request transfer_request_reviewed_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transfer_request
+    ADD CONSTRAINT transfer_request_reviewed_by_fkey FOREIGN KEY (reviewed_by) REFERENCES public."user"(user_id);
+
+
+--
+-- Name: transfer_request transfer_request_to_warehouse_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transfer_request
+    ADD CONSTRAINT transfer_request_to_warehouse_id_fkey FOREIGN KEY (to_warehouse_id) REFERENCES public.warehouse(warehouse_id);
+
+
+--
+-- Name: user user_agency_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."user"
+    ADD CONSTRAINT user_agency_id_fkey FOREIGN KEY (agency_id) REFERENCES public.agency(agency_id);
+
+
+--
+-- Name: user user_assigned_warehouse_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."user"
+    ADD CONSTRAINT user_assigned_warehouse_id_fkey FOREIGN KEY (assigned_warehouse_id) REFERENCES public.warehouse(warehouse_id);
+
+
+--
+-- Name: user_role user_role_assigned_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_role
+    ADD CONSTRAINT user_role_assigned_by_fkey FOREIGN KEY (assigned_by) REFERENCES public."user"(user_id);
+
+
+--
+-- Name: user_role user_role_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_role
+    ADD CONSTRAINT user_role_role_id_fkey FOREIGN KEY (role_id) REFERENCES public.role(id) ON DELETE CASCADE;
+
+
+--
+-- Name: user_role user_role_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_role
+    ADD CONSTRAINT user_role_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(user_id) ON DELETE CASCADE;
+
+
+--
+-- Name: user_warehouse user_warehouse_assigned_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_warehouse
+    ADD CONSTRAINT user_warehouse_assigned_by_fkey FOREIGN KEY (assigned_by) REFERENCES public."user"(user_id);
+
+
+--
+-- Name: user_warehouse user_warehouse_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_warehouse
+    ADD CONSTRAINT user_warehouse_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(user_id) ON DELETE CASCADE;
+
+
+--
+-- Name: user_warehouse user_warehouse_warehouse_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_warehouse
+    ADD CONSTRAINT user_warehouse_warehouse_id_fkey FOREIGN KEY (warehouse_id) REFERENCES public.warehouse(warehouse_id) ON DELETE CASCADE;
+
+
+--
+-- Name: warehouse warehouse_custodian_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.warehouse
+    ADD CONSTRAINT warehouse_custodian_id_fkey FOREIGN KEY (custodian_id) REFERENCES public.custodian(custodian_id);
+
+
+--
+-- Name: warehouse warehouse_parish_code_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.warehouse
+    ADD CONSTRAINT warehouse_parish_code_fkey FOREIGN KEY (parish_code) REFERENCES public.parish(parish_code);
+
+
+--
+-- Name: xfreturn_item xfreturn_item_uom_code_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.xfreturn_item
+    ADD CONSTRAINT xfreturn_item_uom_code_fkey FOREIGN KEY (uom_code) REFERENCES public.unitofmeasure(uom_code);
+
+
+--
+-- Name: xfreturn_item xfreturn_item_xfreturn_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.xfreturn_item
+    ADD CONSTRAINT xfreturn_item_xfreturn_id_fkey FOREIGN KEY (xfreturn_id) REFERENCES public.xfreturn(xfreturn_id);
+
+
+--
+-- PostgreSQL database dump complete
+--
+
+\unrestrict QlgGGbpSAR8vLdCUDnHxRgIzhFHPq3DVwFNdZuWI2ozl3vaG0dloBWXySKQg3r1
+
