@@ -186,9 +186,23 @@
                             <div class="card">
                                 <div class="card-body">
                                     <h5 class="mb-3"><i class="bi bi-plus-circle"></i> Add Donation Item</h5>
+                                    
+                                    <!-- Cost Definition Help -->
+                                    <div class="alert alert-info mb-3" style="font-size: 0.9rem;">
+                                        <strong><i class="bi bi-info-circle"></i> Cost Definitions:</strong>
+                                        <div class="row mt-2">
+                                            <div class="col-md-6">
+                                                <strong>PURCHASE Costs:</strong> {% for cd in cost_defs %}{% if cd.cost_type == 'PURCHASE' %}{{ cd.cost_name }}{% if not loop.last %}, {% endif %}{% endif %}{% endfor %}
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>ADDITIONAL Costs:</strong> {% for cd in cost_defs %}{% if cd.cost_type == 'ADDITIONAL' %}{{ cd.cost_name }}{% if not loop.last %}, {% endif %}{% endif %}{% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
                                 <div id="addItemForm">
                                     <div class="row">
-                                        <div class="col-md-4 mb-3">
+                                        <div class="col-md-6 mb-3">
                                             <label for="new_item_id" class="form-label">Item *</label>
                                             <select class="form-select" id="new_item_id">
                                                 <option value="">Select item...</option>
@@ -199,29 +213,36 @@
                                                 {% endfor %}
                                             </select>
                                         </div>
-                                        <div class="col-md-4 mb-3">
-                                            <label for="new_donation_type" class="form-label">Type *</label>
-                                            <select class="form-select" id="new_donation_type">
-                                                <option value="GOODS" selected>GOODS</option>
-                                                <option value="FUNDS">FUNDS</option>
-                                            </select>
+                                        <div class="col-md-3 mb-3">
+                                            <label for="new_donation_type" class="form-label">
+                                                Type * 
+                                                <i class="bi bi-info-circle" data-bs-toggle="tooltip" title="Auto-set based on item category"></i>
+                                            </label>
+                                            <input type="text" class="form-control" id="new_donation_type" value="" readonly style="background-color: #e9ecef; cursor: not-allowed;" placeholder="Select item first">
+                                            <small class="text-muted" id="category_hint">Auto-set</small>
                                         </div>
-                                        <div class="col-md-4 mb-3">
+                                        <div class="col-md-3 mb-3">
                                             <label for="new_quantity" class="form-label">Quantity *</label>
                                             <input type="number" class="form-control" id="new_quantity" step="0.01" min="0" value="1.00" placeholder="1.00">
-                                            <small class="text-muted" id="uom_hint">Unit: <span id="selected_uom">—</span></small>
+                                            <small class="text-muted" id="quantity_hint">Default: 1.00</small>
                                         </div>
                                     </div>
                                     <div class="row">
                                         <div class="col-md-3 mb-3">
-                                            <label for="new_item_cost" class="form-label">Item Cost *</label>
+                                            <label for="new_item_cost" class="form-label">
+                                                Item Cost * 
+                                                <i class="bi bi-info-circle" data-bs-toggle="tooltip" title="PURCHASE cost per unit"></i>
+                                            </label>
                                             <input type="number" class="form-control" id="new_item_cost" step="0.01" min="0" value="0.00" placeholder="0.00">
-                                            <small class="text-muted">Purchase price</small>
+                                            <small class="text-muted" id="item_cost_hint">Purchase price per unit</small>
                                         </div>
                                         <div class="col-md-3 mb-3">
-                                            <label for="new_addon_cost" class="form-label">Addon Cost *</label>
+                                            <label for="new_addon_cost" class="form-label">
+                                                Addon Cost * 
+                                                <i class="bi bi-info-circle" data-bs-toggle="tooltip" title="ADDITIONAL costs (transport, storage, etc.)"></i>
+                                            </label>
                                             <input type="number" class="form-control" id="new_addon_cost" step="0.01" min="0" value="0.00" placeholder="0.00">
-                                            <small class="text-muted">Storage, transport, etc.</small>
+                                            <small class="text-muted" id="addon_cost_hint">Additional costs per unit</small>
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label for="new_uom_code" class="form-label">UOM *</label>
@@ -234,7 +255,7 @@
                                                 {% endfor %}
                                             </select>
                                             <input type="hidden" id="new_uom_code_hidden" value="">
-                                            <small class="text-muted">Auto-filled</small>
+                                            <small class="text-muted" id="uom_hint">Unit: <span id="selected_uom">—</span></small>
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label for="new_location_name" class="form-label">Location *</label>
@@ -309,37 +330,117 @@
 <script nonce="{{ csp_nonce() }}">
 let itemCounter = 0;
 const donationItems = [];
+let currentCategoryType = null;
 
-// Auto-populate UOM from Item Master when item is selected
-document.getElementById('new_item_id').addEventListener('change', function() {
-    const selectedOption = this.options[this.selectedIndex];
-    const defaultUomCode = selectedOption.getAttribute('data-uom');
+// Fetch item category and adjust form fields dynamically
+document.getElementById('new_item_id').addEventListener('change', async function() {
+    const itemId = this.value;
+    const donationTypeInput = document.getElementById('new_donation_type');
+    const categoryHint = document.getElementById('category_hint');
+    const quantityHint = document.getElementById('quantity_hint');
+    const itemCostHint = document.getElementById('item_cost_hint');
+    const addonCostInput = document.getElementById('new_addon_cost');
+    const addonCostHint = document.getElementById('addon_cost_hint');
     const uomSelect = document.getElementById('new_uom_code');
     const uomHidden = document.getElementById('new_uom_code_hidden');
     const uomHint = document.getElementById('selected_uom');
     
-    if (defaultUomCode) {
-        // Auto-select the UOM from item's default_uom_code
-        uomSelect.value = defaultUomCode;
-        uomHidden.value = defaultUomCode;  // Store in hidden field for form submission
-        uomHint.textContent = defaultUomCode;
-        // Keep UOM field disabled (read-only)
-        uomSelect.disabled = true;
-        uomSelect.style.backgroundColor = '#e9ecef';
-    } else {
-        // No item selected - reset UOM
-        uomSelect.value = '';
-        uomHidden.value = '';
-        uomHint.textContent = '—';
-        uomSelect.disabled = true;
-        uomSelect.style.backgroundColor = '#e9ecef';
+    if (!itemId) {
+        resetFormFields();
+        return;
+    }
+    
+    try {
+        const response = await fetch(`{{ url_for('donations.get_item_category', item_id=0) }}`.replace('/0', `/${itemId}`));
+        if (!response.ok) {
+            throw new Error('Failed to fetch item category');
+        }
+        
+        const data = await response.json();
+        currentCategoryType = data.category_type;
+        
+        donationTypeInput.value = data.category_type;
+        categoryHint.textContent = `${data.category_desc} (${data.category_type})`;
+        
+        uomSelect.value = data.default_uom_code;
+        uomHidden.value = data.default_uom_code;
+        uomHint.textContent = data.default_uom_code;
+        
+        if (data.category_type === 'GOODS') {
+            enableFieldsForGoods();
+        } else if (data.category_type === 'FUNDS') {
+            enableFieldsForFunds();
+        }
+        
+    } catch (error) {
+        console.error('Error fetching category:', error);
+        alert('Error loading item category information. Please try again.');
+        resetFormFields();
     }
 });
 
-// Add item button click handler
+function enableFieldsForGoods() {
+    const addonCostInput = document.getElementById('new_addon_cost');
+    const addonCostHint = document.getElementById('addon_cost_hint');
+    const itemCostHint = document.getElementById('item_cost_hint');
+    const quantityHint = document.getElementById('quantity_hint');
+    
+    addonCostInput.disabled = false;
+    addonCostInput.style.backgroundColor = '';
+    addonCostInput.style.cursor = '';
+    addonCostInput.value = '0.00';
+    
+    itemCostHint.textContent = 'Purchase price per unit';
+    addonCostHint.textContent = 'Transport, storage, CIF, etc.';
+    quantityHint.textContent = 'Quantity of goods';
+}
+
+function enableFieldsForFunds() {
+    const addonCostInput = document.getElementById('new_addon_cost');
+    const addonCostHint = document.getElementById('addon_cost_hint');
+    const itemCostHint = document.getElementById('item_cost_hint');
+    const quantityHint = document.getElementById('quantity_hint');
+    
+    addonCostInput.value = '0.00';
+    addonCostInput.disabled = true;
+    addonCostInput.style.backgroundColor = '#e9ecef';
+    addonCostInput.style.cursor = 'not-allowed';
+    
+    itemCostHint.textContent = 'Donated value per instance';
+    addonCostHint.textContent = 'Always 0.00 for FUNDS';
+    quantityHint.textContent = 'Number of fund instances';
+}
+
+function resetFormFields() {
+    currentCategoryType = null;
+    const donationTypeInput = document.getElementById('new_donation_type');
+    const categoryHint = document.getElementById('category_hint');
+    const addonCostInput = document.getElementById('new_addon_cost');
+    const uomSelect = document.getElementById('new_uom_code');
+    const uomHidden = document.getElementById('new_uom_code_hidden');
+    const uomHint = document.getElementById('selected_uom');
+    
+    donationTypeInput.value = '';
+    categoryHint.textContent = 'Auto-set';
+    
+    addonCostInput.disabled = false;
+    addonCostInput.style.backgroundColor = '';
+    addonCostInput.style.cursor = '';
+    addonCostInput.value = '0.00';
+    
+    uomSelect.value = '';
+    uomHidden.value = '';
+    uomHint.textContent = '—';
+    
+    document.getElementById('item_cost_hint').textContent = 'Purchase price per unit';
+    document.getElementById('addon_cost_hint').textContent = 'Additional costs per unit';
+    document.getElementById('quantity_hint').textContent = 'Default: 1.00';
+}
+
+// Add item button click handler with GOODS/FUNDS validation
 document.getElementById('addItemBtn').addEventListener('click', function() {
     const itemSelect = document.getElementById('new_item_id');
-    const donationTypeSelect = document.getElementById('new_donation_type');
+    const donationTypeInput = document.getElementById('new_donation_type');
     const quantityInput = document.getElementById('new_quantity');
     const itemCostInput = document.getElementById('new_item_cost');
     const addonCostInput = document.getElementById('new_addon_cost');
@@ -348,45 +449,63 @@ document.getElementById('addItemBtn').addEventListener('click', function() {
     const locationInput = document.getElementById('new_location_name');
     const commentsInput = document.getElementById('new_item_comments');
     
-    // Validate
     if (!itemSelect.value) {
         alert('Please select an item');
         itemSelect.focus();
         return;
     }
-    if (!quantityInput.value || parseFloat(quantityInput.value) < 0) {
-        alert('Please enter a valid quantity (>= 0)');
+    
+    if (!currentCategoryType) {
+        alert('Please wait for category information to load');
+        return;
+    }
+    
+    const qty = parseFloat(quantityInput.value);
+    const itemCost = parseFloat(itemCostInput.value);
+    const addonCost = parseFloat(addonCostInput.value);
+    
+    if (isNaN(qty) || qty < 0) {
+        alert('Please enter a valid quantity (must be >= 0)');
         quantityInput.focus();
         return;
     }
-    if (!itemCostInput.value || parseFloat(itemCostInput.value) < 0) {
+    
+    if (isNaN(itemCost) || itemCost < 0) {
         alert('Please enter a valid item cost (>= 0)');
         itemCostInput.focus();
         return;
     }
-    if (!addonCostInput.value || parseFloat(addonCostInput.value) < 0) {
+    
+    if (isNaN(addonCost) || addonCost < 0) {
         alert('Please enter a valid addon cost (>= 0)');
         addonCostInput.focus();
         return;
     }
-    // FUNDS validation: addon_cost must be 0.00
-    if (donationTypeSelect.value === 'FUNDS' && parseFloat(addonCostInput.value) !== 0) {
+    
+    if (currentCategoryType === 'FUNDS' && addonCost !== 0) {
         alert('Addon cost must be 0.00 for FUNDS donations');
         addonCostInput.focus();
         return;
     }
+    
+    if (itemCost + addonCost <= 0) {
+        alert('Total cost (item cost + addon cost) must be greater than 0');
+        itemCostInput.focus();
+        return;
+    }
+    
     if (!uomHidden.value) {
         alert('Please select an item with a valid unit of measure');
         itemSelect.focus();
         return;
     }
+    
     if (!locationInput.value.trim()) {
         alert('Please enter a location');
         locationInput.focus();
         return;
     }
     
-    // Get item details
     const selectedItemOption = itemSelect.options[itemSelect.selectedIndex];
     const selectedUomOption = uomSelect.options[uomSelect.selectedIndex];
     
@@ -394,12 +513,12 @@ document.getElementById('addItemBtn').addEventListener('click', function() {
         id: ++itemCounter,
         item_id: itemSelect.value,
         item_name: selectedItemOption.getAttribute('data-name'),
-        donation_type: donationTypeSelect.value,
-        quantity: parseFloat(quantityInput.value),
-        item_cost: parseFloat(itemCostInput.value),
-        addon_cost: parseFloat(addonCostInput.value),
+        donation_type: currentCategoryType,
+        quantity: qty,
+        item_cost: itemCost,
+        addon_cost: addonCost,
         uom_code: uomHidden.value,
-        uom_desc: selectedUomOption.getAttribute('data-desc'),
+        uom_desc: selectedUomOption ? selectedUomOption.getAttribute('data-desc') : uomHidden.value,
         location_name: locationInput.value.trim().toUpperCase(),
         comments: commentsInput.value.trim().toUpperCase()
     };
@@ -407,17 +526,13 @@ document.getElementById('addItemBtn').addEventListener('click', function() {
     donationItems.push(item);
     updateItemsTable();
     
-    // Clear form
     itemSelect.value = '';
-    donationTypeSelect.value = 'GOODS';
+    resetFormFields();
     quantityInput.value = '1.00';
     itemCostInput.value = '0.00';
     addonCostInput.value = '0.00';
-    uomSelect.value = '';
-    uomHidden.value = '';
     locationInput.value = 'DONATION RECEIVED';
     commentsInput.value = '';
-    document.getElementById('selected_uom').textContent = '—';
     
     itemSelect.focus();
 });
@@ -454,14 +569,16 @@ function updateItemsTable() {
         noItemsMsg.classList.remove('d-block');
         noItemsMsg.classList.add('d-none');
         
-        // Build table HTML
         let tableHtml = `
             <div class="table-responsive">
                 <table class="modern-table">
                     <thead>
                         <tr>
                             <th scope="col">Item</th>
+                            <th scope="col">Type</th>
                             <th scope="col" class="text-end">Quantity</th>
+                            <th scope="col" class="text-end">Item Cost</th>
+                            <th scope="col" class="text-end">Addon Cost</th>
                             <th scope="col">Comments</th>
                             <th scope="col" class="text-end">Actions</th>
                         </tr>
@@ -470,19 +587,26 @@ function updateItemsTable() {
         `;
         
         donationItems.forEach(item => {
+            const typeBadge = item.donation_type === 'GOODS' 
+                ? '<span class="badge bg-primary">GOODS</span>' 
+                : '<span class="badge bg-success">FUNDS</span>';
+            
             tableHtml += `
                 <tr>
-                    <td>${item.item_name}</td>
-                    <td class="text-end">
-                        <strong>${item.quantity.toFixed(2)}</strong>
-                        ${item.uom_desc}
-                    </td>
                     <td>
-                        ${item.comments ? item.comments : '<span class="text-muted">—</span>'}
+                        <strong>${item.item_name}</strong><br>
+                        <small class="text-muted">${item.location_name}</small>
                     </td>
+                    <td>${typeBadge}</td>
+                    <td class="text-end">
+                        <strong>${item.quantity.toFixed(2)}</strong> ${item.uom_desc}
+                    </td>
+                    <td class="text-end">$${item.item_cost.toFixed(2)}</td>
+                    <td class="text-end">$${item.addon_cost.toFixed(2)}</td>
+                    <td>${item.comments ? item.comments : '<span class="text-muted">—</span>'}</td>
                     <td class="text-end">
                         <button type="button" class="btn btn-sm btn-danger" data-action="remove-donation-item" data-item-id="${item.id}">
-                            <i class="bi bi-trash"></i> Remove
+                            <i class="bi bi-trash"></i>
                         </button>
                     </td>
                 </tr>
@@ -497,19 +621,18 @@ function updateItemsTable() {
         
         tableContainer.innerHTML = tableHtml;
         
-        // Build hidden inputs for form submission
         let hiddenHtml = '';
         donationItems.forEach((item, index) => {
             const num = index + 1;
             hiddenHtml += `
-                <input type="hidden" name="item_id_${num}" value="${item.item_id}">
-                <input type="hidden" name="donation_type_${num}" value="${item.donation_type}">
-                <input type="hidden" name="quantity_${num}" value="${item.quantity}">
-                <input type="hidden" name="item_cost_${num}" value="${item.item_cost}">
-                <input type="hidden" name="addon_cost_${num}" value="${item.addon_cost}">
-                <input type="hidden" name="uom_id_${num}" value="${item.uom_code}">
-                <input type="hidden" name="location_name_${num}" value="${item.location_name}">
-                <input type="hidden" name="item_comments_${num}" value="${item.comments}">
+                <input type="hidden" name="item_id_${num}" value="${Number(item.item_id)}">
+                <input type="hidden" name="donation_type_${num}" value="${String(item.donation_type)}">
+                <input type="hidden" name="quantity_${num}" value="${Number(item.quantity).toFixed(2)}">
+                <input type="hidden" name="item_cost_${num}" value="${Number(item.item_cost).toFixed(2)}">
+                <input type="hidden" name="addon_cost_${num}" value="${Number(item.addon_cost).toFixed(2)}">
+                <input type="hidden" name="uom_id_${num}" value="${String(item.uom_code)}">
+                <input type="hidden" name="location_name_${num}" value="${String(item.location_name)}">
+                <input type="hidden" name="item_comments_${num}" value="${String(item.comments)}">
             `;
         });
         

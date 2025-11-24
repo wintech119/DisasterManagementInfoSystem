@@ -1,0 +1,177 @@
+Under the header, display a grid of donation items. The behaviour must honour the comments on donation_item, itemcatg, and itemcostdef.
+
+A.3.1 Use itemcatg to drive donation type and field behaviour
+
+Each item has a category_id → itemcatg.category_id.
+
+itemcatg.category_type is either 'GOODS' or 'FUNDS' (see check constraint and comments).
+
+When the user selects an item_id in the grid:
+
+Look up the associated item.category_id and then the itemcatg record.
+
+Determine category_type ('GOODS' or 'FUNDS').
+
+Automatically set donation_item.donation_type equal to this category_type.
+
+The user must not be able to choose a conflicting type:
+
+Make donation_type read-only or hidden (but still stored in the DB) and always equal to the item’s category_type.
+
+Use the itemcatg.category_desc in tooltips/help text to explain what kind of donation this line represents.
+
+Only allow items where itemcatg.status_code = 'A' in the selection list.
+
+The UI must dynamically enable or grey out fields depending on category_type:
+
+If category_type = 'GOODS':
+
+Fields enabled (editable):
+
+item_qty
+
+item_cost
+
+addon_cost
+
+uom_code (unit of measure from unitofmeasure)
+
+location_name
+
+comments_text
+
+Behaviour:
+
+item_qty = quantity of goods.
+
+item_cost = purchase cost per unit (PURCHASE cost).
+
+addon_cost = additional costs per unit (transport, storage, CIF etc.).
+
+uom_code must come from standard units for the goods.
+
+Fields that are not applicable for GOODS (if any UI elements were added specifically for FUNDS behaviour) must be greyed out/disabled so users cannot enter conflicting data.
+
+If category_type = 'FUNDS':
+
+Fields enabled (editable):
+
+item_qty (number of fund “instances”; default 1)
+
+item_cost (average value per instance of funds)
+
+uom_code (but for FUNDS this should represent the currency)
+
+location_name
+
+comments_text
+
+Fields greyed out / read-only:
+
+addon_cost field must be disabled/greyed and always stored as 0.00 (per check constraint: for FUNDS, addon_cost = 0.00).
+
+Behaviour:
+
+item_qty = number of fund instances (default 1).
+
+item_cost = average value per instance.
+
+uom_code should default to the currency of the donor’s country (via donation.currency_code / donor country logic) but still allow override to another currency, consistent with schema comments.
+
+Show helper text explaining that for FUNDS, all extra costs should already be reflected in the donated value and no additional cost is captured as addon_cost.
+
+If the user changes the item_id in an existing row:
+
+Re-fetch the new itemcatg.category_type.
+
+Reset donation_type to match the new category.
+
+Re-apply the enable/disable rules above.
+
+Clear or reset any now-invalid field values (e.g. if switching from GOODS to FUNDS, auto-set addon_cost back to 0.00 and grey it out).
+
+A.3.2 Fields per row (edit/create)
+
+Each row in the donation items grid must persist to donation_item with:
+
+item_id (dropdown/search from item, filtered to active categories where itemcatg.status_code = 'A')
+
+donation_type (auto-set, read-only, equal to itemcatg.category_type = 'GOODS' or 'FUNDS')
+
+item_qty
+
+Default 1.00
+
+Must be ≥ 0.00 (c_donation_item_1a)
+
+item_cost
+
+For GOODS: purchase cost per item.
+
+For FUNDS: donated value per instance.
+
+Must be ≥ 0.00.
+
+addon_cost
+
+For GOODS: editable; must be >= 0.00.
+
+For FUNDS: always 0.00, greyed out/read-only in the UI.
+
+uom_code
+
+For GOODS: units from unitofmeasure corresponding to the physical goods.
+
+For FUNDS: should default to the currency (per donor country / chosen currency_code) with the ability to select another currency, per the schema comments.
+
+location_name (mandatory)
+
+status_code (P/V – follow existing defaults and logic)
+
+comments_text (optional)
+
+A.3.3 Use itemcostdef for cost semantics (no schema change)
+
+Continue to use itemcostdef to clarify cost semantics in the UI:
+
+Treat:
+
+item_cost as PURCHASE cost (itemcostdef.cost_type = 'PURCHASE').
+
+addon_cost as ADDITIONAL cost (itemcostdef.cost_type = 'ADDITIONAL').
+
+In the UI:
+
+Provide a “Cost definition” tooltip/section per row or globally on the page that lists active (status_code = 'A') itemcostdef records, grouped by cost_type:
+
+Show cost_name and cost_desc so users know what should be considered purchase vs additional cost.
+
+This breakdown is for guidance only; you still only persist item_cost and addon_cost exactly as defined in donation_item.
+
+A.3.4 Validation & persistence (unchanged constraints)
+
+All validations must still match the donation_item table constraints and comments:
+
+Enforce:
+
+donation_type in ('GOODS','FUNDS') (auto-set from itemcatg.category_type).
+
+item_qty >= 0.00.
+
+item_cost >= 0.00.
+
+For FUNDS: addon_cost = 0.00.
+
+For GOODS: addon_cost >= 0.00.
+
+Final check: item_cost + addon_cost > 0.00.
+
+On submit:
+
+Upsert donation_item rows for the given donation_id, respecting pk_donation_item (donation_id, item_id).
+
+If a row already exists for (donation_id, item_id), update it instead of inserting a duplicate.
+
+Preserve existing verification, status, and audit behaviour.
+
+No new columns or constraints should be added. All changes are UI and business-logic only, driven by itemcatg.category_type, while keeping the database schema and security posture unchanged.

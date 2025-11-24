@@ -113,6 +113,34 @@ def list_donations():
                          events=events)
 
 
+@donations_bp.route('/api/item-category/<int:item_id>')
+@login_required
+@feature_required('donation_management')
+def get_item_category(item_id):
+    """
+    API endpoint to get item category information for dynamic form behavior.
+    Returns category_type (GOODS/FUNDS) and category details.
+    """
+    from app.db.models import ItemCategory
+    
+    item = Item.query.get_or_404(item_id)
+    category = ItemCategory.query.get(item.category_id)
+    
+    if not category:
+        return jsonify({'error': 'Category not found'}), 404
+    
+    return jsonify({
+        'item_id': item.item_id,
+        'item_name': item.item_name,
+        'sku_code': item.sku_code,
+        'category_id': category.category_id,
+        'category_code': category.category_code,
+        'category_desc': category.category_desc,
+        'category_type': category.category_type,
+        'default_uom_code': item.default_uom_code
+    })
+
+
 @donations_bp.route('/create', methods=['GET', 'POST'])
 @login_required
 @feature_required('donation_management')
@@ -272,13 +300,13 @@ def create_donation():
                 addon_cost = item_info['addon_cost']
                 quantity = item_info['quantity']
                 
-                # Validate quantity for all types
-                if quantity <= 0:
-                    errors.append(f"Donation items must have quantity greater than 0")
+                # Validate quantity for all types (allow >= 0 to match DB constraint)
+                if quantity < 0:
+                    errors.append(f"Donation items must have quantity >= 0")
                     continue
                 
                 if donation_type == 'FUNDS':
-                    # FUNDS must have item_cost > 0, addon_cost = 0, and quantity > 0
+                    # FUNDS must have item_cost > 0, addon_cost = 0, and quantity >= 0
                     if item_cost <= 0:
                         errors.append(f"FUNDS donations must have item cost greater than 0.00")
                         continue
