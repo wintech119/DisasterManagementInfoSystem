@@ -1,0 +1,42 @@
+Update the existing Donation Acceptance / Add Donation Item functionality so that the Quantity field behaves differently for FUNDS vs GOODS, without breaking anything else in the system.
+
+IMPORTANT CONSTRAINTS
+- Do NOT change:
+  - Any database schema (no new columns, no alters, no drops).
+  - Any existing routes, templates, menus, navigation, or page layout.
+  - Any existing workflows, security fixes, CSP, auth, or role checks.
+- Only adjust the logic for how the Quantity field behaves on the existing Donation Items section of the donation acceptance page.
+
+REQUIREMENT
+When a user is accepting a donation and adding donation items:
+
+1. Determine the category type of the selected item:
+   - From the existing relationship item.category_id → itemcatg.category_id → itemcatg.category_type.
+   - category_type can be 'GOODS' or 'FUNDS'.
+
+2. Behaviour when category_type = 'FUNDS':
+   - The Quantity field in the Donation Items block must:
+     • Default to 1.00 when the item is selected.
+     • Be displayed as read-only / disabled so the user cannot change it.
+   - In the UI, the user should clearly see “1.00” as the quantity, but they must not be able to edit it.
+   - On form submit, the backend must always treat FUNDS items as:
+     • donation_item.item_qty = 1.00
+     • Even if a malicious user tries to tamper with the request, the server-side logic must override any incoming quantity for FUNDS and force item_qty to 1.00.
+   - All other fields (Item, Type, Location, Item Cost, UOM, Comments, etc.) must continue to behave exactly as they do now.
+
+3. Behaviour when category_type = 'GOODS':
+   - Keep the current behaviour exactly as it is:
+     • Quantity should default to 1.00 (as it does now).
+     • Quantity must remain editable by the user.
+   - No changes to any validation rules for GOODS quantities.
+
+4. General:
+   - Do not alter any existing validations unrelated to this rule.
+   - Do not introduce any visual regressions to the Donation Items section.
+   - Ensure the change works for both Create and Edit of donation items.
+   - Ensure that all current business rules, security checks, and database constraints continue to pass.
+
+In summary:
+- FUNDS items → Quantity is fixed at 1.00 (default + non-editable, enforced in both UI and backend).
+- GOODS items → Quantity behaves exactly as it does today.
+Implement this using the existing code structure and patterns without breaking anything else.

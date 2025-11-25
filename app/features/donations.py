@@ -14,7 +14,7 @@ from sqlalchemy.orm.exc import StaleDataError
 from app.db import db
 from app.utils.timezone import now as jamaica_now
 from app.db.models import (Donation, DonationItem, DonationDoc, Donor, Event, Custodian, 
-                          Item, UnitOfMeasure, Country, Currency, ItemCostDef)
+                          Item, ItemCategory, UnitOfMeasure, Country, Currency, ItemCostDef)
 from app.core.audit import add_audit_fields, add_verify_fields
 from app.core.decorators import feature_required
 import os
@@ -980,10 +980,20 @@ def add_donation_item(donation_id):
                                      form_data=request.form,
                                      duplicate_item_id=duplicate_item_id)
             
+            # FUNDS items: Server-side enforcement - quantity is always 1.00
+            # This prevents tampering regardless of what the form submitted
+            item_obj = Item.query.get(int(item_id))
+            is_funds_item = False
+            if item_obj:
+                category = ItemCategory.query.get(item_obj.category_id)
+                if category and category.category_type == 'FUNDS':
+                    is_funds_item = True
+            
             donation_item = DonationItem()
             donation_item.donation_id = donation_id
             donation_item.item_id = int(item_id)
-            donation_item.item_qty = Decimal(item_qty)
+            # Force quantity to 1.00 for FUNDS items, regardless of submitted value
+            donation_item.item_qty = Decimal('1.00') if is_funds_item else Decimal(item_qty)
             donation_item.uom_code = uom_code
             donation_item.location_name = location_name.upper()
             donation_item.status_code = 'V'
@@ -1103,7 +1113,16 @@ def edit_donation_item(donation_id, item_id):
                                      uoms=uoms,
                                      form_data=request.form)
             
-            donation_item.item_qty = Decimal(item_qty)
+            # FUNDS items: Server-side enforcement - quantity is always 1.00
+            # This prevents tampering regardless of what the form submitted
+            is_funds_item = False
+            if donation_item.item:
+                category = ItemCategory.query.get(donation_item.item.category_id)
+                if category and category.category_type == 'FUNDS':
+                    is_funds_item = True
+            
+            # Force quantity to 1.00 for FUNDS items, regardless of submitted value
+            donation_item.item_qty = Decimal('1.00') if is_funds_item else Decimal(item_qty)
             donation_item.uom_code = uom_code
             
             donation_item.location_name = location_name.upper()
@@ -1138,10 +1157,18 @@ def edit_donation_item(donation_id, item_id):
     
     uoms = UnitOfMeasure.query.order_by(UnitOfMeasure.uom_code).all()
     
+    # Determine if item is FUNDS type for quantity field behavior
+    is_funds_item = False
+    if donation_item.item:
+        category = ItemCategory.query.get(donation_item.item.category_id)
+        if category and category.category_type == 'FUNDS':
+            is_funds_item = True
+    
     return render_template('donations/edit_item.html',
                          donation=donation,
                          donation_item=donation_item,
-                         uoms=uoms)
+                         uoms=uoms,
+                         is_funds_item=is_funds_item)
 
 
 @donations_bp.route('/<int:donation_id>/items/<int:item_id>/delete', methods=['POST'])
