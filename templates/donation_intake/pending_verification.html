@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% from 'relief_requests/_summary_cards.html' import render_summary_cards %}
+
+{% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css') }}">
+{% endblock %}
+
+{% block title %}Pending Intake Verification{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="page-header mb-0">
+            <div class="page-title">
+                <i class="bi bi-clipboard-check page-title-icon"></i>
+                <h1 class="page-title-text">Pending Intake Verification</h1>
+            </div>
+            <p class="text-muted mb-0">Review and verify donation intake entries</p>
+        </div>
+        <a href="{{ url_for('donation_intake.list_intakes') }}" class="btn-relief-secondary">
+            <i class="bi bi-arrow-left"></i>
+            All Intakes
+        </a>
+    </div>
+
+    {% set summary_metrics = [
+        {
+            'icon': 'hourglass-split',
+            'label': 'Pending Verification',
+            'value': pending_count,
+            'variant': 'warning'
+        }
+    ] %}
+    {{ render_summary_cards(summary_metrics) }}
+
+    <div class="card mb-3">
+        <div class="card-body p-3">
+            <form method="GET" action="{{ url_for('donation_intake.pending_verification') }}" class="row g-2">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" 
+                               class="form-control" 
+                               name="search" 
+                               value="{{ search_query }}" 
+                               placeholder="Search by donation or warehouse..."
+                               aria-label="Search intakes">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn-relief-secondary w-100">
+                        <i class="bi bi-search"></i> Search
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            {% if intakes %}
+            <div class="table-responsive">
+                <table class="modern-table">
+                    <thead>
+                        <tr>
+                            <th>Donation ID</th>
+                            <th>Donation Description</th>
+                            <th>Warehouse</th>
+                            <th>Entry Date</th>
+                            <th>Entered By</th>
+                            <th>Items</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for intake in intakes %}
+                        <tr>
+                            <td class="fw-bold">#{{ intake.donation_id }}</td>
+                            <td>{{ intake.donation.donation_desc|truncate(50) }}</td>
+                            <td>{{ intake.warehouse.warehouse_name }}</td>
+                            <td>{{ intake.intake_date|format_date }}</td>
+                            <td>{{ intake.create_by_id }}</td>
+                            <td>
+                                <span class="badge bg-info">
+                                    {{ intake.items|length }} items
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('donation_intake.verify_intake', donation_id=intake.donation_id, inventory_id=intake.inventory_id) }}" 
+                                   class="btn btn-sm btn-success">
+                                    <i class="bi bi-check-circle"></i> Verify
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-check-circle display-1 d-block mb-3"></i>
+                <p class="lead">No intakes pending verification</p>
+                {% if search_query %}
+                <p>Try adjusting your search criteria</p>
+                {% else %}
+                <p>All intake entries have been verified</p>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

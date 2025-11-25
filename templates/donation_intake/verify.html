@@ -1,0 +1,412 @@
+{% extends 'base.html' %}
+
+{% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css') }}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" integrity="sha384-RkASv+6KfBMW9eknReJIJ6b3UnjKOKC5bOUaNgIY778NFbQ8MtWq9Lr/khUgqtTt" crossorigin="anonymous">
+<style nonce="{{ csp_nonce() }}">
+.item-card {
+    border-left: 4px solid #ffc107;
+    background-color: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    margin-bottom: 0.875rem;
+    transition: all 0.2s;
+}
+.item-card:hover {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    border-left-color: #ffca2c;
+}
+.batch-indicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #ffc107;
+    margin-right: 5px;
+}
+.required-field::after {
+    content: " *";
+    color: #dc3545;
+}
+.field-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6c757d;
+    margin-bottom: 0.2rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+.qty-input {
+    width: 115px;
+}
+.item-header {
+    background-color: #fff3cd;
+    border-bottom: 1px solid #ffc107;
+    padding: 0.6rem 0.875rem;
+    border-radius: 0.375rem 0.375rem 0 0;
+}
+.item-body {
+    padding: 0.75rem 0.875rem;
+}
+.row-divider {
+    border-top: 1px dashed #dee2e6;
+    margin: 0.5rem 0;
+}
+.donated-qty-box {
+    text-align: center;
+    padding: 0.5rem;
+    background-color: #f8f9fa;
+    border-radius: 0.25rem;
+}
+.readonly-field {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+}
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type=number] {
+    -moz-appearance: textfield;
+}
+</style>
+{% endblock %}
+
+{% block title %}Verify Donation Intake{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="page-header mb-0">
+            <div class="page-title">
+                <i class="bi bi-clipboard-check page-title-icon"></i>
+                <h1 class="page-title-text">Verify Intake Entry</h1>
+            </div>
+            <p class="text-muted mb-0">Donation #{{ donation.donation_id }} → {{ warehouse.warehouse_name }}</p>
+        </div>
+        <a href="{{ url_for('donation_intake.pending_verification') }}" class="btn-relief-secondary">
+            <i class="bi bi-arrow-left"></i>
+            Back to List
+        </a>
+    </div>
+
+    <form method="POST" action="{{ url_for('donation_intake.verify_intake', donation_id=donation.donation_id, inventory_id=warehouse.warehouse_id) }}" id="verifyForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="version_nbr" value="{{ intake.version_nbr }}">
+        
+        <div class="row">
+            <div class="col-lg-9">
+                <div class="card mb-3">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            Verification Mode
+                        </h5>
+                        <p class="mb-0 mt-1 small">
+                            Review and adjust quantities as needed. Changes will be applied to inventory upon verification.
+                        </p>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Intake Date</label>
+                                <input type="text" class="form-control readonly-field" value="{{ intake.intake_date|format_date }}" readonly>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Entry By</label>
+                                <input type="text" class="form-control readonly-field" value="{{ intake.create_by_id }}" readonly>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Entry Date</label>
+                                <input type="text" class="form-control readonly-field" value="{{ intake.create_dtime|format_datetime if intake.create_dtime else '-' }}" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-box-seam text-primary"></i>
+                            Intake Items ({{ intake_items|length }} items)
+                        </h5>
+                        <p class="mb-0 mt-1 text-muted small">
+                            <i class="bi bi-info-circle"></i>
+                            You may adjust defective/expired quantities and batch details. Usable quantity is automatically calculated.
+                        </p>
+                    </div>
+                    <div class="card-body">
+                        {% for item in intake_items %}
+                        {% set donation_item = donation.items|selectattr('item_id', 'equalto', item.item_id)|first %}
+                        <div class="item-card">
+                            <div class="item-header">
+                                <div class="d-flex align-items-center">
+                                    <span class="batch-indicator"></span>
+                                    <div>
+                                        <strong class="d-block">{{ item.item.item_code }}</strong>
+                                        <small class="text-dark">{{ item.item.item_name }}</small>
+                                    </div>
+                                    <div class="ms-auto">
+                                        {% if item.item.is_batched_flag %}
+                                        <span class="badge bg-warning text-dark me-1" title="Batch tracking required">
+                                            <i class="bi bi-tag"></i> Batched
+                                        </span>
+                                        {% endif %}
+                                        {% if item.item.can_expire_flag %}
+                                        <span class="badge bg-danger" title="Expiry date required">
+                                            <i class="bi bi-calendar-x"></i> Perishable
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="item-body">
+                                <div class="row g-2 mb-2">
+                                    <div class="col-md-2">
+                                        <div class="field-label">Donated Qty</div>
+                                        <div class="donated-qty-box">
+                                            <strong class="text-primary fs-6">{{ donation_item.item_qty if donation_item else item.usable_qty + item.defective_qty + item.expired_qty }}</strong>
+                                            <small class="text-muted d-block fs-tiny">{{ item.uom_code }}</small>
+                                        </div>
+                                        <input type="hidden" name="donated_qty_{{ item.item_id }}" value="{{ donation_item.item_qty if donation_item else item.usable_qty + item.defective_qty + item.expired_qty }}">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="batch_no_{{ item.item_id }}" class="field-label">Batch No</label>
+                                        <input type="text" 
+                                               class="form-control form-control-sm text-uppercase" 
+                                               id="batch_no_{{ item.item_id }}"
+                                               name="batch_no_{{ item.item_id }}" 
+                                               value="{{ item.batch_no or '' }}"
+                                               placeholder="{% if item.item.is_batched_flag %}Required{% else %}Optional{% endif %}"
+                                               {% if item.item.is_batched_flag %}required{% endif %}>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="batch_date_{{ item.item_id }}" class="field-label">Batch Date</label>
+                                        <input type="text" 
+                                               class="form-control form-control-sm iso-date-picker" 
+                                               id="batch_date_{{ item.item_id }}"
+                                               name="batch_date_{{ item.item_id }}" 
+                                               value="{{ item.batch_date.isoformat() if item.batch_date else '' }}"
+                                               data-max-date="{{ today }}"
+                                               placeholder="YYYY-MM-DD"
+                                               {% if item.item.is_batched_flag %}required{% endif %}>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="expiry_date_{{ item.item_id }}" class="field-label">Expiry Date</label>
+                                        <input type="text" 
+                                               class="form-control form-control-sm iso-date-picker" 
+                                               id="expiry_date_{{ item.item_id }}"
+                                               name="expiry_date_{{ item.item_id }}" 
+                                               value="{{ item.expiry_date.isoformat() if item.expiry_date else '' }}"
+                                               data-min-date="{{ today }}"
+                                               placeholder="{% if item.item.can_expire_flag %}YYYY-MM-DD{% else %}N/A{% endif %}"
+                                               {% if item.item.can_expire_flag %}required{% else %}disabled{% endif %}
+                                               {% if not item.item.can_expire_flag %}class="form-control form-control-sm iso-date-picker readonly-field"{% endif %}>
+                                    </div>
+                                </div>
+                                
+                                <div class="row-divider"></div>
+                                
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-2">
+                                        <label class="field-label">UOM</label>
+                                        <input type="text" class="form-control form-control-sm readonly-field" value="{{ item.uom_code }}" readonly>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="field-label">Unit Cost ($J)</label>
+                                        <input type="text" class="form-control form-control-sm readonly-field" value="{{ item.avg_unit_value|format_currency }}" readonly>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="usable_qty_{{ item.item_id }}" class="field-label">Usable Qty</label>
+                                        <input type="number" 
+                                               class="form-control form-control-sm qty-input readonly-field usable-qty-field" 
+                                               id="usable_qty_{{ item.item_id }}"
+                                               name="usable_qty_{{ item.item_id }}" 
+                                               value="{{ item.usable_qty }}"
+                                               data-item-id="{{ item.item_id }}"
+                                               readonly>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label for="defective_qty_{{ item.item_id }}" class="field-label">Defective</label>
+                                        <input type="number" 
+                                               class="form-control form-control-sm qty-input editable-qty" 
+                                               id="defective_qty_{{ item.item_id }}"
+                                               name="defective_qty_{{ item.item_id }}" 
+                                               step="0.01" 
+                                               min="0"
+                                               value="{{ item.defective_qty }}"
+                                               data-item-id="{{ item.item_id }}"
+                                               data-type="defective">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="expired_qty_{{ item.item_id }}" class="field-label">Expired</label>
+                                        <input type="number" 
+                                               class="form-control form-control-sm qty-input editable-qty" 
+                                               id="expired_qty_{{ item.item_id }}"
+                                               name="expired_qty_{{ item.item_id }}" 
+                                               step="0.01" 
+                                               min="0"
+                                               value="{{ item.expired_qty }}"
+                                               data-item-id="{{ item.item_id }}"
+                                               data-type="expired">
+                                    </div>
+                                </div>
+
+                                <div class="row g-2 mt-2">
+                                    <div class="col-12">
+                                        <label for="item_comments_{{ item.item_id }}" class="field-label">Item Comments</label>
+                                        <input type="text" 
+                                               class="form-control form-control-sm" 
+                                               id="item_comments_{{ item.item_id }}"
+                                               name="item_comments_{{ item.item_id }}" 
+                                               value="{{ item.comments_text or '' }}"
+                                               maxlength="255"
+                                               placeholder="Optional comments">
+                                    </div>
+                                </div>
+
+                                <div class="row g-2 mt-1">
+                                    <div class="col-12">
+                                        <div class="invalid-feedback d-block qty-error-{{ item.item_id }} d-none">
+                                            <i class="bi bi-exclamation-circle"></i>
+                                            <span class="qty-error-text-{{ item.item_id }}"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('donation_intake.pending_verification') }}" class="btn-relief-secondary">
+                                <i class="bi bi-arrow-left"></i>
+                                Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success btn-lg" id="verifyBtn">
+                                <i class="bi bi-check-circle"></i>
+                                Verify & Update Inventory
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3">
+                <div class="card mb-3">
+                    <div class="card-header bg-light">
+                        <h6 class="card-title mb-0">
+                            <i class="bi bi-gift"></i>
+                            Donation Information
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row mb-0">
+                            <dt class="col-sm-5">Donation ID:</dt>
+                            <dd class="col-sm-7">#{{ donation.donation_id }}</dd>
+                            
+                            <dt class="col-sm-5">Donor:</dt>
+                            <dd class="col-sm-7">{{ donation.donor.donor_name }}</dd>
+                            
+                            <dt class="col-sm-5">Received:</dt>
+                            <dd class="col-sm-7">{{ donation.received_date|format_date }}</dd>
+                            
+                            <dt class="col-sm-5">Status:</dt>
+                            <dd class="col-sm-7">
+                                <span class="badge bg-success">Verified</span>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header bg-light">
+                        <h6 class="card-title mb-0">
+                            <i class="bi bi-building"></i>
+                            Target Warehouse
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row mb-0">
+                            <dt class="col-sm-5">Name:</dt>
+                            <dd class="col-sm-7">{{ warehouse.warehouse_name }}</dd>
+                            
+                            <dt class="col-sm-5">Location:</dt>
+                            <dd class="col-sm-7">{{ warehouse.location_name }}</dd>
+                        </dl>
+                    </div>
+                </div>
+
+                <div class="card border-info">
+                    <div class="card-header bg-info text-white">
+                        <h6 class="card-title mb-0">
+                            <i class="bi bi-info-circle"></i>
+                            Verification Rules
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="mb-0 small">
+                            <li><strong>Usable Qty</strong>: Auto-calculated (Donated - Defective - Expired)</li>
+                            <li><strong>Defective/Expired</strong>: Adjust as needed based on inspection</li>
+                            <li><strong>Usable Qty</strong>: Must be greater than zero</li>
+                            <li><strong>Batch Info</strong>: Both Batch No and Date required if provided</li>
+                            <li><strong>Expiry Date</strong>: Required for perishable items</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr" integrity="sha384-EXLfCNJIz7fcrm0+fY3M4TthqBP1J/gVLrV+QYTJ0EN2S2fRMxM3WO9k9j5XW9JL" crossorigin="anonymous"></script>
+<script nonce="{{ csp_nonce() }}">
+document.addEventListener('DOMContentLoaded', function() {
+    flatpickr('.iso-date-picker', {
+        dateFormat: 'Y-m-d',
+        allowInput: true
+    });
+
+    document.querySelectorAll('.editable-qty').forEach(function(input) {
+        input.addEventListener('change', function() {
+            updateUsableQty(this.dataset.itemId);
+        });
+        input.addEventListener('input', function() {
+            updateUsableQty(this.dataset.itemId);
+        });
+    });
+});
+
+function updateUsableQty(itemId) {
+    const donatedQty = parseFloat(document.querySelector(`input[name="donated_qty_${itemId}"]`).value) || 0;
+    const defectiveQty = parseFloat(document.querySelector(`input[name="defective_qty_${itemId}"]`).value) || 0;
+    const expiredQty = parseFloat(document.querySelector(`input[name="expired_qty_${itemId}"]`).value) || 0;
+    
+    const usableQty = donatedQty - defectiveQty - expiredQty;
+    const usableInput = document.querySelector(`input[name="usable_qty_${itemId}"]`);
+    const errorDiv = document.querySelector(`.qty-error-${itemId}`);
+    const errorText = document.querySelector(`.qty-error-text-${itemId}`);
+    
+    usableInput.value = usableQty.toFixed(2);
+    
+    if (defectiveQty + expiredQty > donatedQty) {
+        errorDiv.classList.remove('d-none');
+        errorText.textContent = 'Defective + Expired cannot exceed donated quantity';
+        usableInput.classList.add('is-invalid');
+    } else if (usableQty <= 0) {
+        errorDiv.classList.remove('d-none');
+        errorText.textContent = 'Usable quantity must be greater than zero';
+        usableInput.classList.add('is-invalid');
+    } else {
+        errorDiv.classList.add('d-none');
+        usableInput.classList.remove('is-invalid');
+    }
+}
+</script>
+{% endblock %}

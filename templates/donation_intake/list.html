@@ -9,7 +9,7 @@
 
 {% block content %}
 <div class="container-fluid py-4">
-    <!-- Page Header with Action Button -->
+    <!-- Page Header with Action Buttons -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div class="page-header mb-0">
             <div class="page-title">
@@ -17,10 +17,19 @@
                 <h1 class="page-title-text">Donation Intake</h1>
             </div>
         </div>
-        <a href="{{ url_for('donation_intake.create_intake') }}" class="btn-relief-primary">
-            <i class="bi bi-plus-circle"></i>
-            Intake Donation
-        </a>
+        <div class="d-flex gap-2">
+            {% if counts.get('pending', 0) > 0 %}
+            <a href="{{ url_for('donation_intake.pending_verification') }}" class="btn-relief-secondary position-relative">
+                <i class="bi bi-clipboard-check"></i>
+                Verify Intakes
+                <span class="badge bg-warning text-dark ms-1">{{ counts.get('pending', 0) }}</span>
+            </a>
+            {% endif %}
+            <a href="{{ url_for('donation_intake.create_intake') }}" class="btn-relief-primary">
+                <i class="bi bi-plus-circle"></i>
+                Intake Donation
+            </a>
+        </div>
     </div>
 
     <!-- Summary Metrics -->
@@ -32,9 +41,15 @@
             'variant': 'primary'
         },
         {
-            'icon': 'calendar-check',
-            'label': 'Recent (30 Days)',
-            'value': counts.get('recent', 0),
+            'icon': 'hourglass-split',
+            'label': 'Pending Verification',
+            'value': counts.get('pending', 0),
+            'variant': 'warning'
+        },
+        {
+            'icon': 'check-circle',
+            'label': 'Verified',
+            'value': counts.get('verified', 0),
             'variant': 'success'
         }
     ] %}
@@ -50,12 +65,20 @@
             <span class="filter-tab-count" aria-label="{{ counts.get('all', 0) }} total">{{ counts.get('all', 0) }}</span>
             {% endif %}
         </a>
-        <a href="{{ url_for('donation_intake.list_intakes', filter='recent') }}" 
-           class="filter-tab {% if current_filter == 'recent' %}active{% endif %}"
-           aria-current="{% if current_filter == 'recent' %}page{% endif %}">
-            Recent
-            {% if counts.get('recent', 0) > 0 %}
-            <span class="filter-tab-count" aria-label="{{ counts.get('recent', 0) }} recent">{{ counts.get('recent', 0) }}</span>
+        <a href="{{ url_for('donation_intake.list_intakes', filter='pending') }}" 
+           class="filter-tab {% if current_filter == 'pending' %}active{% endif %}"
+           aria-current="{% if current_filter == 'pending' %}page{% endif %}">
+            Pending Verification
+            {% if counts.get('pending', 0) > 0 %}
+            <span class="filter-tab-count" aria-label="{{ counts.get('pending', 0) }} pending">{{ counts.get('pending', 0) }}</span>
+            {% endif %}
+        </a>
+        <a href="{{ url_for('donation_intake.list_intakes', filter='verified') }}" 
+           class="filter-tab {% if current_filter == 'verified' %}active{% endif %}"
+           aria-current="{% if current_filter == 'verified' %}page{% endif %}">
+            Verified
+            {% if counts.get('verified', 0) > 0 %}
+            <span class="filter-tab-count" aria-label="{{ counts.get('verified', 0) }} verified">{{ counts.get('verified', 0) }}</span>
             {% endif %}
         </a>
     </nav>
@@ -102,6 +125,7 @@
                             <th>Status</th>
                             <th>Created By</th>
                             <th>Items</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -113,9 +137,17 @@
                             <td>{{ intake.intake_date|format_date }}</td>
                             <td>
                                 {% if intake.status_code == 'V' %}
-                                <span class="badge bg-success">Verified</span>
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle"></i> Verified
+                                </span>
+                                {% elif intake.status_code == 'C' %}
+                                <span class="badge bg-warning text-dark">
+                                    <i class="bi bi-hourglass-split"></i> Awaiting Verification
+                                </span>
                                 {% elif intake.status_code == 'P' %}
-                                <span class="badge bg-info">Pending</span>
+                                <span class="badge bg-info">
+                                    <i class="bi bi-clock"></i> Pending
+                                </span>
                                 {% else %}
                                 <span class="badge bg-secondary">{{ intake.status_code }}</span>
                                 {% endif %}
@@ -123,8 +155,20 @@
                             <td>{{ intake.create_by_id }}</td>
                             <td>
                                 <span class="badge bg-info">
-                                    {{ intake.donation.items|length }} items
+                                    {{ intake.items|length }} items
                                 </span>
+                            </td>
+                            <td>
+                                {% if intake.status_code == 'C' %}
+                                <a href="{{ url_for('donation_intake.verify_intake', donation_id=intake.donation_id, inventory_id=intake.inventory_id) }}" 
+                                   class="btn btn-sm btn-success" title="Verify this intake">
+                                    <i class="bi bi-check-circle"></i> Verify
+                                </a>
+                                {% elif intake.status_code == 'V' %}
+                                <span class="text-muted small">Completed</span>
+                                {% else %}
+                                <span class="text-muted small">-</span>
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}

@@ -32,6 +32,9 @@ The application employs a modular blueprint architecture with a database-first a
 - **Timezone Standardization**: All datetime operations, database timestamps, audit trails, and user-facing displays use Jamaica Standard Time (UTC-05:00).
 - **Key Features**: Universal visibility for approved relief requests, accurate inventory validation, batch-level reservation synchronization for draft packages, and automatic inventory table updates on dispatch. Relief package cancellation includes full reservation rollback using optimistic locking and transactional integrity. Implements robust relief request status management.
 - **Dynamic GOODS/FUNDS Donation Workflow**: Donation form dynamically adapts based on item category type (GOODS/FUNDS) via an API endpoint, automatically setting donation type and controlling field editability.
+- **Two-Step Donation Intake Workflow**: 
+  - **Entry Phase (Workflow A)**: Creates `dnintake` records with status='C' (Complete entry) and `dnintake_item` with status='P' (Pending). Calculates `ext_item_cost` for audit trail. Does NOT update `itembatch` or `inventory` tables. Only GOODS items are processed; FUNDS donations are excluded from physical intake.
+  - **Verification Phase (Workflow B)**: Verifier reviews and adjusts quantities (defective_qty, expired_qty), batch information (batch_no, batch_date, expiry_date), and comments. Upon verification: creates/updates `itembatch` and `inventory` records, recalculates `ext_item_cost`, updates statuses to 'V' (Verified), and sets donation status to 'P' (Processed). Uses `with_for_update` for batch uniqueness validation and race condition prevention.
 
 ## External Dependencies
 
