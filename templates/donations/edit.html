@@ -631,8 +631,8 @@ function updateItemsTable() {
                             <th scope="col">Item</th>
                             <th scope="col">Type</th>
                             <th scope="col" class="text-end">Quantity</th>
+                            <th scope="col">UOM</th>
                             <th scope="col" class="text-end">Item Cost</th>
-                            <th scope="col">Comments</th>
                             <th scope="col" class="text-end">Actions</th>
                         </tr>
                     </thead>
@@ -651,12 +651,12 @@ function updateItemsTable() {
                 <tr>
                     <td>
                         <strong>${item.item_name}</strong>${existingBadge}
-                        <br><small class="text-muted">${item.uom_desc} @ ${item.location_name}</small>
+                        <br><small class="text-muted">${item.location_name}</small>
                     </td>
                     <td><span class="badge ${item.donation_type === 'FUNDS' ? 'bg-success' : 'bg-primary'}">${item.donation_type}</span></td>
                     <td class="text-end">${item.quantity.toFixed(2)}</td>
+                    <td>${item.uom_desc}</td>
                     <td class="text-end">$${item.item_cost.toFixed(2)}</td>
-                    <td>${item.comments || '—'}</td>
                     <td class="text-end">
                         <button type="button" class="btn btn-sm btn-outline-danger" data-action="remove-donation-item" data-item-id="${item.id}" title="Remove item">
                             <i class="bi bi-trash"></i>
@@ -681,9 +681,9 @@ function updateItemsTable() {
                     </tbody>
                     <tfoot>
                         <tr class="table-light">
-                            <td colspan="3" class="text-end"><strong>Total Donation Value:</strong></td>
+                            <td colspan="4" class="text-end"><strong>Total Donation Value:</strong></td>
                             <td class="text-end"><strong>$${totalItemCost.toFixed(2)}</strong></td>
-                            <td colspan="2"></td>
+                            <td></td>
                         </tr>
                     </tfoot>
                 </table>
