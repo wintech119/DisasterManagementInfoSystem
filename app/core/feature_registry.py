@@ -363,17 +363,6 @@ class FeatureRegistry:
             'navigation_group': 'inventory',
             'priority': 4
         },
-        'donation_intake_verification': {
-            'name': 'Verify Donation Intakes',
-            'description': 'Review and verify submitted donation intakes',
-            'roles': ['LOGISTICS_MANAGER'],
-            'route': 'donation_intake.verify_list',
-            'url': '/donation-intake/verify',
-            'icon': 'bi-clipboard2-check',
-            'category': 'inventory',
-            'navigation_group': 'inventory',
-            'priority': 4
-        },
         
         # =================================================================
         # REPORTING & ANALYTICS
