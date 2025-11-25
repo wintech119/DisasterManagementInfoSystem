@@ -841,8 +841,10 @@ def edit_donation(donation_id):
                     new_item.currency_code = item_info['currency_code']
                     new_item.location_name = item_info['location_name'].upper() if item_info['location_name'] else 'DONATION RECEIVED'
                     new_item.comments_text = item_info['item_comments'].upper() if item_info['item_comments'] else None
-                    new_item.status_code = 'A'
+                    new_item.status_code = 'P'
                     add_audit_fields(new_item, current_user, is_new=True)
+                    new_item.verify_by_id = None
+                    new_item.verify_dtime = None
                     db.session.add(new_item)
             
             # Set total donation value from user input (user-entered value)

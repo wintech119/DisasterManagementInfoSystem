@@ -627,8 +627,8 @@ class Donation(db.Model):
     create_dtime = db.Column(db.DateTime, nullable=False)
     update_by_id = db.Column(db.String(20), nullable=False)
     update_dtime = db.Column(db.DateTime, nullable=False)
-    verify_by_id = db.Column(db.String(20), nullable=False)
-    verify_dtime = db.Column(db.DateTime, nullable=False)
+    verify_by_id = db.Column(db.String(20), nullable=True)
+    verify_dtime = db.Column(db.DateTime, nullable=True)
     version_nbr = db.Column(db.Integer, nullable=False, default=1)
     
     __table_args__ = (
@@ -682,8 +682,8 @@ class DonationItem(db.Model):
     create_dtime = db.Column(db.DateTime, nullable=False)
     update_by_id = db.Column(db.String(20), nullable=False, default='SYSTEM')
     update_dtime = db.Column(db.DateTime, nullable=False, server_default=db.text('CURRENT_TIMESTAMP'))
-    verify_by_id = db.Column(db.String(20), nullable=False)
-    verify_dtime = db.Column(db.DateTime, nullable=False)
+    verify_by_id = db.Column(db.String(20), nullable=True)
+    verify_dtime = db.Column(db.DateTime, nullable=True)
     version_nbr = db.Column(db.Integer, nullable=False, default=1)
     
     __table_args__ = (
