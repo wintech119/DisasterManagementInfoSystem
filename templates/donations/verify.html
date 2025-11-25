@@ -595,12 +595,16 @@ function enableFieldsForGoods() {
     const uomCurrencyLabel = document.getElementById('uom_currency_label');
     const uomCurrencyHintText = document.getElementById('uom_currency_hint_text');
     const currencyHidden = document.getElementById('new_currency_code_hidden');
-    
+    const quantityInput = document.getElementById('new_quantity');
+
     itemCostHint.textContent = 'Cost per unit';
     quantityHint.textContent = 'Quantity of goods';
     uomCurrencyLabel.textContent = 'UOM *';
     uomCurrencyHintText.textContent = 'Unit:';
-    
+
+    quantityInput.disabled = false;
+    quantityInput.classList.remove('field-disabled-visual');
+
     uomSelect.classList.remove('d-none');
     uomSelect.disabled = false;
     uomSelect.classList.remove('field-disabled-visual');
@@ -619,9 +623,13 @@ function enableFieldsForFunds() {
     const uomHint = document.getElementById('selected_uom');
     const uomCurrencyLabel = document.getElementById('uom_currency_label');
     const uomCurrencyHintText = document.getElementById('uom_currency_hint_text');
-    
+    const quantityInput = document.getElementById('new_quantity');
+
     itemCostHint.textContent = 'Donated value per instance';
-    quantityHint.textContent = 'Number of fund instances';
+    quantityInput.value = '1.00';
+    quantityInput.disabled = true;
+    quantityInput.classList.add('field-disabled-visual');
+    quantityHint.textContent = 'Quantity fixed to 1 for funds';
     uomCurrencyLabel.textContent = 'Currency *';
     uomCurrencyHintText.textContent = 'Currency:';
     
@@ -645,7 +653,8 @@ function resetFormFields() {
     const uomHint = document.getElementById('selected_uom');
     const uomCurrencyLabel = document.getElementById('uom_currency_label');
     const uomCurrencyHintText = document.getElementById('uom_currency_hint_text');
-    
+    const quantityInput = document.getElementById('new_quantity');
+
     donationTypeInput.value = '';
     categoryHint.textContent = 'Auto-set';
     uomCurrencyLabel.textContent = 'UOM *';
@@ -660,9 +669,11 @@ function resetFormFields() {
     uomHidden.value = '';
     currencyHidden.value = '';
     uomHint.textContent = '—';
-    
+
     document.getElementById('item_cost_hint').textContent = 'Cost per unit';
     document.getElementById('quantity_hint').textContent = 'Default: 1.00';
+    quantityInput.disabled = false;
+    quantityInput.classList.remove('field-disabled-visual');
 }
 
 document.getElementById('new_uom_code').addEventListener('change', function() {
@@ -715,6 +726,12 @@ document.getElementById('addItemBtn').addEventListener('click', function() {
     
     if (isNaN(qty) || qty < 0) {
         alert('Please enter a valid quantity (must be >= 0)');
+        quantityInput.focus();
+        return;
+    }
+
+    if (currentCategoryType === 'FUNDS' && qty !== 1) {
+        alert('Quantity for funds must be 1.00');
         quantityInput.focus();
         return;
     }
