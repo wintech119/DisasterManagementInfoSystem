@@ -1150,6 +1150,7 @@
     {% if current_user.is_authenticated %}
     <script src="{{ url_for('static', filename='js/csrf-helper.js') }}" nonce="{{ csp_nonce() }}" defer></script>
     <script src="{{ url_for('static', filename='js/form-utils.js') }}" nonce="{{ csp_nonce() }}" defer></script>
+    <script src="{{ url_for('static', filename='js/money-format.js') }}" nonce="{{ csp_nonce() }}" defer></script>
     {% endif %}
     {% endblock %}
     

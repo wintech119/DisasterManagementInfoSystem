@@ -172,12 +172,11 @@
                                     <label for="tot_item_cost" class="form-label">
                                         Total Item Cost
                                     </label>
-                                    <input type="number" 
+                                    <input type="text" 
                                            class="form-control" 
                                            id="tot_item_cost" 
                                            name="tot_item_cost" 
-                                           step="0.01" 
-                                           min="0"
+                                           data-money-format="true"
                                            value="{{ form_data.get('tot_item_cost') if form_data else (donation.tot_item_cost|default('0.00', true)) }}"
                                            readonly>
                                     <small class="form-text text-muted">Auto-calculated from items</small>
@@ -186,42 +185,39 @@
                                     <label for="storage_cost" class="form-label">
                                         Storage Cost
                                     </label>
-                                    <input type="number" 
+                                    <input type="text" 
                                            class="form-control" 
                                            id="storage_cost" 
                                            name="storage_cost" 
-                                           step="0.01" 
-                                           min="0"
-                                           value="{{ form_data.get('storage_cost') if form_data else (donation.storage_cost|default('0.00', true)) }}"
-                                           placeholder="0.00">
+                                           data-money-format="true"
+                                           value="{{ form_data.get('storage_cost') if form_data else (donation.storage_cost|default('', true)) }}"
+                                           placeholder="$0.00">
                                     <small class="form-text text-muted">Warehousing costs</small>
                                 </div>
                                 <div class="col-md-3">
                                     <label for="haulage_cost" class="form-label">
                                         Haulage Cost
                                     </label>
-                                    <input type="number" 
+                                    <input type="text" 
                                            class="form-control" 
                                            id="haulage_cost" 
                                            name="haulage_cost" 
-                                           step="0.01" 
-                                           min="0"
-                                           value="{{ form_data.get('haulage_cost') if form_data else (donation.haulage_cost|default('0.00', true)) }}"
-                                           placeholder="0.00">
+                                           data-money-format="true"
+                                           value="{{ form_data.get('haulage_cost') if form_data else (donation.haulage_cost|default('', true)) }}"
+                                           placeholder="$0.00">
                                     <small class="form-text text-muted">Transportation costs</small>
                                 </div>
                                 <div class="col-md-3">
                                     <label for="other_cost" class="form-label">
                                         Other Cost
                                     </label>
-                                    <input type="number" 
+                                    <input type="text" 
                                            class="form-control" 
                                            id="other_cost" 
                                            name="other_cost" 
-                                           step="0.01" 
-                                           min="0"
-                                           value="{{ form_data.get('other_cost') if form_data else (donation.other_cost|default('0.00', true)) }}"
-                                           placeholder="0.00">
+                                           data-money-format="true"
+                                           value="{{ form_data.get('other_cost') if form_data else (donation.other_cost|default('', true)) }}"
+                                           placeholder="$0.00">
                                     <small class="form-text text-muted">Miscellaneous costs</small>
                                 </div>
                                 <div class="col-md-12">
@@ -266,19 +262,6 @@
                                 <div class="card-body">
                                     <h5 class="mb-3"><i class="bi bi-plus-circle"></i> Add Donation Item</h5>
                                     
-                                    <!-- Cost Definition Help -->
-                                    <div class="alert alert-info mb-3 alert-text-sm">
-                                        <strong><i class="bi bi-info-circle"></i> Cost Definitions:</strong>
-                                        <div class="row mt-2">
-                                            <div class="col-md-6">
-                                                <strong>PURCHASE Costs:</strong> {% for cd in cost_defs %}{% if cd.cost_type == 'PURCHASE' %}{{ cd.cost_name }}{% if not loop.last %}, {% endif %}{% endif %}{% endfor %}
-                                            </div>
-                                            <div class="col-md-6">
-                                                <strong>ADDITIONAL Costs:</strong> {% for cd in cost_defs %}{% if cd.cost_type == 'ADDITIONAL' %}{{ cd.cost_name }}{% if not loop.last %}, {% endif %}{% endif %}{% endfor %}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
                                     <div id="addItemForm">
                                         <div class="row">
                                             <div class="col-md-6 mb-3">
@@ -312,7 +295,7 @@
                                                     Item Cost * 
                                                     <i class="bi bi-info-circle" data-bs-toggle="tooltip" title="Cost per unit"></i>
                                                 </label>
-                                                <input type="number" class="form-control" id="new_item_cost" step="0.01" min="0" value="0.00" placeholder="0.00">
+                                                <input type="text" class="form-control" id="new_item_cost" data-money-format="true" value="" placeholder="$0.00">
                                                 <small class="text-muted" id="item_cost_hint">Cost per unit</small>
                                             </div>
                                             <div class="col-md-4 mb-3">
@@ -552,7 +535,7 @@ document.getElementById('addItemBtn').addEventListener('click', function() {
     }
     
     const qty = parseFloat(quantityInput.value) || 0;
-    const itemCost = parseFloat(itemCostInput.value) || 0;
+    const itemCost = window.DRIMS && window.DRIMS.money ? window.DRIMS.money.parse(itemCostInput.value) : parseFloat(itemCostInput.value.replace(/[$,]/g, ''));
     
     if (qty < 0) {
         alert('Quantity must be >= 0');
@@ -560,7 +543,7 @@ document.getElementById('addItemBtn').addEventListener('click', function() {
         return;
     }
     
-    if (itemCost < 0) {
+    if (itemCost === null || isNaN(itemCost) || itemCost < 0) {
         alert('Item cost must be >= 0');
         itemCostInput.focus();
         return;
@@ -601,7 +584,7 @@ document.getElementById('addItemBtn').addEventListener('click', function() {
     itemSelect.value = '';
     resetFormFields();
     quantityInput.value = '1.00';
-    itemCostInput.value = '0.00';
+    itemCostInput.value = '';
     locationInput.value = 'DONATION RECEIVED';
     commentsInput.value = '';
     

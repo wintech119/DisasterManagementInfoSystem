@@ -172,12 +172,11 @@
                                     <label for="tot_item_cost" class="form-label">
                                         Total Item Cost
                                     </label>
-                                    <input type="number" 
+                                    <input type="text" 
                                            class="form-control" 
                                            id="tot_item_cost" 
                                            name="tot_item_cost" 
-                                           step="0.01" 
-                                           min="0"
+                                           data-money-format="true"
                                            value="{{ form_data.get('tot_item_cost') if form_data else (donation.tot_item_cost or '0.00') }}"
                                            readonly>
                                     <small class="form-text text-muted">Auto-calculated from items</small>
@@ -186,42 +185,39 @@
                                     <label for="storage_cost" class="form-label">
                                         Storage Cost
                                     </label>
-                                    <input type="number" 
+                                    <input type="text" 
                                            class="form-control" 
                                            id="storage_cost" 
                                            name="storage_cost" 
-                                           step="0.01" 
-                                           min="0"
-                                           value="{{ form_data.get('storage_cost') if form_data else (donation.storage_cost or '0.00') }}"
-                                           placeholder="0.00">
+                                           data-money-format="true"
+                                           value="{{ form_data.get('storage_cost') if form_data else (donation.storage_cost or '') }}"
+                                           placeholder="$0.00">
                                     <small class="form-text text-muted">Warehousing costs</small>
                                 </div>
                                 <div class="col-md-3">
                                     <label for="haulage_cost" class="form-label">
                                         Haulage Cost
                                     </label>
-                                    <input type="number" 
+                                    <input type="text" 
                                            class="form-control" 
                                            id="haulage_cost" 
                                            name="haulage_cost" 
-                                           step="0.01" 
-                                           min="0"
-                                           value="{{ form_data.get('haulage_cost') if form_data else (donation.haulage_cost or '0.00') }}"
-                                           placeholder="0.00">
+                                           data-money-format="true"
+                                           value="{{ form_data.get('haulage_cost') if form_data else (donation.haulage_cost or '') }}"
+                                           placeholder="$0.00">
                                     <small class="form-text text-muted">Transportation costs</small>
                                 </div>
                                 <div class="col-md-3">
                                     <label for="other_cost" class="form-label">
                                         Other Cost
                                     </label>
-                                    <input type="number" 
+                                    <input type="text" 
                                            class="form-control" 
                                            id="other_cost" 
                                            name="other_cost" 
-                                           step="0.01" 
-                                           min="0"
-                                           value="{{ form_data.get('other_cost') if form_data else (donation.other_cost or '0.00') }}"
-                                           placeholder="0.00">
+                                           data-money-format="true"
+                                           value="{{ form_data.get('other_cost') if form_data else (donation.other_cost or '') }}"
+                                           placeholder="$0.00">
                                     <small class="form-text text-muted">Miscellaneous costs</small>
                                 </div>
                                 <div class="col-md-12">
@@ -266,18 +262,6 @@
                                 <div class="card-body">
                                     <h5 class="mb-3"><i class="bi bi-plus-circle"></i> Add Donation Item</h5>
                                     
-                                    <div class="alert alert-info mb-3 alert-text-sm">
-                                        <strong><i class="bi bi-info-circle"></i> Cost Definitions:</strong>
-                                        <div class="row mt-2">
-                                            <div class="col-md-6">
-                                                <strong>PURCHASE Costs:</strong> {% for cd in cost_defs %}{% if cd.cost_type == 'PURCHASE' %}{{ cd.cost_name }}{% if not loop.last %}, {% endif %}{% endif %}{% endfor %}
-                                            </div>
-                                            <div class="col-md-6">
-                                                <strong>ADDITIONAL Costs:</strong> {% for cd in cost_defs %}{% if cd.cost_type == 'ADDITIONAL' %}{{ cd.cost_name }}{% if not loop.last %}, {% endif %}{% endif %}{% endfor %}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
                                     <div id="addItemForm">
                                         <div class="row">
                                             <div class="col-md-6 mb-3">
@@ -311,7 +295,7 @@
                                                     Item Cost * 
                                                     <i class="bi bi-info-circle" data-bs-toggle="tooltip" title="Cost per unit"></i>
                                                 </label>
-                                                <input type="number" class="form-control" id="new_item_cost" step="0.01" min="0" value="0.00" placeholder="0.00">
+                                                <input type="text" class="form-control" id="new_item_cost" data-money-format="true" value="" placeholder="$0.00">
                                                 <small class="text-muted" id="item_cost_hint">Cost per unit</small>
                                             </div>
                                             <div class="col-md-4 mb-3">
@@ -436,7 +420,12 @@ function updateTotalItemCost() {
     donationItems.forEach(item => {
         total += item.item_cost * item.quantity;
     });
-    document.getElementById('tot_item_cost').value = total.toFixed(2);
+    const totInput = document.getElementById('tot_item_cost');
+    if (window.DRIMS && window.DRIMS.money) {
+        window.DRIMS.money.updateDisplay(totInput, total);
+    } else {
+        totInput.value = '$' + total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
 }
 
 function updateItemsTable() {
@@ -659,7 +648,7 @@ document.getElementById('addItemBtn').addEventListener('click', function() {
     }
     
     const qty = parseFloat(quantityInput.value);
-    const itemCost = parseFloat(itemCostInput.value);
+    const itemCost = window.DRIMS && window.DRIMS.money ? window.DRIMS.money.parse(itemCostInput.value) : parseFloat(itemCostInput.value.replace(/[$,]/g, ''));
     
     if (isNaN(qty) || qty < 0) {
         alert('Please enter a valid quantity (must be >= 0)');
@@ -667,7 +656,7 @@ document.getElementById('addItemBtn').addEventListener('click', function() {
         return;
     }
     
-    if (isNaN(itemCost) || itemCost < 0) {
+    if (itemCost === null || isNaN(itemCost) || itemCost < 0) {
         alert('Please enter a valid item cost (>= 0)');
         itemCostInput.focus();
         return;
@@ -713,7 +702,7 @@ document.getElementById('addItemBtn').addEventListener('click', function() {
     itemSelect.value = '';
     resetFormFields();
     quantityInput.value = '1.00';
-    itemCostInput.value = '0.00';
+    itemCostInput.value = '';
     locationInput.value = 'DONATION RECEIVED';
     commentsInput.value = '';
     
@@ -734,8 +723,8 @@ document.addEventListener('click', function(e) {
     }
 });
 
-document.getElementById('other_cost').addEventListener('input', function() {
-    const otherCost = parseFloat(this.value) || 0;
+document.getElementById('other_cost').addEventListener('blur', function() {
+    const otherCost = window.DRIMS && window.DRIMS.money ? window.DRIMS.money.parse(this.value) : parseFloat(this.value.replace(/[$,]/g, '')) || 0;
     const otherCostDescInput = document.getElementById('other_cost_desc');
     
     if (otherCost > 0) {

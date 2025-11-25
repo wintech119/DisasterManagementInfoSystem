@@ -1,0 +1,57 @@
+Update the DRIMS app with the following changes, without breaking any existing workflow, UI layout, business logic, security fixes, or database schema:
+
+Money format for all cost fields
+
+For all cost-related fields across the application (e.g. tot_item_cost, unit_cost, addon_cost, any other cost/amount fields in donations, donation items, inventory, requests, etc.):
+
+Enforce money formatting in the UI as the user types or on blur, using the pattern:
+
+Example: $1,000.00
+
+Always include:
+
+Leading currency symbol ($)
+
+Thousand separators (,)
+
+Exactly two decimal places
+
+Ensure that whatever formatting is applied in the frontend, the underlying value saved to the database remains valid numeric/decimal and consistent with the existing schema and server-side validation.
+
+If there is already any utility or helper in the codebase for currency formatting, reuse it instead of adding a new library. If a new helper is needed, implement it in a clean, reusable way and apply it to all cost fields used in donation and donation items entry, as well as any other relevant forms.
+
+Clear placeholder text on focus for cost fields
+
+For all cost-related input fields that have placeholder text (e.g. “Enter cost”, “0.00”, “$0.00”, etc.):
+
+When the user clicks/focuses into the field, the placeholder should be cleared so the user sees an empty field and can type immediately.
+
+When the user leaves the field (blur event):
+
+If they entered a value, format it using the money format described above.
+
+If they left it blank, restore the placeholder (if applicable) and keep the stored value as NULL/empty according to existing rules.
+
+Do not change any validation rules or database constraints—just adjust the frontend behavior and formatting.
+
+Remove the “cost definition” block from Donation Items section (Accept Donation)
+
+In the Donation Items section on the Accept Donation workflow/page, remove the cost definition block that explains what the different cost fields mean (e.g. any explanatory panel, legend, or definition box related to costs).
+
+Only remove the definition/explanation block—do not remove or hide any actual cost input fields, labels, or existing validation.
+
+Ensure the layout still looks clean and aligned after removing this block (no awkward white spaces or broken grid/columns).
+
+General constraints
+
+Do not modify any database tables, columns, constraints, indexes, or triggers.
+
+Do not alter existing business logic for how costs are calculated, stored, or validated on the backend.
+
+Do not change any security-related code (CSP, headers, CSRF, auth, permissions, etc.).
+
+Keep the existing UI style and components consistent (forms, buttons, spacing), only adjusting what is necessary to:
+
+enforce money formatting,
+
+clear placeholders on focus, and
