@@ -1,0 +1,119 @@
+Your task is to safely drop and recreate the dnintake table so it matches the EXACT DDL below, while:
+
+Retaining all referential integrity
+
+NOT breaking any workflow, business logic, or UI
+
+NOT impacting security fixes (CSP, CSRF, RBAC, secure cookies, sessions)
+
+NOT modifying any other tables, except temporarily dropping/restoring foreign keys where required
+
+Ensuring zero regression to:
+
+Donation → Intake workflow
+
+Intake → Intake Item operations
+
+Reporting & dashboards
+
+Any dependent business processes
+
+The table may or may not be empty, but the process must work safely either way.
+
+🎯 TARGET DDL — FINAL REQUIRED STRUCTURE OF dnintake
+create table dnintake
+(
+	donation_id integer not null
+		constraint fk_dnintake_donation references donation,
+
+	inventory_id integer not null
+		constraint fk_dnintake_warehouse references warehouse(warehouse_id),
+
+	intake_date date not null
+		constraint c_dnintake_1 check (intake_date <= CURRENT_DATE),
+
+	comments_text varchar(255),
+
+	status_code char(1) not null
+		--I=Incomplete, C=Completed, V=Verified
+		constraint c_dnintake_2 check (status_code in ('I','C','V')),
+
+	create_by_id varchar(20) not null,
+	create_dtime timestamp(0) without time zone not null,
+	update_by_id varchar(20) not null,
+	update_dtime timestamp(0) without time zone,
+	verify_by_id varchar(20) not null,
+	verify_dtime timestamp(0) without time zone,
+	version_nbr integer not null,
+
+	constraint pk_dnintake primary key(donation_id, inventory_id)
+);
+
+🚨 HARD RULES (DO NOT VIOLATE)
+✔ 1. Retain full referential integrity
+
+Before altering/dropping, detect all foreign keys pointing to dnintake:
+
+dnintake_item(donation_id, inventory_id) → dnintake(donation_id, inventory_id)
+
+Any other FKs identified in /mnt/data/drms-2.2.sql
+
+If these FKs exist:
+
+They MUST be dropped first and later recreated exactly.
+
+✔ 2. Do NOT break other tables
+
+You must not permanently change:
+
+donation
+
+warehouse
+
+dnintake_item
+
+donation_item
+
+unitofmeasure
+
+Only temporary FK dropping/adding is allowed.
+
+✔ 3. Do NOT break any logic, workflows, or UI
+
+After migration:
+
+Intake workflows must work exactly the same
+
+Intake/verification screens must not break
+
+Donation → Intake linkage must remain intact
+
+Dashboards and summary counts must still function
+
+✔ 4. No changes to security configuration
+
+Do NOT modify:
+
+CSP
+
+CSRF tokens
+
+Authentication or RBAC
+
+Cookie/session settings
+
+Any Flask routes or templates
+
+This is a database-only structural migration.
+
+✔ 5. Use the shadow-table swap pattern
+
+Structure migration must be done through:
+
+dnintake_new (with target DDL)
+
+Data copy (if any rows exist)
+
+Drop FKs → rename tables → recreate FKs
+
+Sequence alignment (if applicable)
