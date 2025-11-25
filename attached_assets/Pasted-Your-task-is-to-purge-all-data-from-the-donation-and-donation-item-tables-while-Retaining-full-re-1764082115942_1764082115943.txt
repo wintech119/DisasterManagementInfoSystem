@@ -1,0 +1,96 @@
+Your task is to purge all data from the donation and donation_item tables, while:
+
+Retaining full referential integrity
+
+Not altering or dropping any tables, columns, keys, constraints, indexes, or triggers
+
+Not breaking existing code, routes, UI, workflows, or security (CSP, CSRF, RBAC, sessions, cookies)
+
+Performing a data-only cleanup
+
+You must use a single transaction and an ordered DELETE approach (no disabling FKs, no schema changes).
+
+1. Identify dependent tables
+
+From /mnt/data/drms-2.2.sql and \d output, confirm the tables that depend (directly or indirectly) on donation and donation_item. At minimum, expect:
+
+donation_item
+
+FK to donation(donation_id)
+
+dnintake
+
+FK to donation(donation_id)
+
+dnintake_item
+
+FK to dnintake(donation_id, inventory_id)
+
+FK to donation_item(donation_id, item_id)
+
+donation_doc
+
+FK to donation(donation_id)
+
+Adjust the script if the schema shows additional child tables – but do not change the schema itself.
+
+2. Implement ordered DELETE in a single transaction
+
+Create a SQL script that deletes rows in correct dependency order, like this:
+
+BEGIN;
+
+-- 1. Delete from grandchild tables that depend on donation_item or dnintake
+DELETE FROM dnintake_item
+WHERE donation_id IN (SELECT donation_id FROM donation);
+
+-- 2. Delete from child tables that depend directly on donation
+DELETE FROM dnintake
+WHERE donation_id IN (SELECT donation_id FROM donation);
+
+DELETE FROM donation_doc
+WHERE donation_id IN (SELECT donation_id FROM donation);
+
+-- 3. Delete all donation_item rows (they all depend on donation)
+DELETE FROM donation_item;
+
+-- 4. Finally delete all donation rows
+DELETE FROM donation;
+
+COMMIT;
+
+
+Rules:
+
+Keep the table names and FK relationships aligned with the actual schema in /mnt/data/drms-2.2.sql.
+
+If additional child tables exist that reference donation or donation_item, add corresponding DELETE statements before deleting from donation_item and donation.
+
+Do NOT use DROP TABLE, ALTER TABLE, DISABLE TRIGGER, or any command that changes schema or constraints.
+
+3. Post-purge verification
+
+After running the script:
+
+Verify row counts:
+
+SELECT COUNT(*) FROM donation;
+SELECT COUNT(*) FROM donation_item;
+SELECT COUNT(*) FROM dnintake;
+SELECT COUNT(*) FROM dnintake_item;
+SELECT COUNT(*) FROM donation_doc;
+
+
+Ensure:
+
+donation and donation_item are empty.
+
+All FKs remain valid; no constraint errors.
+
+Application can still:
+
+Load donation screens (they should just show no data).
+
+Create new donations and donation items without error.
+
+This script must only remove data and leave schema, referential integrity, and security fully intact.
