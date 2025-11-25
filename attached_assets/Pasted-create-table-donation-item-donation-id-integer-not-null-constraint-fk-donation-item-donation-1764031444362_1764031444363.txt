@@ -1,0 +1,59 @@
+create table donation_item
+(
+	donation_id integer not null
+		constraint fk_donation_item_donation references donation,
+	item_id integer not null
+		constraint fk_donation_item_item references item,
+	--
+	--Type of donation - Goods/Funds. For funds, unit of measure should
+	--default to the currency of the donor's country of residence. For
+	--goods, units of measure is defined on unit of measure table.
+	--For funds, the item quantity is the number of instances of funds
+	--donated (default 1), and the item cost is the average value over the
+	--instances of funds donated. Ideally, where there are multiple funds
+	--donated, record each fund as a separate item.
+	--The field tags should be reviewed for best indication of the data
+	--to be captured.
+	--
+	donation_type char(5) not null
+		c_donation_item_0 check (donation_type in ('GOODS','FUNDS')),
+		
+	--Quantity (if goods)/number of instances (if funds) of items/funds received
+	item_qty decimal(9,2) not null default 1.00
+		constraint c_donation_item_1a check (item_qty >= 0.00),
+
+	--Purchase cost (if goods) or donated value (if funds) of item/fund.
+	item_cost decimal(10,2) not null
+		constraint c_donation_item_1b check (item_cost >= 0.00),
+	--
+	--Actual units in which quantity of item received is measured. Note that quantity
+	--of the item received may be measured in a different unit from the designated
+	--default unit of measure.
+	--For FUNDS, the unit of measure should be defaulted to the currency code/symbol
+	--the donor's country with the ability of ODPEM to select another currency (e.g.
+	--USD (US$) as the defactor international transaction currency.
+	--
+	uom_code varchar(25) not null
+		constraint fk_donation_item_unitofmeasure references unitofmeasure,
+
+	--Place at which consignment is located (bank & account, name of entity and/or
+	--address location at which donated item must be picked up)
+	location_name text not null,
+
+	status_code char(1) not null default 'V'
+		--P=Pending verification, V=Verified
+		constraint c_donation_item_2 check (status_code in ('P','V')),
+
+	--Any comments on item donated
+	comments_text text,
+		
+	create_by_id varchar(20) not null,
+	create_dtime timestamp(0) without time zone not null,
+	update_by_id varchar(20) not null,
+	update_dtime timestamp(0) without time zone not null,
+	verify_by_id varchar(20) not null,
+	verify_dtime timestamp(0) without time zone not null,
+	version_nbr integer not null,
+	constraint c_donation_item_10 check (item_cost + addon_cost > 0.00),
+	constraint pk_donation_item primary key(donation_id,item_id)
+);		
