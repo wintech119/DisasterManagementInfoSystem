@@ -407,9 +407,9 @@ class FeatureRegistry:
             'route': 'dashboard.donations_analytics',
             'url': '/dashboard/donations-analytics',
             'icon': 'bi-graph-up-arrow',
-            'category': 'reports',
-            'navigation_group': 'reports',
-            'priority': 3
+            'category': 'dashboard',
+            'navigation_group': 'dashboard',
+            'priority': 5
         },
         
         # =================================================================
