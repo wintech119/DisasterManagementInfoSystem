@@ -616,10 +616,10 @@ class Donation(db.Model):
     event_id = db.Column(db.Integer, db.ForeignKey('event.event_id'), nullable=False)
     custodian_id = db.Column(db.Integer, db.ForeignKey('custodian.custodian_id'), nullable=False)
     received_date = db.Column(db.Date, nullable=False)
-    tot_item_cost = db.Column(db.Numeric(12, 2), nullable=False, default=0.01)
-    storage_cost = db.Column(db.Numeric(12, 2), nullable=False, default=0.01)
-    haulage_cost = db.Column(db.Numeric(12, 2), nullable=False, default=0.01)
-    other_cost = db.Column(db.Numeric(12, 2), nullable=False, default=0.01)
+    tot_item_cost = db.Column(db.Numeric(12, 2), nullable=False, default=0.00)
+    storage_cost = db.Column(db.Numeric(12, 2), nullable=False, default=0.00)
+    haulage_cost = db.Column(db.Numeric(12, 2), nullable=False, default=0.00)
+    other_cost = db.Column(db.Numeric(12, 2), nullable=False, default=0.00)
     other_cost_desc = db.Column(db.String(255))
     status_code = db.Column(db.CHAR(1), nullable=False)
     comments_text = db.Column(db.Text)
@@ -633,10 +633,10 @@ class Donation(db.Model):
     
     __table_args__ = (
         db.CheckConstraint("received_date <= CURRENT_DATE", name='c_donation_1'),
-        db.CheckConstraint("tot_item_cost > 0.00", name='c_donation_2'),
-        db.CheckConstraint("storage_cost > 0.00", name='c_donation_2a'),
-        db.CheckConstraint("haulage_cost > 0.00", name='c_donation_2b'),
-        db.CheckConstraint("other_cost > 0.00", name='c_donation_2c'),
+        db.CheckConstraint("tot_item_cost >= 0.00", name='c_donation_2'),
+        db.CheckConstraint("storage_cost >= 0.00", name='c_donation_2a'),
+        db.CheckConstraint("haulage_cost >= 0.00", name='c_donation_2b'),
+        db.CheckConstraint("other_cost >= 0.00", name='c_donation_2c'),
         db.CheckConstraint("status_code IN ('E', 'V', 'P')", name='c_donation_3'),
     )
     
