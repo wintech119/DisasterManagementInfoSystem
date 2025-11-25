@@ -387,77 +387,10 @@ input[type=number] {
 {% block extra_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/flatpickr" integrity="sha384-1a8Wi8gJdDPWfEWuJf7Z4p4C6aOqEYw6cqC7DFKfEWDnsjf/dz+pzzCz2fv1ZHzS" crossorigin="anonymous"></script>
 <script nonce="{{ csp_nonce() }}">
-document.addEventListener('DOMContentLoaded', function() {
-    flatpickr('.iso-date-picker', {
-        dateFormat: 'Y-m-d',
-        allowInput: true
-    });
-    
-    function recalculateUsableQty(itemId) {
-        var defectiveInput = document.getElementById('defective_qty_' + itemId);
-        var expiredInput = document.getElementById('expired_qty_' + itemId);
-        var usableInput = document.getElementById('usable_qty_' + itemId);
-        var errorDiv = document.querySelector('.qty-error-' + itemId);
-        var errorText = document.querySelector('.qty-error-text-' + itemId);
-        
-        var intakeTotal = parseFloat(defectiveInput.getAttribute('data-intake-total')) || 0;
-        var defective = parseFloat(defectiveInput.value) || 0;
-        var expired = parseFloat(expiredInput.value) || 0;
-        var usable = intakeTotal - defective - expired;
-        
-        usableInput.value = usable.toFixed(2);
-        
-        if (defective + expired > intakeTotal) {
-            errorDiv.classList.remove('d-none');
-            errorText.textContent = 'Defective + Expired cannot exceed intake quantity (' + intakeTotal.toFixed(2) + ')';
-            usableInput.classList.add('is-invalid');
-        } else if (usable < 0) {
-            errorDiv.classList.remove('d-none');
-            errorText.textContent = 'Usable quantity cannot be negative';
-            usableInput.classList.add('is-invalid');
-        } else {
-            errorDiv.classList.add('d-none');
-            usableInput.classList.remove('is-invalid');
-        }
-    }
-    
-    var qtyAdjustInputs = document.querySelectorAll('.qty-adjust');
-    for (var i = 0; i < qtyAdjustInputs.length; i++) {
-        qtyAdjustInputs[i].addEventListener('input', function(e) {
-            var itemId = e.target.getAttribute('data-item-id');
-            recalculateUsableQty(itemId);
-        });
-        qtyAdjustInputs[i].addEventListener('change', function(e) {
-            var itemId = e.target.getAttribute('data-item-id');
-            recalculateUsableQty(itemId);
-        });
-    }
-    
-    document.getElementById('verifyForm').addEventListener('submit', function(e) {
-        var hasErrors = false;
-        
-        var errorDivs = document.querySelectorAll('[class*="qty-error-"]');
-        for (var i = 0; i < errorDivs.length; i++) {
-            if (!errorDivs[i].classList.contains('d-none')) {
-                hasErrors = true;
-                break;
-            }
-        }
-        
-        var usableInputs = document.querySelectorAll('input[id^="usable_qty_"]');
-        for (var j = 0; j < usableInputs.length; j++) {
-            var usable = parseFloat(usableInputs[j].value) || 0;
-            if (usable < 0) {
-                hasErrors = true;
-                break;
-            }
-        }
-        
-        if (hasErrors) {
-            e.preventDefault();
-            alert('Please correct the quantity errors before verifying.');
-        }
-    });
+flatpickr('.iso-date-picker', {
+    dateFormat: 'Y-m-d',
+    allowInput: true
 });
 </script>
+<script nonce="{{ csp_nonce() }}" src="{{ url_for('static', filename='js/verify-intake.js') }}"></script>
 {% endblock %}
