@@ -14,7 +14,7 @@ from sqlalchemy.orm.exc import StaleDataError
 from app.db import db
 from app.utils.timezone import now as jamaica_now
 from app.db.models import (Donation, DonationItem, DonationDoc, Donor, Event, Custodian, 
-                          Item, ItemCategory, UnitOfMeasure, Country, Currency, ItemCostDef)
+                          Item, UnitOfMeasure, Country, Currency, ItemCostDef)
 from app.core.audit import add_audit_fields, add_verify_fields
 from app.core.decorators import feature_required
 import os
@@ -321,8 +321,8 @@ def create_donation():
             
             add_audit_fields(donation, current_user, is_new=True)
             
-            # verify_by_id and verify_dtime remain NULL for new donations (status='E')
-            # They will be populated when the donation is actually verified
+            donation.verify_by_id = current_user.user_name
+            donation.verify_dtime = current_timestamp
             
             db.session.add(donation)
             db.session.flush()
@@ -374,8 +374,7 @@ def create_donation():
                 donation_item.donation_id = donation.donation_id
                 donation_item.item_id = item_info['item_id']
                 donation_item.donation_type = item_info['donation_type']
-                # FUNDS items: Server-side enforcement - quantity is always 1.00
-                donation_item.item_qty = Decimal('1.00') if item_info['donation_type'] == 'FUNDS' else item_info['quantity']
+                donation_item.item_qty = item_info['quantity']
                 donation_item.item_cost = item_info['item_cost']
                 donation_item.uom_code = item_info['uom_code']
                 donation_item.currency_code = item_info['currency_code']
@@ -385,8 +384,8 @@ def create_donation():
                 
                 add_audit_fields(donation_item, current_user, is_new=True)
                 
-                # verify_by_id and verify_dtime remain NULL for pending items (status='P')
-                # They will be populated when the donation is actually verified
+                donation_item.verify_by_id = current_user.user_name
+                donation_item.verify_dtime = current_timestamp
                 
                 db.session.add(donation_item)
             
@@ -807,8 +806,7 @@ def edit_donation(donation_id):
             
             for item_info in item_data:
                 item_cost = item_info['item_cost']
-                # FUNDS items: Server-side enforcement - quantity is always 1.00
-                quantity = Decimal('1.00') if item_info['donation_type'] == 'FUNDS' else item_info['quantity']
+                quantity = item_info['quantity']
                 line_total = item_cost * quantity
                 total_item_cost += line_total
                 
@@ -982,20 +980,10 @@ def add_donation_item(donation_id):
                                      form_data=request.form,
                                      duplicate_item_id=duplicate_item_id)
             
-            # FUNDS items: Server-side enforcement - quantity is always 1.00
-            # This prevents tampering regardless of what the form submitted
-            item_obj = Item.query.get(int(item_id))
-            is_funds_item = False
-            if item_obj:
-                category = ItemCategory.query.get(item_obj.category_id)
-                if category and category.category_type == 'FUNDS':
-                    is_funds_item = True
-            
             donation_item = DonationItem()
             donation_item.donation_id = donation_id
             donation_item.item_id = int(item_id)
-            # Force quantity to 1.00 for FUNDS items, regardless of submitted value
-            donation_item.item_qty = Decimal('1.00') if is_funds_item else Decimal(item_qty)
+            donation_item.item_qty = Decimal(item_qty)
             donation_item.uom_code = uom_code
             donation_item.location_name = location_name.upper()
             donation_item.status_code = 'V'
@@ -1115,16 +1103,7 @@ def edit_donation_item(donation_id, item_id):
                                      uoms=uoms,
                                      form_data=request.form)
             
-            # FUNDS items: Server-side enforcement - quantity is always 1.00
-            # This prevents tampering regardless of what the form submitted
-            is_funds_item = False
-            if donation_item.item:
-                category = ItemCategory.query.get(donation_item.item.category_id)
-                if category and category.category_type == 'FUNDS':
-                    is_funds_item = True
-            
-            # Force quantity to 1.00 for FUNDS items, regardless of submitted value
-            donation_item.item_qty = Decimal('1.00') if is_funds_item else Decimal(item_qty)
+            donation_item.item_qty = Decimal(item_qty)
             donation_item.uom_code = uom_code
             
             donation_item.location_name = location_name.upper()
@@ -1159,18 +1138,10 @@ def edit_donation_item(donation_id, item_id):
     
     uoms = UnitOfMeasure.query.order_by(UnitOfMeasure.uom_code).all()
     
-    # Determine if item is FUNDS type for quantity field behavior
-    is_funds_item = False
-    if donation_item.item:
-        category = ItemCategory.query.get(donation_item.item.category_id)
-        if category and category.category_type == 'FUNDS':
-            is_funds_item = True
-    
     return render_template('donations/edit_item.html',
                          donation=donation,
                          donation_item=donation_item,
-                         uoms=uoms,
-                         is_funds_item=is_funds_item)
+                         uoms=uoms)
 
 
 @donations_bp.route('/<int:donation_id>/items/<int:item_id>/delete', methods=['POST'])

@@ -65,10 +65,7 @@
                                            min="0.0001" 
                                            required
                                            placeholder="0.0000">
-                                    <small class="form-text text-muted" id="qty_help">Up to 4 decimal places</small>
-                                    <small class="form-text text-info d-none" id="qty_funds_note">
-                                        <i class="bi bi-info-circle"></i> FUNDS items always have quantity 1.00
-                                    </small>
+                                    <small class="form-text text-muted">Up to 4 decimal places</small>
                                 </div>
                                 <div class="col-md-3">
                                     <label for="uom_code" class="form-label">
@@ -152,49 +149,4 @@
         </div>
     </div>
 </div>
-
-<script nonce="{{ csp_nonce() }}">
-document.addEventListener('DOMContentLoaded', function() {
-    const itemSelect = document.getElementById('item_id');
-    const qtyInput = document.getElementById('item_qty');
-    const qtyHelp = document.getElementById('qty_help');
-    const qtyFundsNote = document.getElementById('qty_funds_note');
-    
-    itemSelect.addEventListener('change', function() {
-        const itemId = this.value;
-        if (!itemId) {
-            resetQuantityField();
-            return;
-        }
-        
-        fetch(`/donations/api/item-category/${itemId}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.category_type === 'FUNDS') {
-                    qtyInput.value = '1.00';
-                    qtyInput.readOnly = true;
-                    qtyInput.classList.add('bg-light');
-                    qtyHelp.classList.add('d-none');
-                    qtyFundsNote.classList.remove('d-none');
-                } else {
-                    resetQuantityField();
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching item category:', error);
-                resetQuantityField();
-            });
-    });
-    
-    function resetQuantityField() {
-        qtyInput.readOnly = false;
-        qtyInput.classList.remove('bg-light');
-        qtyHelp.classList.remove('d-none');
-        qtyFundsNote.classList.add('d-none');
-        if (!qtyInput.value) {
-            qtyInput.value = '';
-        }
-    }
-});
-</script>
 {% endblock %}

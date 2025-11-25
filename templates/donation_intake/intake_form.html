@@ -338,10 +338,16 @@ input[type=number] {
                                 <i class="bi bi-arrow-left"></i>
                                 Back
                             </a>
-                            <button type="submit" class="btn-relief-primary" id="submitBtn">
-                                <i class="bi bi-check-circle"></i>
-                                Complete Intake
-                            </button>
+                            <div class="d-flex gap-2">
+                                <button type="submit" name="action" value="save_draft" class="btn btn-outline-secondary" id="saveDraftBtn">
+                                    <i class="bi bi-save"></i>
+                                    Save Draft
+                                </button>
+                                <button type="submit" name="action" value="submit" class="btn-relief-primary" id="submitBtn">
+                                    <i class="bi bi-send"></i>
+                                    Submit for Verification
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

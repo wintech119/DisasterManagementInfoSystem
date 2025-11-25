@@ -32,9 +32,9 @@ The application employs a modular blueprint architecture with a database-first a
 - **Timezone Standardization**: All datetime operations, database timestamps, audit trails, and user-facing displays use Jamaica Standard Time (UTC-05:00).
 - **Key Features**: Universal visibility for approved relief requests, accurate inventory validation, batch-level reservation synchronization for draft packages, and automatic inventory table updates on dispatch. Relief package cancellation includes full reservation rollback using optimistic locking and transactional integrity. Implements robust relief request status management.
 - **Dynamic GOODS/FUNDS Donation Workflow**: Donation form dynamically adapts based on item category type (GOODS/FUNDS) via an API endpoint, automatically setting donation type and controlling field editability.
-- **Two-Step Donation Intake Workflow**: 
-  - **Entry Phase (Workflow A)**: Creates `dnintake` records with status='C' (Complete entry) and `dnintake_item` with status='P' (Pending). Calculates `ext_item_cost` for audit trail. Does NOT update `itembatch` or `inventory` tables. Only GOODS items are processed; FUNDS donations are excluded from physical intake.
-  - **Verification Phase (Workflow B)**: Verifier reviews and adjusts quantities (defective_qty, expired_qty), batch information (batch_no, batch_date, expiry_date), and comments. Upon verification: creates/updates `itembatch` and `inventory` records, recalculates `ext_item_cost`, updates statuses to 'V' (Verified), and sets donation status to 'P' (Processed). Uses `with_for_update` for batch uniqueness validation and race condition prevention.
+- **Donation Intake Two-Stage Workflow**: 
+  - **Workflow A (Entry)**: LOGISTICS_OFFICER creates/edits intakes. Selects verified donations (status='V'), filters only GOODS items. Creates dnintake with status 'I' (draft) or 'C' (submitted for verification). NO inventory/batch updates at this stage.
+  - **Workflow B (Verification)**: LOGISTICS_MANAGER reviews submitted intakes (status='C'). Can adjust defective/expired quantities, batch details. Upon verification, status changes to 'V', ItemBatch records are created/updated, Inventory totals are updated, and Donation status changes to 'P' (Processed). All operations in a single atomic transaction with optimistic locking.
 
 ## External Dependencies
 
