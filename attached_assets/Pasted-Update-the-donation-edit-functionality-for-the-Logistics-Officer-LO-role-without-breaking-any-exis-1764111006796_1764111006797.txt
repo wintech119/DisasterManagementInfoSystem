@@ -1,0 +1,114 @@
+Update the donation edit functionality for the Logistics Officer (LO) role without breaking any existing code, workflows, behaviour, security fixes, or the database schema.
+Scope & Constraints
+
+
+Do not change any database tables, columns, constraints, or indexes.
+
+
+Do not change any existing security configuration (CSP, CSRF, auth, roles, sessions, etc.).
+
+
+Do not alter existing navigation flows or business workflows except as explicitly described below.
+
+
+Reuse existing components, helpers, and patterns wherever possible instead of creating new parallel logic.
+
+
+
+1. Edit template must mirror “Accept Donation” template (for LO)
+For the Logistics Officer donation edit page:
+
+
+Make the edit template almost identical to the existing “Accept Donation” template, especially for the Donation Items section:
+
+
+Same layout, styling and structure for the header and items grid.
+
+
+The LO must be able to add items on the edit page using the same controls and UX as on the accept template (quantity, uom/currency behaviour, comments, etc.).
+
+
+Maintain all current validation rules and behaviours from the accept template when adding or editing items (no changes to existing business rules).
+
+
+
+
+Ensure all changes are applied only for the LO edit page and do not affect other roles’ edit or accept views.
+
+
+
+2. Remove “Total Donation Value” at bottom of page (for LO edit)
+On the LO donation edit page only:
+
+
+Remove the “Total Donation Value” field from the bottom of the page so it is no longer visible to the Logistics Officer while editing.
+
+
+Do not remove or alter any other cost fields or cost breakdown logic (e.g. haulage, storage, other costs etc.).
+
+
+Do not change any backend calculations or persistence related to total donation value; this is a UI-only removal on the LO edit view.
+
+
+
+3. Fix error when re-saving with a new item
+When the LO edits a donation and adds a new donation_item then saves, an error currently occurs:
+
+
+psycopg2.errors.NotNullViolation: null value in column "verify_by_id" of relation "donation_item" violates not-null constraint
+
+
+The failing INSERT shows verify_by_id and verify_dtime as None for the new row.
+
+
+Update the backend logic that handles saving new donation_item rows from the LO edit page so that:
+
+
+It respects the existing business rule for Pending status (if already implemented elsewhere):
+
+
+When status_code = 'P' (Pending), do not populate verify_by_id and verify_dtime (leave them unset / null at the application level, consistent with the current design for Pending donations and items).
+
+
+
+
+For non-pending statuses that require verification (e.g. status_code = 'A' or any other “verified/accepted” status in use):
+
+
+Ensure donation_item.verify_by_id is always set to an appropriate value (e.g. the current user or the same logic used in the existing verification workflow).
+
+
+Ensure donation_item.verify_dtime is set to the current timestamp (or the same value used elsewhere when items are verified).
+
+
+This must satisfy the NOT NULL constraint on these fields and eliminate the error when adding a new item and re-saving.
+
+
+
+
+Reuse the existing verification logic already used elsewhere in the system for populating verify_by_id and verify_dtime instead of inventing new rules.
+
+
+Ensure that updating existing items during edit still follows the original behaviour and does not change statuses or verification fields unexpectedly.
+
+
+
+4. General
+
+
+After your changes, the Logistics Officer should be able to:
+
+
+Open an existing donation,
+
+
+See an edit page that visually and functionally matches the accept template for items (except no Total Donation Value at the bottom),
+
+
+Add new donation items and save successfully with no database errors.
+
+
+
+
+All other roles, pages and workflows must continue to function exactly as they did before.
+
