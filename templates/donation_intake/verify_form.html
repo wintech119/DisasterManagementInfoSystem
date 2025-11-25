@@ -176,17 +176,18 @@ input[type=number] {
                             <div class="item-body">
                                 <div class="row g-2 mb-2">
                                     <div class="col-md-2">
-                                        <div class="field-label">Donated Qty</div>
+                                        <div class="field-label">Intake Qty</div>
                                         {% set donation_item = namespace(qty=0, uom_code='', item_cost=0) %}
                                         {% for di in donation.items if di.item_id == ii.item_id %}
                                             {% set donation_item.qty = di.item_qty %}
                                             {% set donation_item.uom_code = di.uom_code %}
                                             {% set donation_item.item_cost = di.item_cost %}
                                         {% endfor %}
+                                        {% set intake_total = (ii.usable_qty + ii.defective_qty + ii.expired_qty)|float %}
                                         <div class="donated-qty-box">
-                                            <strong class="text-primary fs-6">{{ donation_item.qty }}</strong>
+                                            <strong class="text-primary fs-6">{{ "%.2f"|format(intake_total) }}</strong>
                                         </div>
-                                        <input type="hidden" name="donated_qty_{{ ii.item_id }}" value="{{ donation_item.qty }}">
+                                        <input type="hidden" name="intake_total_{{ ii.item_id }}" value="{{ intake_total }}">
                                     </div>
                                     <div class="col-md-3">
                                         <label for="batch_no_{{ ii.item_id }}" class="field-label">Batch No</label>
@@ -243,7 +244,7 @@ input[type=number] {
                                                id="usable_qty_{{ ii.item_id }}"
                                                name="usable_qty_{{ ii.item_id }}" 
                                                value="{{ ii.usable_qty }}"
-                                               data-donated-qty="{{ donation_item.qty }}"
+                                               data-intake-total="{{ intake_total }}"
                                                data-item-id="{{ ii.item_id }}"
                                                readonly>
                                     </div>
@@ -257,7 +258,7 @@ input[type=number] {
                                                min="0"
                                                value="{{ ii.defective_qty }}"
                                                data-item-id="{{ ii.item_id }}"
-                                               data-donated-qty="{{ donation_item.qty }}">
+                                               data-intake-total="{{ intake_total }}">
                                     </div>
                                     <div class="col-md-3">
                                         <label for="expired_qty_{{ ii.item_id }}" class="field-label">Expiry Qty</label>
@@ -269,7 +270,7 @@ input[type=number] {
                                                min="0"
                                                value="{{ ii.expired_qty }}"
                                                data-item-id="{{ ii.item_id }}"
-                                               data-donated-qty="{{ donation_item.qty }}">
+                                               data-intake-total="{{ intake_total }}">
                                     </div>
                                 </div>
                                 
@@ -371,7 +372,7 @@ input[type=number] {
                     <div class="card-body">
                         <ul class="mb-0 small">
                             <li><strong>Defective/Expired</strong>: Adjust as needed based on inspection</li>
-                            <li><strong>Usable Qty</strong>: Auto-calculated (Donated - Defective - Expired)</li>
+                            <li><strong>Usable Qty</strong>: Auto-calculated (Intake - Defective - Expired)</li>
                             <li><strong>Batch Details</strong>: Can be corrected if needed</li>
                             <li>Upon verification, inventory will be updated</li>
                         </ul>
@@ -393,7 +394,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.qty-adjust').forEach(function(input) {
         input.addEventListener('input', function() {
             const itemId = this.dataset.itemId;
-            const donatedQty = parseFloat(this.dataset.donatedQty) || 0;
+            const intakeTotal = parseFloat(this.dataset.intakeTotal) || 0;
             
             const defectiveInput = document.getElementById('defective_qty_' + itemId);
             const expiredInput = document.getElementById('expired_qty_' + itemId);
@@ -403,17 +404,17 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const defective = parseFloat(defectiveInput.value) || 0;
             const expired = parseFloat(expiredInput.value) || 0;
-            const usable = donatedQty - defective - expired;
+            const usable = intakeTotal - defective - expired;
             
             usableInput.value = usable.toFixed(2);
             
-            if (defective + expired > donatedQty) {
+            if (defective + expired > intakeTotal) {
                 errorDiv.classList.remove('d-none');
-                errorText.textContent = 'Defective + Expired cannot exceed donated quantity (' + donatedQty + ')';
+                errorText.textContent = 'Defective + Expired cannot exceed intake quantity (' + intakeTotal.toFixed(2) + ')';
                 usableInput.classList.add('is-invalid');
-            } else if (usable <= 0) {
+            } else if (usable < 0) {
                 errorDiv.classList.remove('d-none');
-                errorText.textContent = 'Usable quantity must be greater than zero';
+                errorText.textContent = 'Usable quantity cannot be negative';
                 usableInput.classList.add('is-invalid');
             } else {
                 errorDiv.classList.add('d-none');
@@ -425,15 +426,15 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('verifyForm').addEventListener('submit', function(e) {
         let hasErrors = false;
         
-        document.querySelectorAll('.qty-error-text').forEach(function(el) {
-            if (el.textContent.trim() !== '' && !el.closest('.d-none')) {
+        document.querySelectorAll('[class*="qty-error-"]:not(.d-none)').forEach(function(el) {
+            if (!el.classList.contains('d-none')) {
                 hasErrors = true;
             }
         });
         
         document.querySelectorAll('input[id^="usable_qty_"]').forEach(function(input) {
             const usable = parseFloat(input.value) || 0;
-            if (usable <= 0) {
+            if (usable < 0) {
                 hasErrors = true;
             }
         });
