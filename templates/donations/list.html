@@ -202,18 +202,32 @@
                             </td>
                             <td class="text-end">
                                 <div class="btn-group" role="group" aria-label="Donation actions">
-                                    <a href="{{ url_for('donations.view_donation', donation_id=donation.donation_id) }}" 
-                                       class="btn btn-sm btn-outline-primary" 
+                                    <a href="{{ url_for('donations.view_donation', donation_id=donation.donation_id) }}"
+                                       class="btn btn-sm btn-outline-primary"
                                        title="View details"
                                        aria-label="View donation #{{ donation.donation_id }} details">
                                         <i class="bi bi-eye"></i>
                                     </a>
-                                    <a href="{{ url_for('donations.edit_donation', donation_id=donation.donation_id) }}" 
-                                       class="btn btn-sm btn-outline-secondary" 
+                                    {% if donation.status_code == 'E' and has_feature('donation_verification') %}
+                                    <a href="{{ url_for('donations.verify_donation_detail', donation_id=donation.donation_id) }}"
+                                       class="btn btn-sm btn-outline-warning"
+                                       title="Review and verify donation"
+                                       aria-label="Review and verify donation #{{ donation.donation_id }}">
+                                        <i class="bi bi-clipboard-check"></i>
+                                    </a>
+                                    {% endif %}
+                                    {% if donation.status_code == 'E' %}
+                                    <a href="{{ url_for('donations.edit_donation', donation_id=donation.donation_id) }}"
+                                       class="btn btn-sm btn-outline-secondary"
                                        title="Edit donation"
                                        aria-label="Edit donation #{{ donation.donation_id }}">
                                         <i class="bi bi-pencil"></i>
                                     </a>
+                                    {% else %}
+                                    <span class="btn btn-sm btn-outline-secondary disabled" title="Editing locked">
+                                        <i class="bi bi-lock"></i>
+                                    </span>
+                                    {% endif %}
                                 </div>
                             </td>
                         </tr>
