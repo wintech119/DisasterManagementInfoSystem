@@ -5,6 +5,15 @@ DMIS (Disaster Management Information System) is a web-based platform for the Go
 
 ## Recent Changes (November 24, 2025)
 
+### Donation Item Table Rebuild (Migration 014)
+- **Table Rebuilt**: Dropped and recreated donation_item table to match exact target DDL structure
+- **FK Handling**: Safely dropped/recreated FK from dnintake_item during rebuild
+- **Column Order Aligned**: Columns now match target DDL order for audit traceability
+- **All Constraints Preserved**: c_donation_item_0, 1a, 1b, 1c, 2, 10
+- **addon_cost Retained**: Required by c_donation_item_10 constraint (item_cost + addon_cost > 0.00)
+- **Referential Integrity**: All FKs intact (donation, item, unitofmeasure) + dnintake_item FK restored
+- **Migration File**: `migrations/014_recreate_donation_item_table.sql`
+
 ### Donation Intake Item Table Migration (Migration 013)
 - **Primary Key Restructured**: Changed from serial `intake_item_id` to composite PK `(donation_id, inventory_id, item_id, batch_no)`
 - **New Column Added**: `ext_item_cost` DECIMAL(12,2) for extended cost tracking (total qty * avg_unit_value)
