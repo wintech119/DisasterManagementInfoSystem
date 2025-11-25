@@ -1,0 +1,103 @@
+diff --git a/app/features/donation_intake.py b/app/features/donation_intake.py
+index ffac49b584f309d96f6bfa02ad567129f2e8e2bf..70e0d16402084686682cc4a75c8ac1e2228bd251 100644
+--- a/app/features/donation_intake.py
++++ b/app/features/donation_intake.py
+@@ -612,75 +612,89 @@ def _process_verification_submission(intake, donation, warehouse):
+     """
+     errors = []
+     
+     intake_items = DonationIntakeItem.query.filter_by(
+         donation_id=intake.donation_id,
+         inventory_id=intake.inventory_id
+     ).all()
+     
+     verified_items_data = []
+     
+     for intake_item in intake_items:
+         item_id = intake_item.item_id
+         item = intake_item.item
+         
+         defective_qty_str = request.form.get(f'defective_qty_{item_id}', str(intake_item.defective_qty))
+         expired_qty_str = request.form.get(f'expired_qty_{item_id}', str(intake_item.expired_qty))
+         batch_no_default = intake_item.batch_no or ''
+         batch_no_raw = request.form.get(f'batch_no_{item_id}', batch_no_default).strip().upper()
+         batch_date_str = request.form.get(f'batch_date_{item_id}', '')
+         expiry_date_str = request.form.get(f'expiry_date_{item_id}', '')
+         item_comments = request.form.get(f'item_comments_{item_id}', intake_item.comments_text or '').strip()
+         
+         try:
+             defective_qty = Decimal(defective_qty_str) if defective_qty_str else Decimal('0')
+             expired_qty = Decimal(expired_qty_str) if expired_qty_str else Decimal('0')
+-            
++
+             if defective_qty < 0 or expired_qty < 0:
+                 errors.append(f'{item.item_name}: Quantities cannot be negative')
+                 continue
+-            
++
+             donation_item = DonationItem.query.filter_by(
+                 donation_id=donation.donation_id,
+                 item_id=item_id
+             ).first()
+-            
++
+             if not donation_item:
+                 errors.append(f'{item.item_name}: Donation item not found')
+                 continue
+-            
++
++            intake_item_total = (
++                (intake_item.usable_qty or Decimal('0'))
++                + (intake_item.defective_qty or Decimal('0'))
++                + (intake_item.expired_qty or Decimal('0'))
++            )
++
+             total_deductions = defective_qty + expired_qty
++            if total_deductions > intake_item_total:
++                errors.append(
++                    f'{item.item_name}: Defective + Expired cannot exceed the intake quantity ({intake_item_total})'
++                )
++                continue
++
+             if total_deductions > donation_item.item_qty:
+-                errors.append(f'{item.item_name}: Defective + Expired cannot exceed donated quantity ({donation_item.item_qty})')
++                errors.append(
++                    f'{item.item_name}: Defective + Expired cannot exceed donated quantity ({donation_item.item_qty})'
++                )
+                 continue
+-            
+-            usable_qty = donation_item.item_qty - defective_qty - expired_qty
+-            
++
++            usable_qty = intake_item_total - defective_qty - expired_qty
++
+             if usable_qty <= 0:
+                 errors.append(f'{item.item_name}: Usable quantity must be greater than zero')
+                 continue
+-            
++
+         except (InvalidOperation, ValueError):
+             errors.append(f'{item.item_name}: Invalid quantity values')
+             continue
+         
+         batch_no = batch_no_raw if batch_no_raw else intake_item.batch_no
+         
+         batch_date = intake_item.batch_date
+         if batch_date_str:
+             try:
+                 batch_date = datetime.strptime(batch_date_str, '%Y-%m-%d').date()
+                 if batch_date > date.today():
+                     errors.append(f'{item.item_name}: Batch date cannot be in the future')
+                     continue
+             except ValueError:
+                 errors.append(f'{item.item_name}: Invalid batch date format')
+                 continue
+         
+         expiry_date = intake_item.expiry_date
+         if expiry_date_str:
+             try:
+                 expiry_date = datetime.strptime(expiry_date_str, '%Y-%m-%d').date()
+                 if item.can_expire_flag and expiry_date < date.today():
+                     errors.append(f'{item.item_name}: Expiry date cannot be in the past for perishable items')
+                     continue
+                 if batch_date and expiry_date < batch_date:
