@@ -522,7 +522,13 @@ def view_donation(donation_id):
 @login_required
 @feature_required('donation_management')
 def edit_donation(donation_id):
-    """Edit donation header (optimistic locking)"""
+    """
+    Edit donation header and items (only for 'Entered' status).
+    Supports adding new items, deleting existing items, and updating header fields.
+    Uses optimistic locking for concurrency control.
+    """
+    from app.db.models import ItemCategory
+    
     donation = Donation.query.get_or_404(donation_id)
     
     # Prevent editing of verified or processed donations
@@ -530,7 +536,6 @@ def edit_donation(donation_id):
         flash('Cannot edit a verified donation. Donation has been verified and is now read-only.', 'danger')
         return redirect(url_for('donations.view_donation', donation_id=donation_id))
     
-    # Prevent editing of processed donations (already in warehouse)
     if donation.status_code == 'P':
         flash('Cannot edit a processed donation. It has already been added to warehouse inventory.', 'danger')
         return redirect(url_for('donations.view_donation', donation_id=donation_id))
@@ -543,16 +548,26 @@ def edit_donation(donation_id):
                 flash('This donation has been modified by another user. Please reload and try again.', 'danger')
                 return redirect(url_for('donations.edit_donation', donation_id=donation_id))
             
+            # Header fields
             donor_id = request.form.get('donor_id')
             event_id = request.form.get('event_id')
             custodian_id = request.form.get('custodian_id')
             donation_desc = request.form.get('donation_desc', '').strip()
             received_date_str = request.form.get('received_date')
-            status_code = request.form.get('status_code')
             comments_text = request.form.get('comments_text', '').strip()
+            origin_country_id = request.form.get('origin_country_id')
+            origin_address1 = request.form.get('origin_address1_text', '').strip()
+            origin_address2 = request.form.get('origin_address2_text', '').strip()
+            
+            # Cost fields
+            storage_cost_str = request.form.get('storage_cost', '0.00').strip()
+            haulage_cost_str = request.form.get('haulage_cost', '0.00').strip()
+            other_cost_str = request.form.get('other_cost', '0.00').strip()
+            other_cost_desc = request.form.get('other_cost_desc', '').strip()
             
             errors = []
             
+            # Validate header fields
             if not donor_id:
                 errors.append('Donor is required')
             if not event_id:
@@ -563,44 +578,199 @@ def edit_donation(donation_id):
                 errors.append('Donation description is required')
             if not received_date_str:
                 errors.append('Received date is required')
-            if not status_code or status_code not in ['E', 'V', 'P']:
-                errors.append('Valid status code is required')
+            if not origin_country_id:
+                errors.append('Origin country is required')
             
+            received_date = None
             if received_date_str:
                 received_date = datetime.strptime(received_date_str, '%Y-%m-%d').date()
                 if received_date > date.today():
                     errors.append('Received date cannot be in the future')
             
+            # Validate cost fields
+            storage_cost_value = Decimal('0.00')
+            try:
+                storage_cost_value = Decimal(storage_cost_str) if storage_cost_str else Decimal('0.00')
+                if storage_cost_value < 0:
+                    errors.append('Storage cost must be >= 0')
+            except:
+                errors.append('Invalid storage cost value')
+            
+            haulage_cost_value = Decimal('0.00')
+            try:
+                haulage_cost_value = Decimal(haulage_cost_str) if haulage_cost_str else Decimal('0.00')
+                if haulage_cost_value < 0:
+                    errors.append('Haulage cost must be >= 0')
+            except:
+                errors.append('Invalid haulage cost value')
+            
+            other_cost_value = Decimal('0.00')
+            try:
+                other_cost_value = Decimal(other_cost_str) if other_cost_str else Decimal('0.00')
+                if other_cost_value < 0:
+                    errors.append('Other cost must be >= 0')
+            except:
+                errors.append('Invalid other cost value')
+            
+            if other_cost_value > 0 and not other_cost_desc:
+                errors.append('Other cost description is required when other cost is greater than 0')
+            
+            # Parse items from form
+            item_data = []
+            existing_item_ids = []
+            item_ids_seen = set()
+            
+            for key in request.form.keys():
+                if key.startswith('item_id_'):
+                    item_num = key.split('_')[-1]
+                    item_id = request.form.get(f'item_id_{item_num}')
+                    donation_type = request.form.get(f'donation_type_{item_num}', 'GOODS').upper()
+                    quantity_str = request.form.get(f'quantity_{item_num}')
+                    item_cost_str = request.form.get(f'item_cost_{item_num}', '0.00')
+                    uom_id = request.form.get(f'uom_id_{item_num}')
+                    location_name = request.form.get(f'location_name_{item_num}', 'DONATION RECEIVED').strip()
+                    item_comments = request.form.get(f'item_comments_{item_num}', '').strip()
+                    existing_donation_item_id = request.form.get(f'donation_item_id_{item_num}')
+                    
+                    if item_id:
+                        if item_id in item_ids_seen:
+                            errors.append(f'Duplicate item detected in row #{item_num}. Each item can only be added once per donation.')
+                            continue
+                        item_ids_seen.add(item_id)
+                        
+                        if donation_type not in ('GOODS', 'FUNDS'):
+                            errors.append(f'Invalid donation type for item #{item_num}. Must be GOODS or FUNDS.')
+                        
+                        quantity_value = None
+                        if not quantity_str:
+                            errors.append(f'Quantity is required for item #{item_num}')
+                        else:
+                            try:
+                                quantity_value = Decimal(quantity_str)
+                                if quantity_value < 0:
+                                    errors.append(f'Quantity must be >= 0 for item #{item_num}')
+                            except:
+                                errors.append(f'Invalid quantity for item #{item_num}')
+                        
+                        item_cost_value = Decimal('0.00')
+                        try:
+                            item_cost_value = Decimal(item_cost_str)
+                            if item_cost_value < 0:
+                                errors.append(f'Item cost must be >= 0 for item #{item_num}')
+                        except:
+                            errors.append(f'Invalid item cost for item #{item_num}')
+                        
+                        if not uom_id:
+                            errors.append(f'UOM is required for item #{item_num}')
+                        
+                        try:
+                            item_data.append({
+                                'item_id': int(item_id),
+                                'donation_type': donation_type,
+                                'quantity': quantity_value,
+                                'item_cost': item_cost_value,
+                                'uom_code': uom_id,
+                                'location_name': location_name,
+                                'item_comments': item_comments,
+                                'existing_donation_item_id': int(existing_donation_item_id) if existing_donation_item_id else None
+                            })
+                            if existing_donation_item_id:
+                                existing_item_ids.append(int(existing_donation_item_id))
+                        except ValueError as ve:
+                            errors.append(f'Invalid data for item #{item_num}: {str(ve)}')
+            
+            if not item_data:
+                errors.append('At least one donation item is required')
+            
             if errors:
                 for error in errors:
                     flash(error, 'danger')
-                donors = Donor.query.order_by(Donor.donor_name).all()
-                events = Event.query.filter_by(status_code='A').order_by(Event.event_name).all()
-                custodians = Custodian.query.order_by(Custodian.custodian_name).all()
-                return render_template('donations/edit.html', 
-                                     donation=donation,
-                                     donors=donors,
-                                     events=events,
-                                     custodians=custodians,
-                                     today=date.today().isoformat(),
-                                     form_data=request.form)
+                form_data = _get_donation_form_data()
+                form_data['donation'] = donation
+                form_data['form_data'] = request.form
+                form_data['today'] = date.today().isoformat()
+                
+                # Get existing items for restoration
+                existing_items = []
+                for di in donation.items:
+                    existing_items.append({
+                        'donation_item_id': di.donation_item_id,
+                        'item_id': di.item_id,
+                        'item_name': di.item.item_name if di.item else 'Unknown',
+                        'donation_type': di.donation_type,
+                        'quantity': float(di.item_qty) if di.item_qty else 0,
+                        'item_cost': float(di.item_cost) if di.item_cost else 0,
+                        'uom_code': di.uom_code,
+                        'location_name': di.location_name or 'DONATION RECEIVED',
+                        'comments': di.comments_text or ''
+                    })
+                form_data['existing_items'] = existing_items
+                
+                return render_template('donations/edit.html', **form_data)
             
+            # Update header fields
             donation.donor_id = int(donor_id)
             donation.event_id = int(event_id)
             donation.custodian_id = int(custodian_id)
             donation.donation_desc = donation_desc.upper()
-            
             donation.received_date = received_date
-            donation.status_code = status_code
+            donation.origin_country_id = int(origin_country_id) if origin_country_id else None
+            donation.origin_address1_text = origin_address1.upper() if origin_address1 else None
+            donation.origin_address2_text = origin_address2.upper() if origin_address2 else None
             donation.comments_text = comments_text.upper() if comments_text else None
+            donation.storage_cost = storage_cost_value
+            donation.haulage_cost = haulage_cost_value
+            donation.other_cost = other_cost_value
+            donation.other_cost_desc = other_cost_desc.upper() if other_cost_desc else None
+            
+            # Delete items that are no longer in the form
+            current_item_ids = [di.donation_item_id for di in donation.items]
+            items_to_delete = [item_id for item_id in current_item_ids if item_id not in existing_item_ids]
+            for item_id in items_to_delete:
+                item_to_delete = DonationItem.query.get(item_id)
+                if item_to_delete:
+                    db.session.delete(item_to_delete)
+            
+            # Calculate total item cost and update/add items
+            total_item_cost = Decimal('0.00')
+            
+            for item_info in item_data:
+                item_cost = item_info['item_cost']
+                quantity = item_info['quantity']
+                line_total = item_cost * quantity
+                total_item_cost += line_total
+                
+                if item_info['existing_donation_item_id']:
+                    # Update existing item
+                    existing_item = DonationItem.query.get(item_info['existing_donation_item_id'])
+                    if existing_item:
+                        existing_item.item_id = item_info['item_id']
+                        existing_item.donation_type = item_info['donation_type']
+                        existing_item.item_qty = quantity
+                        existing_item.item_cost = item_cost
+                        existing_item.uom_code = item_info['uom_code']
+                        existing_item.location_name = item_info['location_name'].upper() if item_info['location_name'] else 'DONATION RECEIVED'
+                        existing_item.comments_text = item_info['item_comments'].upper() if item_info['item_comments'] else None
+                        add_audit_fields(existing_item, current_user, is_new=False)
+                else:
+                    # Add new item
+                    new_item = DonationItem()
+                    new_item.donation_id = donation.donation_id
+                    new_item.item_id = item_info['item_id']
+                    new_item.donation_type = item_info['donation_type']
+                    new_item.item_qty = quantity
+                    new_item.item_cost = item_cost
+                    new_item.uom_code = item_info['uom_code']
+                    new_item.location_name = item_info['location_name'].upper() if item_info['location_name'] else 'DONATION RECEIVED'
+                    new_item.comments_text = item_info['item_comments'].upper() if item_info['item_comments'] else None
+                    new_item.status_code = 'A'
+                    add_audit_fields(new_item, current_user, is_new=True)
+                    db.session.add(new_item)
+            
+            # Update total item cost
+            donation.tot_item_cost = total_item_cost
             
             add_audit_fields(donation, current_user, is_new=False)
-            
-            # MVP: Any successful update is treated as verified
-            # Update verify fields to reflect current user and timestamp
-            if status_code == 'V':
-                donation.verify_by_id = current_user.user_name
-                donation.verify_dtime = jamaica_now()
             
             db.session.commit()
             
@@ -615,20 +785,33 @@ def edit_donation(donation_id):
             db.session.rollback()
             flash(f'Database error: {str(e)}', 'danger')
             return redirect(url_for('donations.edit_donation', donation_id=donation_id))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Unexpected error: {str(e)}', 'danger')
+            return redirect(url_for('donations.edit_donation', donation_id=donation_id))
     
-    donors = Donor.query.order_by(Donor.donor_name).all()
-    custodians = Custodian.query.order_by(Custodian.custodian_name).all()
+    # GET request - load form with existing data
+    form_data = _get_donation_form_data()
+    form_data['donation'] = donation
+    form_data['today'] = date.today().isoformat()
     
-    events = Event.query.filter_by(status_code='A').order_by(Event.event_name).all()
-    if donation.event not in events:
-        events = [donation.event] + events
+    # Get existing items with full details
+    existing_items = []
+    for di in donation.items:
+        existing_items.append({
+            'donation_item_id': di.donation_item_id,
+            'item_id': di.item_id,
+            'item_name': di.item.item_name if di.item else 'Unknown',
+            'donation_type': di.donation_type,
+            'quantity': float(di.item_qty) if di.item_qty else 0,
+            'item_cost': float(di.item_cost) if di.item_cost else 0,
+            'uom_code': di.uom_code,
+            'location_name': di.location_name or 'DONATION RECEIVED',
+            'comments': di.comments_text or ''
+        })
+    form_data['existing_items'] = existing_items
     
-    return render_template('donations/edit.html', 
-                         donation=donation,
-                         donors=donors,
-                         events=events,
-                         custodians=custodians,
-                         today=date.today().isoformat())
+    return render_template('donations/edit.html', **form_data)
 
 
 @donations_bp.route('/<int:donation_id>/delete', methods=['POST'])
