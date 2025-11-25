@@ -17,6 +17,11 @@ from app.db.models import (Donation, DonationItem, DonationDoc, Donor, Event, Cu
                           Item, UnitOfMeasure, Country, Currency, ItemCostDef)
 from app.core.audit import add_audit_fields, add_verify_fields
 from app.core.decorators import feature_required
+from app.services.currency_conversion import (
+    convert_item_cost_to_jmd, 
+    has_exchange_rate,
+    CurrencyConversionError
+)
 import os
 from werkzeug.utils import secure_filename
 import mimetypes
@@ -312,14 +317,17 @@ def create_donation():
             db.session.flush()
             
             # Calculate total donation value and validate items before persisting
-            total_value = Decimal('0.00')
+            # All header costs (tot_item_cost, storage, haulage, other) are in JMD
+            total_value_jmd = Decimal('0.00')
             validated_items = []
+            conversion_errors = []
             
             for item_info in item_data:
                 # Enhanced validation for cost requirements
                 donation_type = item_info['donation_type']
                 item_cost = item_info['item_cost']
                 quantity = item_info['quantity']
+                uom_code = item_info['uom_code']
                 
                 # Validate quantity for all types (allow >= 0 to match DB constraint)
                 if quantity < 0:
@@ -331,6 +339,14 @@ def create_donation():
                     if item_cost <= 0:
                         errors.append(f"FUNDS donations must have item cost greater than 0.00")
                         continue
+                    # For FUNDS, validate currency exchange rate exists
+                    currency_code = uom_code.upper() if uom_code else 'JMD'
+                    if currency_code != 'JMD' and not has_exchange_rate(currency_code):
+                        conversion_errors.append(
+                            f"Conversion rate for [{currency_code}] to JMD is not configured. "
+                            f"Please contact the administrator."
+                        )
+                        continue
                 elif donation_type == 'GOODS':
                     # GOODS should have item_cost >= 0
                     if item_cost < 0:
@@ -340,8 +356,22 @@ def create_donation():
                 # If item passed validation, add to validated list
                 validated_items.append(item_info)
                 
-                # Add to total value (item_cost * quantity)
-                total_value += Decimal(str(item_cost)) * Decimal(str(quantity))
+                # Convert item cost to JMD for header total calculation
+                # For FUNDS items, the uom_code contains the currency code
+                # For GOODS items, costs are assumed to be in JMD
+                currency_for_conversion = uom_code if donation_type == 'FUNDS' else 'JMD'
+                jmd_amount, conv_error = convert_item_cost_to_jmd(
+                    item_cost, quantity, currency_for_conversion, donation_type
+                )
+                
+                if conv_error:
+                    conversion_errors.append(conv_error)
+                else:
+                    total_value_jmd += jmd_amount
+            
+            # Check if there were any conversion errors
+            if conversion_errors:
+                errors.extend(conversion_errors)
             
             # Check if there were any validation errors
             if errors:
@@ -353,7 +383,7 @@ def create_donation():
                 return render_template('donations/create.html', **form_data)
             
             # Validate that total item cost is > 0.00 (database constraint)
-            if total_value <= 0:
+            if total_value_jmd <= 0:
                 errors.append('Total item cost must be greater than 0.00. Please ensure at least one item has a cost.')
                 db.session.rollback()
                 for error in errors:
@@ -382,8 +412,8 @@ def create_donation():
                 
                 db.session.add(donation_item)
             
-            # Set cost breakdown on donation header
-            donation.tot_item_cost = total_value
+            # Set cost breakdown on donation header (all costs are in JMD)
+            donation.tot_item_cost = total_value_jmd
             
             # Handle document uploads
             document_count = 0
@@ -737,14 +767,39 @@ def edit_donation(donation_id):
                 if item_to_delete:
                     db.session.delete(item_to_delete)
             
-            # Calculate total item cost and update/add items
-            total_item_cost = Decimal('0.00')
+            # Calculate total item cost (converted to JMD) and update/add items
+            total_item_cost_jmd = Decimal('0.00')
+            conversion_errors = []
             
             for item_info in item_data:
                 item_cost = item_info['item_cost']
                 quantity = item_info['quantity']
-                line_total = item_cost * quantity
-                total_item_cost += line_total
+                donation_type = item_info['donation_type']
+                uom_code = item_info['uom_code']
+                
+                # Convert item cost to JMD for header total
+                # For FUNDS items, the uom_code contains the currency code
+                # For GOODS items, costs are assumed to be in JMD
+                currency_for_conversion = uom_code if donation_type == 'FUNDS' else 'JMD'
+                
+                # Validate exchange rate for FUNDS items
+                if donation_type == 'FUNDS':
+                    currency_code = uom_code.upper() if uom_code else 'JMD'
+                    if currency_code != 'JMD' and not has_exchange_rate(currency_code):
+                        conversion_errors.append(
+                            f"Conversion rate for [{currency_code}] to JMD is not configured. "
+                            f"Please contact the administrator."
+                        )
+                        continue
+                
+                jmd_amount, conv_error = convert_item_cost_to_jmd(
+                    item_cost, quantity, currency_for_conversion, donation_type
+                )
+                
+                if conv_error:
+                    conversion_errors.append(conv_error)
+                else:
+                    total_item_cost_jmd += jmd_amount
                 
                 if item_info['is_existing']:
                     # Update existing item using composite key (donation_id, item_id)
@@ -772,8 +827,33 @@ def edit_donation(donation_id):
                     add_audit_fields(new_item, current_user, is_new=True)
                     db.session.add(new_item)
             
-            # Update total item cost
-            donation.tot_item_cost = total_item_cost
+            # Check for conversion errors
+            if conversion_errors:
+                db.session.rollback()
+                for error in conversion_errors:
+                    flash(error, 'danger')
+                form_data = _get_donation_form_data()
+                form_data['donation'] = donation
+                form_data['form_data'] = request.form
+                # Get existing items for restoration
+                existing_items = []
+                for di in donation.items:
+                    existing_items.append({
+                        'is_existing': True,
+                        'item_id': di.item_id,
+                        'item_name': di.item.item_name if di.item else 'Unknown',
+                        'donation_type': di.donation_type,
+                        'quantity': float(di.item_qty) if di.item_qty else 0,
+                        'item_cost': float(di.item_cost) if di.item_cost else 0,
+                        'uom_code': di.uom_code,
+                        'location_name': di.location_name or 'DONATION RECEIVED',
+                        'comments': di.comments_text or ''
+                    })
+                form_data['existing_items'] = existing_items
+                return render_template('donations/edit.html', **form_data)
+            
+            # Update total item cost (in JMD)
+            donation.tot_item_cost = total_item_cost_jmd
             
             add_audit_fields(donation, current_user, is_new=False)
             

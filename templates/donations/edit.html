@@ -162,15 +162,16 @@
                             </div>
                         </div>
 
-                        <!-- Cost Breakdown Section -->
+                        <!-- Cost Breakdown Section (All amounts in JMD) -->
                         <div class="mb-4">
                             <h5 class="border-bottom pb-2 mb-3">
-                                <i class="bi bi-currency-dollar"></i> Cost Breakdown
+                                <i class="bi bi-currency-dollar"></i> Cost Breakdown <small class="text-muted">(All amounts in JMD)</small>
                             </h5>
                             <div class="row g-3">
                                 <div class="col-md-3">
                                     <label for="tot_item_cost" class="form-label">
-                                        Total Item Cost
+                                        Total Item Cost (JMD)
+                                        <i class="bi bi-info-circle" data-bs-toggle="tooltip" title="Converted to JMD from item currencies"></i>
                                     </label>
                                     <input type="text" 
                                            class="form-control" 
@@ -179,11 +180,11 @@
                                            data-money-format="true"
                                            value="{{ form_data.get('tot_item_cost') if form_data else (donation.tot_item_cost|default('0.00', true)) }}"
                                            readonly>
-                                    <small class="form-text text-muted">Auto-calculated from items</small>
+                                    <small class="form-text text-muted">Auto-calculated from items (converted to JMD)</small>
                                 </div>
                                 <div class="col-md-3">
                                     <label for="storage_cost" class="form-label">
-                                        Storage Cost
+                                        Storage Cost (JMD)
                                     </label>
                                     <input type="text" 
                                            class="form-control" 
@@ -192,11 +193,11 @@
                                            data-money-format="true"
                                            value="{{ form_data.get('storage_cost') if form_data else (donation.storage_cost|default('', true)) }}"
                                            placeholder="$0.00">
-                                    <small class="form-text text-muted">Warehousing costs</small>
+                                    <small class="form-text text-muted">Warehousing costs in JMD</small>
                                 </div>
                                 <div class="col-md-3">
                                     <label for="haulage_cost" class="form-label">
-                                        Haulage Cost
+                                        Haulage Cost (JMD)
                                     </label>
                                     <input type="text" 
                                            class="form-control" 
@@ -205,11 +206,11 @@
                                            data-money-format="true"
                                            value="{{ form_data.get('haulage_cost') if form_data else (donation.haulage_cost|default('', true)) }}"
                                            placeholder="$0.00">
-                                    <small class="form-text text-muted">Transportation costs</small>
+                                    <small class="form-text text-muted">Transportation costs in JMD</small>
                                 </div>
                                 <div class="col-md-3">
                                     <label for="other_cost" class="form-label">
-                                        Other Cost
+                                        Other Cost (JMD)
                                     </label>
                                     <input type="text" 
                                            class="form-control" 
@@ -218,7 +219,7 @@
                                            data-money-format="true"
                                            value="{{ form_data.get('other_cost') if form_data else (donation.other_cost|default('', true)) }}"
                                            placeholder="$0.00">
-                                    <small class="form-text text-muted">Miscellaneous costs</small>
+                                    <small class="form-text text-muted">Miscellaneous costs in JMD</small>
                                 </div>
                                 <div class="col-md-12">
                                     <label for="other_cost_desc" class="form-label">

@@ -1,0 +1,101 @@
+1. Donation Header Costs Must Be in Jamaican Currency (JMD)
+
+On the donation header:
+
+Ensure the following fields are always stored and displayed in Jamaican Dollars (JMD):
+
+Total Cost (overall donation value)
+
+Storage Cost
+
+Haulage Cost
+
+Other Costs
+
+Update labels, help text and/or tooltips so it is clear these are JMD amounts (e.g. “Total Cost (JMD)” or “$ JMD” prefix), but do not change the underlying database fields or types.
+
+If there is a header-level currency_code or similar field, set or enforce it as “JMD” for these totals, without removing, renaming, or altering the column definition.
+
+2. Currency Conversion from Item-Level Costs to JMD
+
+On the Donation Items section:
+
+The unit cost for each item can be entered in a different currency, based on the item’s UOM / currency selection (for example:
+
+FUNDS items where UOM = a currency code, or
+
+any item where the cost is expressed in a non-JMD currency).
+
+When an item’s unit cost and currency are set, the system must:
+
+Calculate the item’s total in its source currency (e.g. unit_cost * quantity).
+
+Use a currency conversion service to convert that amount into JMD.
+
+Use the converted JMD values when:
+
+Calculating the Total Cost in the donation header.
+
+Including item-level contributions in any other header-level cost summaries that are meant to be in JMD.
+
+This conversion must occur:
+
+In the backend whenever the donation is calculated / saved (to ensure integrity and prevent tampering).
+
+Optionally in the frontend for live UI feedback, but the backend remains the source of truth.
+
+3. Currency Conversion Service Design (No Schema Changes)
+
+Implement a reusable currency conversion service in the codebase, without creating or altering any database tables or columns:
+
+The service should expose a simple API, such as:
+
+convert_to_jmd(amount, source_currency_code)
+or
+convert(amount, source_currency_code, target_currency_code='JMD')
+
+Internally, the service should:
+
+Use existing configuration or data already available in the app (e.g. an existing currency table, constants, or configuration file) if it exists, OR
+
+Use a config-driven map or environment variables for exchange rates (e.g. loaded from settings or config file) rather than a new DB table.
+
+The service must not introduce any new schema objects (no new tables, columns, constraints, or migrations).
+
+Error handling:
+
+If a rate for the selected currency is missing:
+
+Do not crash or silently fail.
+
+Show a clear validation error to the user (e.g. “Conversion rate for [USD] to JMD is not configured. Please contact the administrator.”) and prevent acceptance until resolved.
+
+All calculations should use appropriate rounding rules (e.g. round to 2 decimal places in JMD) consistent with existing financial handling in the app.
+
+4. Integration with Donation Header Totals
+
+When a donation is being accepted or updated:
+
+Aggregate all item-level values converted to JMD and use that to:
+
+Populate / recalculate the Total Cost (JMD) on the header.
+
+Ensure Storage Cost, Haulage Cost, and Other Costs in the header remain in JMD and are consistent with any item-level or manually entered amounts.
+
+Preserve all existing validation and business rules for these fields; only add the conversion logic and JMD enforcement.
+
+5. General Constraints
+
+Do not:
+
+Change any database schema (no new tables, columns, or constraint changes).
+
+Alter existing authentication, authorization, CSP, headers, CSRF, or other security controls.
+
+Break any existing donation workflows, UI navigation patterns, or business rules.
+
+This change should only:
+
+Enforce that donation header cost fields are in JMD, and
+
+Introduce a currency conversion service so item-level costs in other currencies are correctly converted to JMD for those header totals.
