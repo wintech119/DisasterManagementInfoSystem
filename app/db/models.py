@@ -673,7 +673,6 @@ class DonationItem(db.Model):
     donation_type = db.Column(db.CHAR(5), nullable=False, default='GOODS')
     item_qty = db.Column(db.Numeric(9, 2), nullable=False, default=1.00)
     item_cost = db.Column(db.Numeric(10, 2), nullable=False, default=0.00)
-    addon_cost = db.Column(db.Numeric(10, 2), nullable=False, default=0.00)
     uom_code = db.Column(db.String(25), db.ForeignKey('unitofmeasure.uom_code'), nullable=False)
     location_name = db.Column(db.Text, nullable=False)
     status_code = db.Column(db.CHAR(1), nullable=False, default='V')
@@ -690,9 +689,7 @@ class DonationItem(db.Model):
         db.CheckConstraint("donation_type IN ('GOODS', 'FUNDS')", name='c_donation_item_0'),
         db.CheckConstraint("item_qty >= 0.00", name='c_donation_item_1a'),
         db.CheckConstraint("item_cost >= 0.00", name='c_donation_item_1b'),
-        db.CheckConstraint("addon_cost >= 0.00", name='c_donation_item_1c'),
         db.CheckConstraint("status_code IN ('P', 'V')", name='c_donation_item_2'),
-        db.CheckConstraint("item_cost + addon_cost > 0.00", name='c_donation_item_10'),
     )
     
     donation = db.relationship('Donation', backref='items')

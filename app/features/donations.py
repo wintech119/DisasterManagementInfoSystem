@@ -222,7 +222,6 @@ def create_donation():
                     donation_type = request.form.get(f'donation_type_{item_num}', 'GOODS').upper()
                     quantity_str = request.form.get(f'quantity_{item_num}')
                     item_cost_str = request.form.get(f'item_cost_{item_num}', '0.00')
-                    addon_cost_str = request.form.get(f'addon_cost_{item_num}', '0.00')
                     uom_id = request.form.get(f'uom_id_{item_num}')
                     location_name = request.form.get(f'location_name_{item_num}', 'DONATION RECEIVED').strip()
                     item_comments = request.form.get(f'item_comments_{item_num}', '').strip()
@@ -258,31 +257,16 @@ def create_donation():
                                 errors.append(f'Item cost must be >= 0 for item #{item_num}')
                         except:
                             errors.append(f'Invalid item cost for item #{item_num}')
-                        
-                        # Validate addon_cost
-                        addon_cost_value = Decimal('0.00')
-                        try:
-                            addon_cost_value = Decimal(addon_cost_str)
-                            if addon_cost_value < 0:
-                                errors.append(f'Addon cost must be >= 0 for item #{item_num}')
-                        except:
-                            errors.append(f'Invalid addon cost for item #{item_num}')
-                        
-                        # Validate FUNDS-specific rules
-                        if donation_type == 'FUNDS':
-                            if addon_cost_value != Decimal('0.00'):
-                                errors.append(f'Addon cost must be 0.00 for FUNDS items (item #{item_num})')
-                        
+
                         if not uom_id:
                             errors.append(f'UOM is required for item #{item_num}')
-                        
+
                         try:
                             item_data.append({
                                 'item_id': int(item_id),
                                 'donation_type': donation_type,
                                 'quantity': quantity_value,
                                 'item_cost': item_cost_value,
-                                'addon_cost': addon_cost_value,
                                 'uom_code': uom_id,
                                 'location_name': location_name,
                                 'item_comments': item_comments
@@ -335,7 +319,6 @@ def create_donation():
                 # Enhanced validation for cost requirements
                 donation_type = item_info['donation_type']
                 item_cost = item_info['item_cost']
-                addon_cost = item_info['addon_cost']
                 quantity = item_info['quantity']
                 
                 # Validate quantity for all types (allow >= 0 to match DB constraint)
@@ -344,26 +327,20 @@ def create_donation():
                     continue
                 
                 if donation_type == 'FUNDS':
-                    # FUNDS must have item_cost > 0, addon_cost = 0, and quantity >= 0
+                    # FUNDS must have item_cost > 0 and quantity >= 0
                     if item_cost <= 0:
                         errors.append(f"FUNDS donations must have item cost greater than 0.00")
                         continue
-                    if addon_cost != 0:
-                        errors.append(f"FUNDS donations cannot have addon costs (must be 0.00)")
-                        continue
                 elif donation_type == 'GOODS':
-                    # GOODS should have item_cost >= 0, addon_cost >= 0
+                    # GOODS should have item_cost >= 0
                     if item_cost < 0:
                         errors.append(f"GOODS donations cannot have negative item cost")
-                        continue
-                    if addon_cost < 0:
-                        errors.append(f"GOODS donations cannot have negative addon cost")
                         continue
                 
                 # If item passed validation, add to validated list
                 validated_items.append(item_info)
                 
-                # Add to total value (item_cost * quantity) - addon_cost excluded from total
+                # Add to total value (item_cost * quantity)
                 total_value += Decimal(str(item_cost)) * Decimal(str(quantity))
             
             # Check if there were any validation errors
@@ -393,7 +370,6 @@ def create_donation():
                 donation_item.donation_type = item_info['donation_type']
                 donation_item.item_qty = item_info['quantity']
                 donation_item.item_cost = item_info['item_cost']
-                donation_item.addon_cost = item_info['addon_cost']
                 donation_item.uom_code = item_info['uom_code']
                 donation_item.location_name = item_info['location_name'].upper()
                 donation_item.status_code = 'P'
@@ -1093,7 +1069,6 @@ def verify_donation_detail(donation_id):
                     donation_type = request.form.get(f'donation_type_{item_num}', 'GOODS').upper()
                     quantity_str = request.form.get(f'quantity_{item_num}')
                     item_cost_str = request.form.get(f'item_cost_{item_num}', '0.00')
-                    addon_cost_str = request.form.get(f'addon_cost_{item_num}', '0.00')
                     uom_code = request.form.get(f'uom_id_{item_num}')
                     location_name = request.form.get(f'location_name_{item_num}', 'DONATION RECEIVED').strip()
                     item_comments = request.form.get(f'item_comments_{item_num}', '').strip()
@@ -1129,17 +1104,7 @@ def verify_donation_detail(donation_id):
                                 errors.append(f'Item cost must be > 0 for FUNDS items (item #{item_num})')
                         except:
                             errors.append(f'Invalid item cost for item #{item_num}')
-                        
-                        addon_cost_value = Decimal('0.00')
-                        try:
-                            addon_cost_value = Decimal(addon_cost_str)
-                            if addon_cost_value < 0:
-                                errors.append(f'Addon cost must be >= 0 for item #{item_num}')
-                            if donation_type == 'FUNDS' and addon_cost_value != Decimal('0.00'):
-                                errors.append(f'Addon cost must be 0.00 for FUNDS items (item #{item_num})')
-                        except:
-                            errors.append(f'Invalid addon cost for item #{item_num}')
-                        
+
                         if not uom_code:
                             errors.append(f'UOM is required for item #{item_num}')
                         
@@ -1155,7 +1120,6 @@ def verify_donation_detail(donation_id):
                                 'donation_type': donation_type,
                                 'quantity': quantity_value,
                                 'item_cost': item_cost_value,
-                                'addon_cost': addon_cost_value,
                                 'uom_code': uom_code,
                                 'location_name': location_name,
                                 'item_comments': item_comments
@@ -1208,10 +1172,9 @@ def verify_donation_detail(donation_id):
             
             for item_info in item_data:
                 item_cost = item_info['item_cost']
-                addon_cost = item_info['addon_cost']
                 quantity = item_info['quantity']
-                
-                # Add to total value (item_cost * quantity) - addon_cost excluded from total
+
+                # Add to total value (item_cost * quantity)
                 total_value += Decimal(str(item_cost)) * Decimal(str(quantity))
                 
                 existing_item = DonationItem.query.get((donation_id, item_info['item_id']))
@@ -1220,7 +1183,6 @@ def verify_donation_detail(donation_id):
                     existing_item.donation_type = item_info['donation_type']
                     existing_item.item_qty = item_info['quantity']
                     existing_item.item_cost = item_info['item_cost']
-                    existing_item.addon_cost = item_info['addon_cost']
                     existing_item.uom_code = item_info['uom_code']
                     existing_item.location_name = item_info['location_name'].upper()
                     existing_item.comments_text = item_info['item_comments'].upper() if item_info['item_comments'] else None
@@ -1235,7 +1197,6 @@ def verify_donation_detail(donation_id):
                     donation_item.donation_type = item_info['donation_type']
                     donation_item.item_qty = item_info['quantity']
                     donation_item.item_cost = item_info['item_cost']
-                    donation_item.addon_cost = item_info['addon_cost']
                     donation_item.uom_code = item_info['uom_code']
                     donation_item.location_name = item_info['location_name'].upper()
                     donation_item.status_code = 'V'

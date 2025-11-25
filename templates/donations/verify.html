@@ -514,7 +514,6 @@ function updateItemsTable() {
                 <input type="hidden" name="donation_type_${num}" value="${String(item.donation_type)}">
                 <input type="hidden" name="quantity_${num}" value="${Number(item.quantity).toFixed(2)}">
                 <input type="hidden" name="item_cost_${num}" value="${Number(item.item_cost).toFixed(2)}">
-                <input type="hidden" name="addon_cost_${num}" value="${Number(item.addon_cost).toFixed(2)}">
                 <input type="hidden" name="uom_id_${num}" value="${String(item.uom_code)}">
                 <input type="hidden" name="location_name_${num}" value="${String(item.location_name)}">
                 <input type="hidden" name="item_comments_${num}" value="${String(item.comments)}">
@@ -536,7 +535,6 @@ const existingItems = [
         donation_type: '{{ item_data.category_type }}',
         quantity: {{ item_data.item.item_qty }},
         item_cost: {{ item_data.item.item_cost }},
-        addon_cost: {{ item_data.item.addon_cost }},
         uom_code: '{{ item_data.item.uom_code }}',
         uom_desc: '{{ item_data.item.uom_code }}',
         location_name: '{{ item_data.item.location_name or "DONATION RECEIVED" }}',
@@ -662,7 +660,6 @@ document.getElementById('addItemBtn').addEventListener('click', function() {
     
     const qty = parseFloat(quantityInput.value);
     const itemCost = parseFloat(itemCostInput.value);
-    const addonCost = 0.00;
     
     if (isNaN(qty) || qty < 0) {
         alert('Please enter a valid quantity (must be >= 0)');
@@ -704,7 +701,6 @@ document.getElementById('addItemBtn').addEventListener('click', function() {
         donation_type: currentCategoryType,
         quantity: qty,
         item_cost: itemCost,
-        addon_cost: addonCost,
         uom_code: uomHidden.value,
         uom_desc: selectedUomOption ? selectedUomOption.getAttribute('data-desc') : uomHidden.value,
         location_name: locationInput.value.trim().toUpperCase(),
