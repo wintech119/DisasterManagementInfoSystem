@@ -388,13 +388,13 @@ def _process_entry_submission(donation, warehouse, existing_intake, action):
                 errors.append(f'{item.item_name}: Invalid expiry date format')
                 continue
         else:
+            # Non-expirable items: parse user-provided expiry date if given, otherwise leave as None
             if expiry_date_str:
                 try:
                     expiry_date = datetime.strptime(expiry_date_str, '%Y-%m-%d').date()
                 except ValueError:
                     pass
-            if not expiry_date:
-                expiry_date = date.today() + timedelta(days=3650)
+            # Do NOT set a placeholder date - expiry_date remains None for non-expirable items
         
         if not uom_code:
             errors.append(f'{item.item_name}: UOM is required')

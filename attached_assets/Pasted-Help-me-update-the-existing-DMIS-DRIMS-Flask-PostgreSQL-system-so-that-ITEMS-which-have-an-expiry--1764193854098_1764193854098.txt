@@ -1,0 +1,77 @@
+Help me update the existing DMIS/DRIMS Flask + PostgreSQL system so that ITEMS which have an expiry date field do NOT receive any automatic default date (such as “2030-11-23” or any artificial placeholder) during the donation intake workflow.
+
+IMPORTANT RULES
+-------------------------------------------------
+- DO NOT change any existing database tables, columns, constraints, or triggers.
+- DO NOT introduce new fields, defaults, or constraints.
+- DO NOT remove existing validation logic unless required by this specific fix.
+- DO NOT break donation workflow, relief request workflow, or any inventory behaviour.
+- DO NOT break FEFO/FIFO logic, itembatch logic, or how expiry dates are handled when they DO exist.
+- DO NOT affect any code outside the donation intake process.
+
+REQUIREMENT
+-------------------------------------------------
+Fix the donation intake (LO/LM) workflow so that:
+- If an item does NOT require an expiry date, OR
+- If the user does not enter an expiry date because the item is non-expirable,
+
+➡ **The expiry_date field in dnintake_item MUST be stored as NULL in the database.**
+
+- No system-generated placeholder date such as “2030-11-23”, “2099-01-01”, “1900-01-01”, or similar must ever be inserted automatically.
+- The backend must not substitute a fake expiry date.
+- The UI should not pre-fill any expiry date unless the user explicitly enters one.
+
+WHAT YOU MUST UPDATE
+-------------------------------------------------
+
+1. **UI Updates (Donation Intake Screen)**
+   - Remove any frontend default value for expiry_date.
+   - Ensure the expiry_date input box starts empty.
+   - Only populate expiry_date if the user manually enters one.
+
+2. **Backend (Flask Route / Service)**
+   - In the donation intake POST handler, update the logic so:
+     - If `expiry_date` is absent, empty string, or not applicable:
+       → Set `expiry_date = None` before writing to `dnintake_item`.
+     - Do NOT assign any artificial default date.
+
+3. **Database Insert Logic**
+   - Ensure the SQL/ORM insert into `dnintake_item.expiry_date` sets NULL when no real value is provided.
+   - Example (using SQLAlchemy or raw SQL):
+       expiry_date = form_value if provided else None
+
+4. **Validation**
+   - Keep all existing expiry date validations (expiry_date ≥ CURRENT_DATE) only when expiry_date is actually provided.
+   - If expiry_date is NULL:
+     - Skip the check.
+     - Allow successful insert.
+
+5. **No Change to Existing Records**
+   - DO NOT write migration scripts.
+   - DO NOT alter historical donation records.
+   - Only modify new intake behaviour going forward.
+
+6. **No Behaviour Change for Expirable Items**
+   - If an item legitimately has an expiry date:
+       - User enters it
+       - System validates it
+       - System saves it exactly as entered.
+
+TESTING INSTRUCTIONS
+-------------------------------------------------
+After implementing:
+
+1. Create a donation with an item that has NO expiry date requirement.
+   - Confirm expiry_date is NULL in `dnintake_item`.
+
+2. Create a donation with an item that DOES have expiry date.
+   - Confirm expiry_date is saved correctly.
+   - Confirm expiry_date >= CURRENT_DATE validation still works.
+
+3. Ensure no placeholder “2030-11-23” or similar appears anywhere.
+
+SUMMARY
+-------------------------------------------------
+Only remove the default placeholder expiry date behavior in the donation intake workflow.  
+The expiry_date column must remain NULL when not applicable.  
+Make NO changes to any other workflow, schema, logic, or security settings
