@@ -1,0 +1,255 @@
+diff --git a/templates/base.html b/templates/base.html
+index 6a51cf353b2739ff07c763aea97ca41483318c17..fceb86614ea8042f065d21a06149f18d575ac5ed 100644
+--- a/templates/base.html
++++ b/templates/base.html
+@@ -595,66 +595,66 @@
+         }
+         
+         .table-clickable tbody tr:hover {
+             background-color: rgba(0, 150, 57, 0.08);
+         }
+         
+         .drims-table td {
+             vertical-align: middle;
+             padding: 12px;
+         }
+         
+         .drims-table .btn-sm {
+             padding: 0.25rem 0.75rem;
+             font-size: 0.875rem;
+         }
+     </style>
+     
+     <!-- CSP-compliant utilities -->
+     <link rel="stylesheet" href="{{ url_for('static', filename='css/csp-utilities.css') }}">
+     
+     {% block extra_styles %}{% endblock %}
+ </head>
+ <body>
+     {% if current_user.is_authenticated %}
+     <div class="top-header">
+-        <button class="hamburger-menu" id="sidebarToggle" 
+-                aria-controls="sidebar" 
+-                aria-expanded="false" 
++        <button class="hamburger-menu" id="sidebarToggle"
++                aria-controls="sidebar"
++                aria-expanded="false"
+                 aria-label="Toggle navigation menu">
+             <i class="bi bi-list" aria-hidden="true"></i>
+-            <span class="sr-only">Menu</span>
++            <span class="visually-hidden">Menu</span>
+         </button>
+         <a href="{{ url_for('dashboard.index') }}" class="brand-logo">
+             <img src="/static/images/odpem-logo.png" alt="ODPEM Logo">
+             <div class="brand-text">
+                 <span class="brand-text-main">DMIS</span>
+                 <span class="brand-text-sub">Disaster Management Information System</span>
+             </div>
+         </a>
+         <div class="header-right">
+-            <button class="notification-bell" id="notificationBell" data-bs-toggle="offcanvas" data-bs-target="#notificationPanel">
++            <button class="notification-bell" id="notificationBell" data-bs-toggle="offcanvas" data-bs-target="#notificationPanel" aria-controls="notificationPanel" aria-expanded="false" aria-label="Open notifications panel">
+                 <i class="bi bi-bell"></i>
+                 <span class="notification-badge" id="notificationCount" hidden>0</span>
+             </button>
+             <div class="dropdown">
+                 <a class="user-profile-dropdown d-flex align-items-center" href="#" role="button" id="userDropdown" data-bs-toggle="dropdown">
+                     <i class="bi bi-person-circle me-2 icon-lg"></i>
+                     <div class="d-flex flex-column align-items-start">
+                         <span class="fw-bold">{{ current_user.full_name }}</span>
+                         <small class="small opacity-90">{{ current_user.email }}</small>
+                     </div>
+                     <i class="bi bi-chevron-down ms-2"></i>
+                 </a>
+                 <ul class="dropdown-menu dropdown-menu-end">
+                     <li><a class="dropdown-item" href="{{ url_for('profile.view_profile') }}"><i class="bi bi-person-circle"></i> My Profile</a></li>
+                     <li><hr class="dropdown-divider"></li>
+                     <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                 </ul>
+             </div>
+         </div>
+     </div>
+ 
+     <!-- Mobile sidebar overlay -->
+     <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+ 
+     {% from 'components/_dynamic_navigation.html' import render_dynamic_nav %}
+@@ -749,62 +749,77 @@
+ 
+     <!-- Footer -->
+     {% if current_user.is_authenticated %}
+     <footer class="app-footer">
+         <div class="footer-content">
+             <div class="footer-logos">
+                 <img src="/static/images/odpem-logo.png" alt="ODPEM" class="footer-logo">
+                 <img src="/static/images/jamaica-coat-of-arms.png" alt="Government of Jamaica" class="footer-logo">
+             </div>
+             <div class="footer-text">
+                 <p class="mb-1"><strong>Office of Disaster Preparedness and Emergency Management (ODPEM)</strong></p>
+                 <p class="mb-0 small">Government of Jamaica • "Out of Many, One People"</p>
+             </div>
+             <div class="footer-meta">
+                 <p class="mb-0 small text-muted">© {{ now.year }} ODPEM • All Rights Reserved</p>
+             </div>
+         </div>
+     </footer>
+     {% endif %}
+ 
+     <script  nonce="{{ csp_nonce() }}" src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+     <script nonce="{{ csp_nonce() }}">
+         document.addEventListener('DOMContentLoaded', function() {
+             const sidebar = document.getElementById('sidebar');
+             const sidebarToggle = document.getElementById('sidebarToggle');
+-            
+-            if (sidebarToggle) {
+-                sidebarToggle.addEventListener('click', function() {
+-                    sidebar.classList.toggle('collapsed');
+-                    localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+-                });
+-                
++            const desktopSidebarQuery = window.matchMedia('(min-width: 992px)');
++
++            function applyStoredSidebarState() {
++                if (!sidebar) return;
+                 const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+-                if (sidebarCollapsed) {
++
++                if (desktopSidebarQuery.matches && sidebarCollapsed) {
+                     sidebar.classList.add('collapsed');
++                    sidebarToggle?.setAttribute('aria-expanded', 'false');
++                } else {
++                    sidebar.classList.remove('collapsed');
++                    sidebarToggle?.setAttribute('aria-expanded', 'true');
+                 }
+             }
++
++            if (sidebarToggle && sidebar) {
++                sidebarToggle.addEventListener('click', function() {
++                    if (!desktopSidebarQuery.matches) return;
++
++                    const isCollapsed = sidebar.classList.toggle('collapsed');
++                    localStorage.setItem('sidebarCollapsed', isCollapsed);
++                    sidebarToggle.setAttribute('aria-expanded', (!isCollapsed).toString());
++                });
++
++                applyStoredSidebarState();
++                desktopSidebarQuery.addEventListener('change', applyStoredSidebarState);
++            }
+             
+             {% if current_user.is_authenticated %}
+             loadNotifications();
+             setInterval(loadNotifications, 30000);
+             {% endif %}
+         });
+         
+         {% if current_user.is_authenticated %}
+         function loadNotifications() {
+             const badge = document.getElementById('notificationCount');
+             
+             fetch('/notifications/api/unread_count')
+                 .then(response => response.json())
+                 .then(data => {
+                     if (data.count > 0) {
+                         badge.textContent = data.count;
+                         badge.hidden = false;
+                     } else {
+                         badge.hidden = true;
+                     }
+                 })
+                 .catch(error => console.error('Error loading notifications:', error));
+         }
+         
+         function loadNotificationList() {
+@@ -1051,80 +1066,90 @@
+         function escapeHtml(text) {
+             const div = document.createElement('div');
+             div.textContent = text;
+             return div.innerHTML;
+         }
+         
+         function getNotificationIconInfo(type) {
+             if (type.includes('denied') || type.includes('ineligible')) {
+                 return { icon: 'bi-x-circle-fill', variant: 'danger' };
+             } else if (type.includes('approved') || type.includes('dispatched')) {
+                 return { icon: 'bi-check-circle-fill', variant: 'success' };
+             } else if (type.includes('submitted') || type.includes('ready')) {
+                 return { icon: 'bi-info-circle-fill', variant: 'info' };
+             } else if (type === 'low_stock') {
+                 return { icon: 'bi-exclamation-triangle-fill', variant: 'warning' };
+             } else if (type.includes('package')) {
+                 return { icon: 'bi-box-seam-fill', variant: 'primary' };
+             } else {
+                 return { icon: 'bi-bell-fill', variant: 'primary' };
+             }
+         }
+         
+         const notificationPanel = document.getElementById('notificationPanel');
+         if (notificationPanel) {
+             notificationPanel.addEventListener('show.bs.offcanvas', function() {
++                document.getElementById('notificationBell')?.setAttribute('aria-expanded', 'true');
+                 loadNotificationList();
+             });
++
++            notificationPanel.addEventListener('hidden.bs.offcanvas', function() {
++                document.getElementById('notificationBell')?.setAttribute('aria-expanded', 'false');
++            });
+         }
+         {% endif %}
+         
+         // Mobile Navigation Toggle
+         const sidebarToggle = document.getElementById('sidebarToggle');
+         const sidebar = document.getElementById('sidebar');
+         const sidebarOverlay = document.getElementById('sidebarOverlay');
+         const sidebarClose = document.getElementById('sidebarClose');
+-        
++        const mobileSidebarQuery = window.matchMedia('(max-width: 991.98px)');
++
+         function openSidebar() {
++            if (!mobileSidebarQuery.matches || !sidebar || !sidebarOverlay) return;
+             sidebar.classList.add('active');
+             sidebarOverlay.classList.add('active');
+             sidebarToggle.setAttribute('aria-expanded', 'true');
+             sidebarOverlay.setAttribute('aria-hidden', 'false');
+             document.body.classList.add('body-no-scroll');
+         }
+-        
++
+         function closeSidebar() {
++            if (!sidebar || !sidebarOverlay) return;
+             sidebar.classList.remove('active');
+             sidebarOverlay.classList.remove('active');
+             sidebarToggle.setAttribute('aria-expanded', 'false');
+             sidebarOverlay.setAttribute('aria-hidden', 'true');
+             document.body.classList.remove('body-no-scroll');
+         }
+         
+         // Toggle sidebar on button click
+         if (sidebarToggle) {
+             sidebarToggle.addEventListener('click', function() {
++                if (!mobileSidebarQuery.matches) return;
++
+                 if (sidebar.classList.contains('active')) {
+                     closeSidebar();
+                 } else {
+                     openSidebar();
+                 }
+             });
+         }
+         
+         // Close sidebar on close button click
+         if (sidebarClose) {
+             sidebarClose.addEventListener('click', closeSidebar);
+         }
+         
+         // Close sidebar on overlay click
+         if (sidebarOverlay) {
+             sidebarOverlay.addEventListener('click', closeSidebar);
+         }
+         
+         // Close sidebar on Escape key
+         document.addEventListener('keydown', function(e) {
+             if (e.key === 'Escape' && sidebar && sidebar.classList.contains('active')) {
+                 closeSidebar();
+             }
+         });
+         

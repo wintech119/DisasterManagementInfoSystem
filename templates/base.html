@@ -617,12 +617,12 @@
 <body>
     {% if current_user.is_authenticated %}
     <div class="top-header">
-        <button class="hamburger-menu" id="sidebarToggle" 
-                aria-controls="sidebar" 
-                aria-expanded="false" 
+        <button class="hamburger-menu" id="sidebarToggle"
+                aria-controls="sidebar"
+                aria-expanded="false"
                 aria-label="Toggle navigation menu">
             <i class="bi bi-list" aria-hidden="true"></i>
-            <span class="sr-only">Menu</span>
+            <span class="visually-hidden">Menu</span>
         </button>
         <a href="{{ url_for('dashboard.index') }}" class="brand-logo">
             <img src="/static/images/odpem-logo.png" alt="ODPEM Logo">
@@ -632,7 +632,7 @@
             </div>
         </a>
         <div class="header-right">
-            <button class="notification-bell" id="notificationBell" data-bs-toggle="offcanvas" data-bs-target="#notificationPanel">
+            <button class="notification-bell" id="notificationBell" data-bs-toggle="offcanvas" data-bs-target="#notificationPanel" aria-controls="notificationPanel" aria-expanded="false" aria-label="Open notifications panel">
                 <i class="bi bi-bell"></i>
                 <span class="notification-badge" id="notificationCount" hidden>0</span>
             </button>
@@ -771,17 +771,32 @@
         document.addEventListener('DOMContentLoaded', function() {
             const sidebar = document.getElementById('sidebar');
             const sidebarToggle = document.getElementById('sidebarToggle');
-            
-            if (sidebarToggle) {
-                sidebarToggle.addEventListener('click', function() {
-                    sidebar.classList.toggle('collapsed');
-                    localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
-                });
-                
+            const desktopSidebarQuery = window.matchMedia('(min-width: 992px)');
+
+            function applyStoredSidebarState() {
+                if (!sidebar) return;
                 const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-                if (sidebarCollapsed) {
+
+                if (desktopSidebarQuery.matches && sidebarCollapsed) {
                     sidebar.classList.add('collapsed');
+                    sidebarToggle?.setAttribute('aria-expanded', 'false');
+                } else {
+                    sidebar.classList.remove('collapsed');
+                    sidebarToggle?.setAttribute('aria-expanded', 'true');
                 }
+            }
+
+            if (sidebarToggle && sidebar) {
+                sidebarToggle.addEventListener('click', function() {
+                    if (!desktopSidebarQuery.matches) return;
+
+                    const isCollapsed = sidebar.classList.toggle('collapsed');
+                    localStorage.setItem('sidebarCollapsed', isCollapsed);
+                    sidebarToggle.setAttribute('aria-expanded', (!isCollapsed).toString());
+                });
+
+                applyStoredSidebarState();
+                desktopSidebarQuery.addEventListener('change', applyStoredSidebarState);
             }
             
             {% if current_user.is_authenticated %}
@@ -1073,7 +1088,12 @@
         const notificationPanel = document.getElementById('notificationPanel');
         if (notificationPanel) {
             notificationPanel.addEventListener('show.bs.offcanvas', function() {
+                document.getElementById('notificationBell')?.setAttribute('aria-expanded', 'true');
                 loadNotificationList();
+            });
+
+            notificationPanel.addEventListener('hidden.bs.offcanvas', function() {
+                document.getElementById('notificationBell')?.setAttribute('aria-expanded', 'false');
             });
         }
         {% endif %}
@@ -1083,16 +1103,19 @@
         const sidebar = document.getElementById('sidebar');
         const sidebarOverlay = document.getElementById('sidebarOverlay');
         const sidebarClose = document.getElementById('sidebarClose');
-        
+        const mobileSidebarQuery = window.matchMedia('(max-width: 991.98px)');
+
         function openSidebar() {
+            if (!mobileSidebarQuery.matches || !sidebar || !sidebarOverlay) return;
             sidebar.classList.add('active');
             sidebarOverlay.classList.add('active');
             sidebarToggle.setAttribute('aria-expanded', 'true');
             sidebarOverlay.setAttribute('aria-hidden', 'false');
             document.body.classList.add('body-no-scroll');
         }
-        
+
         function closeSidebar() {
+            if (!sidebar || !sidebarOverlay) return;
             sidebar.classList.remove('active');
             sidebarOverlay.classList.remove('active');
             sidebarToggle.setAttribute('aria-expanded', 'false');
@@ -1103,6 +1126,8 @@
         // Toggle sidebar on button click
         if (sidebarToggle) {
             sidebarToggle.addEventListener('click', function() {
+                if (!mobileSidebarQuery.matches) return;
+
                 if (sidebar.classList.contains('active')) {
                     closeSidebar();
                 } else {
