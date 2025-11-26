@@ -47,6 +47,17 @@ The application employs a modular blueprint architecture with a database-first a
 - **Donation Intake Two-Stage Workflow**: 
   - **Workflow A (Entry)**: LOGISTICS_OFFICER creates/edits intakes. Selects verified donations (status='V'), filters only GOODS items. Creates dnintake with status 'I' (draft) or 'C' (submitted for verification). NO inventory/batch updates at this stage.
   - **Workflow B (Verification)**: LOGISTICS_MANAGER reviews submitted intakes (status='C'). Can adjust defective/expired quantities, batch details. Upon verification, status changes to 'V', ItemBatch records are created/updated, Inventory totals are updated, and Donation status changes to 'P' (Processed). All operations in a single atomic transaction with optimistic locking.
+- **Relief Package Dispatch Workflow (Workflow C)**: LM Submit for Dispatch - Final dispatch operation when Logistics Manager submits a package:
+  - **Service Layer**: `app/services/dispatch_service.py` implements the core algorithm:
+    1. Undo LO reservations (from reliefpkg_item) in itembatch.reserved_qty and inventory.reserved_qty
+    2. Overwrite reliefpkg_item with LM's final allocation plan
+    3. Deplete usable stock in itembatch.usable_qty and inventory.usable_qty based on LM plan
+    4. Update reliefpkg header status to 'D' (Dispatched) with dispatch_dtime
+    5. Update reliefrqst_item.issue_qty with actual dispatched quantities
+  - **Route**: POST `/packaging/package/<reliefpkg_id>/submit-dispatch` - LM-only access
+  - **Data Integrity**: All operations execute in ONE atomic transaction with optimistic locking (version_nbr checks)
+  - **Error Handling**: On any failure (version conflict, insufficient stock, missing records), entire transaction rolls back with user-friendly error message
+  - **Isolation**: Does NOT modify Workflow A (LO packaging) or Workflow B (LM review) - only handles final dispatch step
 
 ## External Dependencies
 

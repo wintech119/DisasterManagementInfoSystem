@@ -722,6 +722,134 @@ def _approve_and_dispatch(relief_request, relief_pkg, relief_request_version, pa
         return redirect(url_for('packaging.approve_package', reliefrqst_id=relief_request.reliefrqst_id))
 
 
+@packaging_bp.route('/package/<int:reliefpkg_id>/submit-dispatch', methods=['POST'])
+@login_required
+def submit_for_dispatch(reliefpkg_id):
+    """
+    WORKFLOW C: LM Submit for Dispatch.
+    
+    This is the final dispatch operation when Logistics Manager clicks "Submit for Dispatch".
+    Implements Workflow C algorithm:
+    1. Undo LO reservations (from reliefpkg_item) in itembatch and inventory
+    2. Overwrite reliefpkg_item with LM's final plan
+    3. Deplete usable stock in itembatch and inventory based on LM plan
+    4. Update reliefpkg header status to Dispatched
+    5. Update reliefrqst_item.issue_qty with actual dispatched quantities
+    
+    All operations execute in ONE atomic transaction with optimistic locking.
+    On any failure, the entire transaction is rolled back.
+    
+    IMPORTANT: This route does NOT modify Workflow A or B logic.
+    It only handles the final dispatch step for LM.
+    """
+    from app.core.rbac import is_logistics_manager
+    from app.services import dispatch_service
+    
+    if not is_logistics_manager():
+        flash('Access denied. Only Logistics Managers can submit packages for dispatch.', 'danger')
+        abort(403)
+    
+    # Get the package
+    relief_pkg = ReliefPkg.query.get_or_404(reliefpkg_id)
+    
+    # Extract version number for optimistic locking
+    package_version = request.form.get('package_version')
+    if package_version is None:
+        flash('Version number is required for concurrency control.', 'danger')
+        return redirect(url_for('packaging.approve_package', reliefrqst_id=relief_pkg.reliefrqst_id))
+    
+    try:
+        package_version = int(package_version)
+    except (ValueError, TypeError):
+        flash('Invalid version number format.', 'danger')
+        return redirect(url_for('packaging.approve_package', reliefrqst_id=relief_pkg.reliefrqst_id))
+    
+    # Build LM plan from form data or current package items
+    # Check if allocations are provided in form data (JSON format)
+    allocations_json = request.form.get('allocations_json')
+    
+    if allocations_json:
+        import json
+        try:
+            form_data = json.loads(allocations_json)
+            lm_plan = dispatch_service.build_lm_plan_from_form(form_data, reliefpkg_id)
+        except json.JSONDecodeError:
+            flash('Invalid allocation data format.', 'danger')
+            return redirect(url_for('packaging.approve_package', reliefrqst_id=relief_pkg.reliefrqst_id))
+    else:
+        # Use current package items as LM plan (LM approves without modifications)
+        lm_plan = dispatch_service.build_lm_plan_from_pkg_items(reliefpkg_id)
+    
+    # Validate LM plan has allocations (unless all items are marked unavailable)
+    if not lm_plan:
+        # Check if all items have valid unavailability statuses
+        relief_request = ReliefRqst.query.get(relief_pkg.reliefrqst_id)
+        unavailability_statuses = {'U', 'D', 'W'}
+        all_items_unavailable = all(
+            item.status_code in unavailability_statuses 
+            for item in relief_request.items
+        )
+        
+        if not all_items_unavailable:
+            flash('Cannot dispatch empty package. Please allocate items before dispatching or mark all items as unavailable.', 'danger')
+            return redirect(url_for('packaging.approve_package', reliefrqst_id=relief_pkg.reliefrqst_id))
+    
+    # Execute Workflow C dispatch
+    try:
+        success, message = dispatch_service.submit_for_dispatch(
+            reliefpkg_id=reliefpkg_id,
+            lm_plan=lm_plan,
+            user_id=current_user.user_name,
+            package_version_nbr=package_version
+        )
+        
+        if not success:
+            db.session.rollback()
+            flash(message, 'danger')
+            return redirect(url_for('packaging.approve_package', reliefrqst_id=relief_pkg.reliefrqst_id))
+        
+        # Notify Inventory Clerk and agency users
+        try:
+            from app.services.notification_service import NotificationService
+            
+            relief_request = ReliefRqst.query.get(relief_pkg.reliefrqst_id)
+            
+            # Notify logistics officers (inventory clerks)
+            lo_users = NotificationService.get_active_users_by_role_codes(['LOGISTICS_OFFICER', 'INVENTORY_CLERK'])
+            
+            # Notify agency users
+            agency_users = []
+            if relief_request and relief_request.agency_id:
+                agency_users = NotificationService.get_agency_active_users(relief_request.agency_id)
+            
+            all_recipients = lo_users + agency_users
+            approver_name = f"{current_user.first_name} {current_user.last_name}" if current_user.first_name else current_user.email.split('@')[0]
+            
+            NotificationService.create_package_approved_notification(
+                relief_pkg=relief_pkg,
+                recipient_users=all_recipients,
+                approver_name=approver_name
+            )
+        except Exception as e:
+            # Don't fail dispatch if notification fails
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f'Failed to send dispatch notification: {str(e)}')
+        
+        db.session.commit()
+        
+        flash(f'Package #{reliefpkg_id} successfully submitted for dispatch.', 'success')
+        return redirect(url_for('packaging.transaction_summary', reliefpkg_id=reliefpkg_id))
+        
+    except Exception as e:
+        db.session.rollback()
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f'Error in submit_for_dispatch: {str(e)}', exc_info=True)
+        flash(f'Error submitting package for dispatch: {str(e)}', 'danger')
+        return redirect(url_for('packaging.approve_package', reliefrqst_id=relief_pkg.reliefrqst_id))
+
+
 @packaging_bp.route('/transaction-summary/<int:reliefpkg_id>')
 @login_required
 def transaction_summary(reliefpkg_id):

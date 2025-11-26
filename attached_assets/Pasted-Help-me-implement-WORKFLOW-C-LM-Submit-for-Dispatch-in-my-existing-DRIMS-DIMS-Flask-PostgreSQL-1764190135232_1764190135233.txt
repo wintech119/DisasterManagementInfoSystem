@@ -1,0 +1,329 @@
+Help me implement WORKFLOW C – “LM Submit for Dispatch” in my existing DRIMS/DIMS Flask + PostgreSQL app WITHOUT changing or breaking any existing workflows, especially:
+
+- DO NOT modify Workflow A (LO packaging / submit for approval).
+- DO NOT modify Workflow B (LM review / approval).
+- DO NOT alter any existing database tables, columns, constraints, triggers, or indexes.
+- DO NOT change any existing routes, templates, navigation, or status transitions outside of what is explicitly described for Workflow C.
+- DO NOT weaken or remove any security controls (CSP, CSRF, auth, RBAC, headers, cookies).
+
+Your ONLY focus is to implement Workflow C – LM Submit for Dispatch, plugging into the existing structure in a safe and isolated way.
+
+========================================
+WORKFLOW C – LM Submit for Dispatch (Refined)
+========================================
+
+C.0 Preconditions
+
+Assume all of this is already true when LM clicks “Submit for Dispatch”:
+
+- The `reliefpkg` header is in a state like “Ready for Dispatch / Awaiting Dispatch” (whatever status you currently use after LM approval).
+- Workflow A (LO) has already:
+  - Written LO allocations to `reliefpkg_item`.
+  - Updated `itembatch.reserved_qty` and `inventory.reserved_qty` based on LO quantities.
+- Workflow B (LM review) has already:
+  - Allowed LM to open the package and adjust allocations via the UI (side drawers, FEFO/FIFO logic, etc.).
+  - These LM-final quantities currently exist only in the UI/service layer as an in-memory array, NOT yet persisted.
+
+You must NOT change how Workflow A or B behave. Only extend the system to implement the C logic when LM clicks “Send for Dispatch / Submit for Dispatch”.
+
+----------------------------------------
+C.1 Data Shapes
+----------------------------------------
+
+C.1.1 LM Final Plan (In-Memory From UI)
+
+The LM final allocation plan should be available from the UI/service as an array like:
+
+LM_PLAN = [
+  {
+    "reliefpkg_id":    <id>,
+    "fr_inventory_id": <warehouse_id>,
+    "batch_id":        <batch_id>,
+    "item_id":         <item_id>,
+    "lm_qty":          <final quantity to dispatch>,
+    "uom_code":        "<uom>"
+  },
+  ...
+]
+
+- One row per (reliefpkg_id, fr_inventory_id, batch_id, item_id).
+- This structure represents LM’s final decision on what is actually being dispatched.
+
+C.1.2 LO Plan (From DB: reliefpkg_item)
+
+The LO plan is already persisted in the DB from Workflow A:
+
+SELECT reliefpkg_id,
+       fr_inventory_id,
+       batch_id,
+       item_id,
+       item_qty AS lo_qty,
+       uom_code,
+       version_nbr
+FROM   reliefpkg_item
+WHERE  reliefpkg_id = :reliefpkg_id;
+
+You will read this and map it into a LO_PLAN dictionary keyed by (fr_inventory_id, batch_id, item_id), e.g.:
+
+LO_PLAN = {
+  "<inv|batch|item>": { "lo_qty": ..., "uom_code": ..., "version_nbr": ... },
+  ...
+}
+
+This represents the committed reservations that were previously written and used to increment `reserved_qty`.
+
+----------------------------------------
+C.2 High-Level Algorithm (On LM Submit for Dispatch)
+----------------------------------------
+
+When LM clicks “Submit for Dispatch”:
+
+1. Snapshot LM final plan (LM_PLAN) from the UI into the backend as an in-memory array.
+2. Read LO plan from DB (`reliefpkg_item`) into LO_PLAN.
+3. Undo LO reservations in `itembatch` and `inventory` using LO_PLAN.
+4. Overwrite `reliefpkg_item` with LM_PLAN (upsert per batch).
+5. Deplete usable stock in `itembatch` and `inventory` based on LM_PLAN.
+6. Update `reliefpkg` header status to Dispatched and update associated `reliefrqst_item.issue_qty`.
+7. Perform all of this inside ONE database transaction with optimistic locking; on any failure, rollback everything.
+
+----------------------------------------
+C.3 Detailed Steps
+----------------------------------------
+
+Implement the following as a new LM “Submit for Dispatch” endpoint/handler, integrated cleanly with existing code patterns (blueprints, services, repositories, etc.), but without modifying Workflows A/B.
+
+C.3.1 – Save LM Final Plan in Memory
+
+When LM clicks “Send for Dispatch” in the UI:
+
+- Validate current drawer allocations (FEFO/FIFO, quantities not exceeding available/requested).
+- Build LM_PLAN on the server side (from posted JSON/form data):
+
+LM_PLAN = [
+  { reliefpkg_id, fr_inventory_id, batch_id, item_id, lm_qty, uom_code },
+  ...
+]
+
+This LM_PLAN is used only within this request/transaction and is NOT yet persisted.
+
+C.3.2 – Retrieve LO Quantities from reliefpkg_item
+
+Inside the dispatch transaction:
+
+1. Query DB:
+
+   SELECT reliefpkg_id,
+          fr_inventory_id,
+          batch_id,
+          item_id,
+          item_qty AS lo_qty,
+          uom_code,
+          version_nbr
+   FROM   reliefpkg_item
+   WHERE  reliefpkg_id = :reliefpkg_id;
+
+2. Map to LO_PLAN keyed by (fr_inventory_id, batch_id, item_id), including version_nbr for optimistic locking.
+
+C.3.3 – Undo LO Reservations Using LO_PLAN
+
+For each entry in LO_PLAN with lo_qty > 0:
+
+1) Update itembatch (reserved only)
+
+- Lock row:
+
+  SELECT reserved_qty, usable_qty, version_nbr
+  FROM   itembatch
+  WHERE  inventory_id = :fr_inventory_id
+    AND  batch_id     = :batch_id
+    AND  item_id      = :item_id
+  FOR UPDATE;
+
+- Validate: reserved_qty >= lo_qty. If not, abort with “Inconsistent reservation state” and rollback.
+
+- Update:
+
+  UPDATE itembatch
+  SET reserved_qty = reserved_qty - :lo_qty,
+      update_by_id = :lm_user,
+      update_dtime = NOW(),
+      version_nbr  = version_nbr + 1
+  WHERE inventory_id = :fr_inventory_id
+    AND batch_id     = :batch_id
+    AND item_id      = :item_id
+    AND version_nbr  = :expected_version_nbr;
+
+- If 0 rows affected → optimistic locking failure → rollback.
+
+2) Update inventory (reserved only)
+
+- For each (fr_inventory_id, item_id), compute:
+
+  total_lo_for_inv_item = SUM(lo_qty) for that inventory_id + item_id across LO_PLAN.
+
+- Then:
+
+  UPDATE inventory
+  SET reserved_qty = reserved_qty - :total_lo_for_inv_item,
+      update_by_id = :lm_user,
+      update_dtime = NOW(),
+      version_nbr  = version_nbr + 1
+  WHERE inventory_id = :fr_inventory_id
+    AND item_id      = :item_id
+    AND reserved_qty >= :total_lo_for_inv_item;
+
+- If 0 rows or reserved_qty < total_lo_for_inv_item → error & rollback.
+
+After this step, all LO reservations are fully reversed. `usable_qty` is still untouched.
+
+C.3.4 – Overwrite reliefpkg_item with LM Final Plan
+
+Now LM_PLAN becomes the new truth for `reliefpkg_item`.
+
+For each row in LM_PLAN:
+
+(reliefpkg_id, fr_inventory_id, batch_id, item_id, lm_qty, uom_code)
+
+Perform an upsert:
+
+- If row exists:
+
+  UPDATE reliefpkg_item
+  SET item_qty     = :lm_qty,
+      uom_code     = :uom_code,
+      update_by_id = :lm_user,
+      update_dtime = NOW(),
+      version_nbr  = version_nbr + 1
+  WHERE reliefpkg_id    = :reliefpkg_id
+    AND fr_inventory_id = :fr_inventory_id
+    AND batch_id        = :batch_id
+    AND item_id         = :item_id;
+
+- Else insert:
+
+  INSERT INTO reliefpkg_item (
+      reliefpkg_id, fr_inventory_id, batch_id, item_id,
+      item_qty, uom_code,
+      create_by_id, create_dtime,
+      update_by_id, update_dtime,
+      version_nbr
+  ) VALUES (
+      :reliefpkg_id, :fr_inventory_id, :batch_id, :item_id,
+      :lm_qty, :uom_code,
+      :lm_user, NOW(),
+      :lm_user, NOW(),
+      1
+  );
+
+For any rows that exist in `reliefpkg_item` for this reliefpkg_id but are NOT present in LM_PLAN (batches that LO had but LM removed):
+
+- Set item_qty = 0 (do NOT delete rows – keep history but mark as zero quantity).
+
+C.3.5 – Deplete Usable Using LM_PLAN
+
+For each LM_PLAN entry with lm_qty > 0:
+
+1) Update itembatch (usable only)
+
+- Lock row:
+
+  SELECT usable_qty, reserved_qty, version_nbr
+  FROM   itembatch
+  WHERE  inventory_id = :fr_inventory_id
+    AND  batch_id     = :batch_id
+    AND  item_id      = :item_id
+  FOR UPDATE;
+
+- Validate: usable_qty >= lm_qty. If not, abort with “Insufficient usable stock”.
+
+- Update:
+
+  UPDATE itembatch
+  SET usable_qty  = usable_qty - :lm_qty,
+      update_by_id = :lm_user,
+      update_dtime = NOW(),
+      version_nbr  = version_nbr + 1
+  WHERE inventory_id = :fr_inventory_id
+    AND batch_id     = :batch_id
+    AND item_id      = :item_id
+    AND version_nbr  = :expected_version_nbr;
+
+2) Update inventory (usable only)
+
+- For each (fr_inventory_id, item_id), compute:
+
+  total_lm_for_inv_item = SUM(lm_qty) for that inventory_id + item_id across LM_PLAN.
+
+- Then:
+
+  UPDATE inventory
+  SET usable_qty  = usable_qty - :total_lm_for_inv_item,
+      update_by_id = :lm_user,
+      update_dtime = NOW(),
+      version_nbr  = version_nbr + 1
+  WHERE inventory_id = :fr_inventory_id
+    AND item_id      = :item_id
+    AND usable_qty   >= :total_lm_for_inv_item;
+
+- If insufficient usable stock or 0 rows affected → rollback and show appropriate error.
+
+C.3.6 – Update reliefpkg & reliefrqst_item
+
+1) Update reliefpkg header:
+
+  UPDATE reliefpkg
+  SET status_code   = 'D',          -- Dispatched
+      dispatch_dtime = NOW(),
+      update_by_id   = :lm_user,
+      update_dtime   = NOW(),
+      version_nbr    = version_nbr + 1
+  WHERE reliefpkg_id = :reliefpkg_id
+    AND version_nbr  = :expected_version_nbr;
+
+2) Update reliefrqst_item.issue_qty:
+
+- For each item_id in LM_PLAN:
+
+  total_dispatched_for_item = SUM(lm_qty) across LM_PLAN for this item_id.
+
+- Then:
+
+  UPDATE reliefrqst_item
+  SET issue_qty   = issue_qty + :total_dispatched_for_item,
+      update_by_id = :lm_user,
+      update_dtime = NOW(),
+      version_nbr  = version_nbr + 1
+  WHERE reliefrqst_id = :reliefrqst_id
+    AND item_id       = :item_id;
+
+Use the existing relationships between reliefpkg and reliefrqst to get reliefrqst_id (reuse current schema).
+
+C.3.7 – Transaction & Failure Handling
+
+- All of C.3.2 through C.3.6 must execute in ONE DB transaction.
+- Use the existing transaction management approach already in the project (SQLAlchemy session or similar).
+- On ANY of the following:
+  - Version conflict (optimistic lock fails),
+  - Constraint violation,
+  - Negative quantity check failure,
+  - Missing itembatch/inventory rows,
+  - Inconsistent reserved_qty / usable_qty,
+- → Rollback the entire transaction.
+- Return an error message to LM such as:
+  - “Stock changed since you last opened this package. Please refresh the package and try again.”
+  - or “Insufficient usable stock for item X in warehouse Y.”
+
+----------------------------------------
+IMPLEMENTATION NOTES
+----------------------------------------
+
+- Implement this as a new route or controller method for “LM Submit for Dispatch”, integrated with existing LM permission checks and status flow.
+- Reuse existing coding patterns (service/repository layers, decorators, auth, etc.).
+- Do NOT alter any prior logic used for LO submit or LM review/approval.
+- Ensure any new code passes existing tests and, where possible, add targeted tests around:
+  - LO reservation reversal,
+  - LM usable deduction,
+  - Correct final quantities in `reliefpkg_item`,
+  - Correct final values in `itembatch`, `inventory`, `reliefpkg`, and `reliefrqst_item`.
+
+Only make the changes required to realize Workflow C as described above, and keep all other behaviours (Workflow A & B and the rest of the system) exactly as they are.
