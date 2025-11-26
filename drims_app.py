@@ -6,6 +6,7 @@ from flask import Flask, render_template, redirect, url_for, flash, request
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 from werkzeug.security import check_password_hash
+from urllib.parse import urlparse, urljoin
 import os
 
 from app.db import db, init_db
@@ -34,6 +35,17 @@ init_csrf_origin_validation(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+
+
+def is_safe_url(target):
+    """Validate that a redirect target stays within the same host (prevents open redirects)."""
+    ref_url = urlparse(request.host_url)
+    test_url = urlparse(urljoin(request.host_url, target))
+    return (
+        test_url.scheme in ('http', 'https')
+        and ref_url.netloc == test_url.netloc
+    )
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -206,7 +218,9 @@ def login():
             else:
                 login_user(user)
                 next_page = request.args.get('next')
-                return redirect(next_page if next_page else url_for('dashboard.index'))
+                if next_page and is_safe_url(next_page):
+                    return redirect(next_page)
+                return redirect(url_for('dashboard.index'))
         else:
             flash('Invalid email or password', 'danger')
     

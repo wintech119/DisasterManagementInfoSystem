@@ -1,0 +1,133 @@
+diff --git a/drims_app.py b/drims_app.py
+index 0262a4373f6ca4b444e23c7f61eea6956011bb2d..ca3ba3bec2117903e8f792eb8e71340f9509fe6d 100644
+--- a/drims_app.py
++++ b/drims_app.py
+@@ -1,62 +1,73 @@
+ """
+ DRIMS - Disaster Relief Inventory Management System
+ Main Flask Application
+ """
+ from flask import Flask, render_template, redirect, url_for, flash, request
+ from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+ from flask_wtf.csrf import CSRFProtect, generate_csrf
+ from werkzeug.security import check_password_hash
+ import os
++from urllib.parse import urlparse, urljoin
+ 
+ from app.db import db, init_db
+ from app.db.models import User, Role, Event, Warehouse, Item, Inventory, Agency, ReliefRqst
+ from settings import Config
+ from app.security.csp import init_csp
+ from app.security.cache_control import init_cache_control
+ from app.security.header_sanitization import init_header_sanitization
+ from app.security.error_handling import init_error_handling
+ from app.security.query_string_protection import init_query_string_protection
+ from app.security.csrf_validation import init_csrf_origin_validation
+ 
+ app = Flask(__name__)
+ app.config.from_object(Config)
+ 
+ init_db(app)
+ init_csp(app)
+ init_cache_control(app)
+ init_header_sanitization(app)
+ init_error_handling(app)
+ init_query_string_protection(app)
+ 
+ csrf = CSRFProtect(app)
+ init_csrf_origin_validation(app)
+ 
+ login_manager = LoginManager()
+ login_manager.init_app(app)
+ login_manager.login_view = 'login'
+ 
++
++def is_safe_url(target):
++    """Validate that a redirect target stays within the same host."""
++    ref_url = urlparse(request.host_url)
++    test_url = urlparse(urljoin(request.host_url, target))
++    return (
++        test_url.scheme in ('http', 'https')
++        and ref_url.netloc == test_url.netloc
++    )
++
+ @login_manager.user_loader
+ def load_user(user_id):
+     user = db.session.get(User, int(user_id))
+     if user and user.is_active and user.status_code == 'A' and not user.is_locked:
+         return user
+     return None
+ 
+ from app.features.events import events_bp
+ from app.features.warehouses import warehouses_bp
+ from app.features.items import items_bp
+ from app.features.item_categories import item_categories_bp
+ from app.features.uom import uom_bp
+ from app.features.inventory import inventory_bp
+ from app.features.requests_aidmgmt import requests_bp
+ from app.features.packaging import packaging_bp
+ from app.features.donations import donations_bp
+ from app.features.donation_intake import donation_intake_bp
+ from app.features.intake_aidmgmt import bp as intake_bp
+ from app.features.user_admin import user_admin_bp
+ from app.features.donors import donors_bp
+ from app.features.agencies import agencies_bp
+ from app.features.custodians import custodians_bp
+ from app.features.dashboard import dashboard_bp
+ from app.features.transfers import transfers_bp
+ from app.features.notifications import notifications_bp
+@@ -184,47 +195,53 @@ def block_static_directory():
+ @login_required
+ def index():
+     """Redirect to role-based dashboard"""
+     return redirect(url_for('dashboard.index'))
+ 
+ @app.route('/login', methods=['GET', 'POST'])
+ def login():
+     """User login"""
+     if current_user.is_authenticated:
+         return redirect(url_for('dashboard.index'))
+     
+     if request.method == 'POST':
+         email = request.form.get('email')
+         password = request.form.get('password')
+         
+         user = User.query.filter_by(email=email).first()
+         
+         if user and password and check_password_hash(user.password_hash, password):
+             if not user.is_active or user.status_code != 'A':
+                 flash('Your account is inactive. Please contact your administrator.', 'warning')
+             elif user.is_locked:
+                 flash('Your account is temporarily locked. Please contact your administrator.', 'warning')
+             else:
+                 login_user(user)
+                 next_page = request.args.get('next')
+-                return redirect(next_page if next_page else url_for('dashboard.index'))
++                if next_page and is_safe_url(next_page):
++                    return redirect(next_page)
++
++                if next_page:
++                    flash('Invalid redirect target. Redirecting to dashboard.', 'warning')
++
++                return redirect(url_for('dashboard.index'))
+         else:
+             flash('Invalid email or password', 'danger')
+     
+     return render_template('login.html')
+ 
+ @app.route('/test-feature-components')
+ @login_required
+ def test_feature_components():
+     """Test feature registry components"""
+     return render_template('test_feature_components.html')
+ 
+ @app.route('/logout')
+ @login_required
+ def logout():
+     """User logout"""
+     logout_user()
+     flash('You have been logged out', 'info')
+     return redirect(url_for('login'))
+ 
+ if __name__ == '__main__':
+     app.run(host='0.0.0.0', port=5000, debug=app.config['DEBUG'])
