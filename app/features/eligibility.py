@@ -6,7 +6,7 @@ from flask import Blueprint, render_template, request, jsonify, flash, redirect,
 from flask_login import login_required, current_user
 
 from app.db import db
-from app.core.rbac import permission_required, has_permission
+from app.core.rbac import executive_required
 from app.services import relief_request_service as rr_service
 
 eligibility_bp = Blueprint('eligibility', __name__, url_prefix='/eligibility')
@@ -14,7 +14,7 @@ eligibility_bp = Blueprint('eligibility', __name__, url_prefix='/eligibility')
 
 @eligibility_bp.route('/pending')
 @login_required
-@permission_required('reliefrqst', 'approve_eligibility')
+@executive_required
 def pending_list():
     """
     List all relief requests pending eligibility review.
@@ -65,7 +65,7 @@ def pending_list():
 
 @eligibility_bp.route('/review/<int:request_id>')
 @login_required
-@permission_required('reliefrqst', 'approve_eligibility')
+@executive_required
 def review_request(request_id):
     """
     View full details of a relief request for eligibility review.
@@ -107,7 +107,7 @@ def review_request(request_id):
 
 @eligibility_bp.route('/decision/<int:request_id>', methods=['POST'])
 @login_required
-@permission_required('reliefrqst', 'approve_eligibility')
+@executive_required
 def submit_decision(request_id):
     """
     Submit eligibility decision for a relief request.
@@ -153,7 +153,7 @@ def submit_decision(request_id):
 
 @eligibility_bp.route('/api/pending', methods=['GET'])
 @login_required
-@permission_required('reliefrqst', 'approve_eligibility')
+@executive_required
 def api_pending_list():
     """
     API endpoint: Get pending eligibility requests as JSON.
@@ -177,7 +177,7 @@ def api_pending_list():
 
 @eligibility_bp.route('/api/<int:request_id>', methods=['GET'])
 @login_required
-@permission_required('reliefrqst', 'approve_eligibility')
+@executive_required
 def api_get_request(request_id):
     """
     API endpoint: Get full request details for eligibility review.
@@ -222,7 +222,7 @@ def api_get_request(request_id):
 
 @eligibility_bp.route('/api/decision/<int:request_id>', methods=['POST'])
 @login_required
-@permission_required('reliefrqst', 'approve_eligibility')
+@executive_required
 def api_submit_decision(request_id):
     """
     API endpoint: Submit eligibility decision.
