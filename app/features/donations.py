@@ -395,7 +395,17 @@ def create_donation():
                 
                 db.session.add(donation_item)
             
-            # Set cost breakdown on donation header (user-entered value)
+            # Validate that manually entered total matches computed sum from items
+            # Allow small tolerance for rounding (0.01 JMD)
+            value_difference = abs(tot_item_cost_value - total_value)
+            if value_difference > Decimal('0.01'):
+                db.session.rollback()
+                flash(f'Total Donation Value (J${tot_item_cost_value:,.2f}) does not match the sum of item costs (J${total_value:,.2f}). Please verify and correct the total.', 'danger')
+                form_data = _get_donation_form_data()
+                form_data['form_data'] = request.form
+                return render_template('donations/create.html', **form_data)
+            
+            # Set total item cost from manually entered value (validated above)
             donation.tot_item_cost = tot_item_cost_value
             
             # Handle document uploads - validate all first, then save
@@ -450,7 +460,14 @@ def create_donation():
                 form_data['form_data'] = request.form
                 return render_template('donations/create.html', **form_data)
             
-            if validated_docs and upload_folder:
+            if validated_docs:
+                if not upload_folder:
+                    db.session.rollback()
+                    flash('File storage is not configured. Please contact the system administrator to set up the upload folder before attaching documents.', 'danger')
+                    form_data = _get_donation_form_data()
+                    form_data['form_data'] = request.form
+                    return render_template('donations/create.html', **form_data)
+                
                 if not os.path.exists(upload_folder):
                     os.makedirs(upload_folder, exist_ok=True)
                 
@@ -1501,7 +1518,18 @@ def verify_donation_detail(donation_id):
                     donation_item.verify_dtime = current_timestamp
                     db.session.add(donation_item)
             
-            # Set total donation value from user input (user-entered value)
+            # Validate that manually entered total matches computed sum from items
+            # Allow small tolerance for rounding (0.01 JMD)
+            value_difference = abs(tot_item_cost_value - total_value)
+            if value_difference > Decimal('0.01'):
+                db.session.rollback()
+                flash(f'Total Donation Value (J${tot_item_cost_value:,.2f}) does not match the sum of item costs (J${total_value:,.2f}). Please verify and correct the total.', 'danger')
+                form_data = _get_donation_form_data()
+                form_data['donation'] = donation
+                form_data['form_data'] = request.form
+                return render_template('donations/verify.html', **form_data)
+            
+            # Set total item cost from manually entered value (validated above)
             donation.tot_item_cost = tot_item_cost_value
             
             # Handle document uploads - validate all first, then save
@@ -1557,7 +1585,15 @@ def verify_donation_detail(donation_id):
                 form_data['form_data'] = request.form
                 return render_template('donations/verify.html', **form_data)
             
-            if validated_docs and upload_folder:
+            if validated_docs:
+                if not upload_folder:
+                    db.session.rollback()
+                    flash('File storage is not configured. Please contact the system administrator to set up the upload folder before attaching documents.', 'danger')
+                    form_data = _get_donation_form_data()
+                    form_data['donation'] = donation
+                    form_data['form_data'] = request.form
+                    return render_template('donations/verify.html', **form_data)
+                
                 if not os.path.exists(upload_folder):
                     os.makedirs(upload_folder, exist_ok=True)
                 
