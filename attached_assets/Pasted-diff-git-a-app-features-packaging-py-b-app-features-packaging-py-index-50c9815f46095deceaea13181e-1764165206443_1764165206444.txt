@@ -1,0 +1,208 @@
+diff --git a/app/features/packaging.py b/app/features/packaging.py
+index 50c9815f46095deceaea13181e5a0ee4693f9e5b..6d1f5cee8bb3a1ab395f09701087cda3ee7ea017 100644
+--- a/app/features/packaging.py
++++ b/app/features/packaging.py
+@@ -140,53 +140,58 @@ def review_approval(reliefrqst_id):
+     
+     if request.method == 'GET':
+         # Load allocations for display
+         warehouses = Warehouse.query.filter_by(status_code='A').order_by(Warehouse.warehouse_name).all()
+         
+         # Build allocation map from ReliefPkgItem
+         allocations = {}
+         for pkg_item in relief_pkg.items:
+             item_id = pkg_item.item_id
+             # fr_inventory_id IS the warehouse_id (inventory_id = warehouse_id in schema)
+             warehouse_id = pkg_item.fr_inventory_id
+             
+             if item_id not in allocations:
+                 allocations[item_id] = {}
+             
+             allocations[item_id][warehouse_id] = pkg_item.item_qty
+         
+         return render_template('packaging/review_approval.html',
+                              relief_request=relief_request,
+                              relief_pkg=relief_pkg,
+                              warehouses=warehouses,
+                              allocations=allocations)
+     
+     # POST: Approve and dispatch
+     action = request.form.get('action')
+-    
++    relief_request_version = request.form.get('relief_request_version')
++    package_version = request.form.get('package_version')
++
+     if action == 'approve_and_dispatch':
+         try:
++            _validate_version_nbr("relief request", relief_request_version, relief_request.version_nbr)
++            _validate_version_nbr("package", package_version, relief_pkg.version_nbr)
++
+             # CRITICAL VALIDATION: Ensure package has items AND issue_qty matches ReliefPkgItem totals
+             # Get all ReliefPkgItem records for this package
+             pkg_items = ReliefPkgItem.query.filter_by(reliefpkg_id=relief_pkg.reliefpkg_id).all()
+             
+             if not pkg_items:
+                 # No items allocated - package is empty
+                 # Check if all items have valid unavailability statuses (U, D, W)
+                 unavailability_statuses = {'U', 'D', 'W'}
+                 all_items_unavailable = all(
+                     item.status_code in unavailability_statuses 
+                     for item in relief_request.items
+                 )
+                 
+                 if not all_items_unavailable:
+                     raise ValueError('Cannot dispatch package: no items have been allocated. All requested items must either have batch allocations or be marked as Unavailable (U), Denied (D), or Awaiting Availability (W).')
+             
+             # Validate that ReliefPkgItem quantities match issue_qty for data integrity
+             # Build totals from ReliefPkgItem records
+             pkg_item_totals = {}
+             for pkg_item in pkg_items:
+                 if pkg_item.item_id not in pkg_item_totals:
+                     pkg_item_totals[pkg_item.item_id] = Decimal('0')
+                 pkg_item_totals[pkg_item.item_id] += pkg_item.item_qty
+             
+             # Verify each item's issue_qty matches ReliefPkgItem total
+@@ -247,59 +252,81 @@ def review_approval(reliefrqst_id):
+                 
+                 # Notify agency users
+                 agency_users = []
+                 if relief_request.agency_id:
+                     agency_users = NotificationService.get_agency_active_users(relief_request.agency_id)
+                 
+                 all_recipients = lo_users + agency_users
+                 approver_name = f"{current_user.first_name} {current_user.last_name}" if current_user.first_name else current_user.email.split('@')[0]
+                 
+                 NotificationService.create_package_approved_notification(
+                     relief_pkg=relief_pkg,
+                     recipient_users=all_recipients,
+                     approver_name=approver_name
+                 )
+             except Exception as e:
+                 # Don't fail dispatch if notification fails
+                 import logging
+                 logger = logging.getLogger(__name__)
+                 logger.warning(f'Failed to send approval notification: {str(e)}')
+             
+             db.session.commit()
+             
+             flash(f'Relief request #{relief_request.reliefrqst_id} approved and dispatched to inventory clerk', 'success')
+             return redirect(url_for('packaging.pending_approval'))
+             
+-        except ValueError as e:
++        except (OptimisticLockError, ValueError) as e:
+             db.session.rollback()
+             flash(str(e), 'danger')
+             return redirect(url_for('packaging.review_approval', reliefrqst_id=reliefrqst_id))
+-    
++
+     elif action == 'reject':
+-        # TODO: Implement rejection workflow (send back to LO for revision)
+-        flash('Rejection workflow not yet implemented', 'info')
+-        return redirect(url_for('packaging.review_approval', reliefrqst_id=reliefrqst_id))
++        try:
++            _validate_version_nbr("relief request", relief_request_version, relief_request.version_nbr)
++            _validate_version_nbr("package", package_version, relief_pkg.version_nbr)
++
++            # Reset LM approval fields so Logistics Officer can revise and resubmit
++            relief_pkg.verify_by_id = None
++            relief_pkg.verify_dtime = None
++            relief_pkg.status_code = rr_service.PKG_STATUS_PENDING
++            relief_pkg.update_by_id = current_user.user_name
++            relief_pkg.update_dtime = jamaica_now()
++            relief_pkg.version_nbr += 1
++
++            # Record action on the relief request for audit trail
++            relief_request.action_by_id = current_user.user_name
++            relief_request.action_dtime = jamaica_now()
++            relief_request.version_nbr += 1
++
++            db.session.commit()
++
++            flash('Package rejected and sent back to Logistics Officer for revision.', 'info')
++            return redirect(url_for('packaging.pending_approval'))
++        except (OptimisticLockError, ValueError) as e:
++            db.session.rollback()
++            flash(str(e), 'danger')
++            return redirect(url_for('packaging.review_approval', reliefrqst_id=reliefrqst_id))
+     
+     else:
+         flash('Invalid action', 'danger')
+         return redirect(url_for('packaging.review_approval', reliefrqst_id=reliefrqst_id))
+ 
+ 
+ @packaging_bp.route('/package/<int:reliefpkg_id>/cancel', methods=['POST'])
+ @login_required
+ def cancel_package(reliefpkg_id):
+     """
+     Cancel a relief package and fully reverse all reservations.
+     
+     Only Logistics Managers can cancel packages.
+     Uses optimistic locking to prevent conflicts.
+     Fully transactional - all-or-nothing operation.
+     
+     Cancellation Process:
+     1. Validates package exists and can be cancelled (P=Pending or D=Dispatched only)
+     2. Releases batch-level reservations (itembatch.reserved_qty) with version_nbr check
+     3. Releases warehouse-level reservations (inventory.reserved_qty) with version_nbr check
+     4. Deletes all ReliefPkgItem records
+     5. Deletes the ReliefPkg record
+     
+     If any version_nbr mismatch or validation error occurs, the entire operation is rolled back.
+     """
+diff --git a/templates/packaging/review_approval.html b/templates/packaging/review_approval.html
+index 8e08c9b3677ef8f0b39e4af11decda3230b30e72..1538edcf4f009157a5efd97eca97a08902b1156e 100644
+--- a/templates/packaging/review_approval.html
++++ b/templates/packaging/review_approval.html
+@@ -336,47 +336,52 @@
+                                         {% endfor %}
+                                     </ul>
+                                     {% else %}
+                                     <span class="text-muted fs-small">No allocations</span>
+                                     {% endif %}
+                                 </td>
+                             </tr>
+                             {% endfor %}
+                         </tbody>
+                     </table>
+                 </div>
+ 
+                 <!-- Action Buttons -->
+                 <div class="action-buttons">
+                     <a href="{{ url_for('packaging.pending_approval') }}" class="btn btn-secondary">
+                         <i class="bi bi-x-circle"></i> Close
+                     </a>
+                     <form method="POST" action="{{ url_for('packaging.cancel_package', reliefpkg_id=relief_pkg.reliefpkg_id) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to cancel this package? This will release all reservations and cannot be undone.');">
+                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                         <button type="submit" class="btn btn-danger">
+                             <i class="bi bi-trash"></i> Cancel Package
+                         </button>
+                     </form>
+                     <form method="POST" action="{{ url_for('packaging.review_approval', reliefrqst_id=relief_request.reliefrqst_id) }}" class="d-inline">
+                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
++                        <input type="hidden" name="relief_request_version" value="{{ relief_request.version_nbr }}">
++                        <input type="hidden" name="package_version" value="{{ relief_pkg.version_nbr }}">
++                        <button type="submit" name="action" value="reject" class="btn btn-outline-danger">
++                            <i class="bi bi-x-octagon"></i> Reject
++                        </button>
+                         <button type="submit" name="action" value="approve_and_dispatch" class="btn-relief-primary">
+                             <i class="bi bi-check-circle"></i> Approve & Dispatch to Inventory Clerk
+                         </button>
+                     </form>
+                 </div>
+             </div>
+         </div>
+ 
+         <!-- Workflow Sidebar -->
+         <div class="col-lg-3 col-xl-3">
+             {{ render_workflow_progress([
+                 {'title': 'Submitted', 'description': relief_request.agency.agency_name if relief_request.agency else 'Agency', 'status': 'completed'},
+                 {'title': 'Eligibility Review', 'description': 'Approved by ODPEM Director', 'status': 'completed'},
+                 {'title': 'Package Prepared', 'description': 'By Logistics Officer', 'status': 'completed'},
+                 {'title': 'LM Approval', 'description': 'Awaiting your review', 'status': 'active'},
+                 {'title': 'Dispatch', 'description': 'To Inventory Clerk', 'status': 'pending'}
+             ]) }}
+         </div>
+     </div>
+ </div>
+ {% endblock %}
+ 
