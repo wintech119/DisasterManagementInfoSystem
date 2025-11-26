@@ -141,7 +141,18 @@ def submit_for_dispatch(
         return False, str(e)
     except SQLAlchemyError as e:
         db.session.rollback()
-        return False, f"Database error during dispatch: {str(e)}"
+        # Log full error for debugging but return sanitized message to user
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Database error during dispatch for package {reliefpkg_id}: {str(e)}")
+        return False, "A system error occurred during dispatch. Please try again or contact support."
+    except Exception as e:
+        db.session.rollback()
+        # Log unexpected errors but never expose details to users
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Unexpected error during dispatch for package {reliefpkg_id}: {str(e)}")
+        return False, "An unexpected error occurred. Please try again or contact support."
 
 
 def _get_lo_plan(reliefpkg_id: int) -> Dict[Tuple[int, int, int], Dict]:

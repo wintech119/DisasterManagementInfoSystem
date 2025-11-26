@@ -846,7 +846,8 @@ def submit_for_dispatch(reliefpkg_id):
         import logging
         logger = logging.getLogger(__name__)
         logger.error(f'Error in submit_for_dispatch: {str(e)}', exc_info=True)
-        flash(f'Error submitting package for dispatch: {str(e)}', 'danger')
+        # Sanitized error message - never expose raw exception details to users
+        flash('An error occurred while submitting the package for dispatch. Please try again or contact support.', 'danger')
         return redirect(url_for('packaging.approve_package', reliefrqst_id=relief_pkg.reliefrqst_id))
 
 
