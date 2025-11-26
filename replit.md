@@ -32,7 +32,13 @@ The application employs a modular blueprint architecture with a database-first a
 - **Timezone Standardization**: All datetime operations, database timestamps, audit trails, and user-facing displays use Jamaica Standard Time (UTC-05:00).
 - **Key Features**: Universal visibility for approved relief requests, accurate inventory validation, batch-level reservation synchronization for draft packages, and automatic inventory table updates on dispatch. Relief package cancellation includes full reservation rollback using optimistic locking and transactional integrity. Implements robust relief request status management.
 - **Relief Package Analytics Dashboard**: Executive-level analytics for dispatched relief packages (status 'D' and 'R'). Shows 4 KPI cards (Total Packages, Items Distributed, Delivery Locations, Requests Fulfilled), 4 interactive Chart.js charts (Destination Type pie, Parish bar, Timeline line, Top Destinations horizontal bar), and a detail table. Accessible to DG, Deputy DG, Director PEOD, and Logistics Manager roles.
-- **Funds Donations Report**: Read-only report for ODPEM Executives (DG, Deputy DG, Director PEOD) showing all FUNDS-type donations. Displays Received Date, Origin Country, Donation Amount, Currency, and Location (Account #). Includes filters for Origin Country, Received Date range, and Currency. Features pagination (25 per page), sorted by received date (most recent first). Route: `/reports/funds_donations`.
+- **Funds Donations Report**: Read-only report for ODPEM Executives (DG, Deputy DG, Director PEOD) showing all FUNDS-type donations. Displays Received Date, Origin Country, Donation Amount, Currency, and Location (Account #). Includes filters for Origin Country, Received Date range, and Currency. Features pagination (25 per page), sorted by received date (most recent first). Route: `/reports/funds_donations`. Includes JMD Total banner showing all donations converted to Jamaican Dollars.
+- **Currency Conversion Service**: Cached exchange rate service using Frankfurter.app (ECB-backed) for converting foreign currencies to JMD. Features:
+  - New `currency_rate` table for caching exchange rates (additive, no existing tables modified)
+  - Service layer in `app/services/currency_service.py` with rate fetching, caching, and conversion
+  - Flask CLI commands: `flask currency-refresh` (refresh all rates), `flask currency-set-usd <rate>` (set USD/JMD rate), `flask currency-list` (list cached rates)
+  - Display-only conversion - no stored values are modified
+  - Graceful degradation if rates unavailable
 - **Dynamic GOODS/FUNDS Donation Workflow**: Donation form dynamically adapts based on item category type (GOODS/FUNDS) via an API endpoint, automatically setting donation type and controlling field editability.
 - **Donation Validation Rules**:
   - Total Donation Value is manually entered and validated against computed sum of line items (0.01 JMD tolerance). Mismatches are rejected with clear error messaging.
@@ -58,6 +64,7 @@ The application employs a modular blueprint architecture with a database-first a
 - pandas
 - python-dotenv
 - Flask-WTF
+- requests
 
 ### Frontend CDN Resources
 - Bootstrap 5.3.3 CSS/JS

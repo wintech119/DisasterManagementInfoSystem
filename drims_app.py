@@ -257,5 +257,80 @@ def logout():
     flash('You have been logged out', 'info')
     return redirect(url_for('login'))
 
+
+import click
+from datetime import date
+from decimal import Decimal
+
+@app.cli.command('currency-refresh')
+@click.option('--date', 'target_date', default=None, help='Date for rates (YYYY-MM-DD). Defaults to today.')
+def currency_refresh(target_date):
+    """Refresh exchange rates for all donation currencies from Frankfurter.app."""
+    from app.services.currency_service import CurrencyService
+    
+    if target_date:
+        try:
+            target_date = date.fromisoformat(target_date)
+        except ValueError:
+            click.echo(f"Invalid date format. Use YYYY-MM-DD.")
+            return
+    else:
+        target_date = date.today()
+    
+    click.echo(f"Refreshing currency rates for {target_date}...")
+    
+    currencies = CurrencyService.get_donation_currencies()
+    click.echo(f"Found {len(currencies)} currencies in donations: {', '.join(currencies) if currencies else 'None'}")
+    
+    success, failed = CurrencyService.refresh_all_rates(target_date)
+    
+    click.echo(f"Refresh complete: {success} succeeded, {failed} failed")
+
+
+@app.cli.command('currency-set-usd')
+@click.argument('rate', type=float)
+@click.option('--date', 'target_date', default=None, help='Date for rate (YYYY-MM-DD). Defaults to today.')
+def currency_set_usd(rate, target_date):
+    """Manually set the USD to JMD exchange rate."""
+    from app.services.currency_service import CurrencyService
+    
+    if target_date:
+        try:
+            target_date = date.fromisoformat(target_date)
+        except ValueError:
+            click.echo(f"Invalid date format. Use YYYY-MM-DD.")
+            return
+    else:
+        target_date = date.today()
+    
+    rate_decimal = Decimal(str(rate))
+    
+    if CurrencyService.set_usd_jmd_rate(rate_decimal, target_date):
+        click.echo(f"Set USD/JMD rate to {rate_decimal} for {target_date}")
+    else:
+        click.echo("Failed to set USD/JMD rate")
+
+
+@app.cli.command('currency-list')
+def currency_list():
+    """List all cached currency rates."""
+    from app.services.currency_service import CurrencyRate
+    
+    rates = CurrencyRate.query.order_by(
+        CurrencyRate.currency_code, 
+        CurrencyRate.rate_date.desc()
+    ).all()
+    
+    if not rates:
+        click.echo("No cached currency rates found.")
+        return
+    
+    click.echo(f"{'Currency':<10} {'Rate to JMD':<18} {'Date':<12} {'Source':<20}")
+    click.echo("-" * 60)
+    
+    for rate in rates:
+        click.echo(f"{rate.currency_code:<10} {rate.rate_to_jmd:<18.4f} {rate.rate_date.isoformat():<12} {rate.source:<20}")
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=app.config['DEBUG'])

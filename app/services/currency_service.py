@@ -332,7 +332,7 @@ class CurrencyService:
         """
         try:
             result = db.session.execute(
-                text("SELECT DISTINCT currency_code FROM donation WHERE currency_code IS NOT NULL ORDER BY currency_code")
+                text("SELECT DISTINCT currency_code FROM donation_item WHERE currency_code IS NOT NULL ORDER BY currency_code")
             )
             return [row[0] for row in result.fetchall() if row[0]]
         except Exception as e:
