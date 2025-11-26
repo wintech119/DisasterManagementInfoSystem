@@ -395,17 +395,15 @@ def create_donation():
                 
                 db.session.add(donation_item)
             
-            # Validate that manually entered total matches computed sum from items
-            # Allow small tolerance for rounding (0.01 JMD)
+            # Note: Total donation value may differ from sum of item costs due to currency differences
+            # (e.g., donation received in USD, items valued in JMD)
+            # Show informational message if values differ significantly, but allow submission
+            # Logistics Manager will review and verify during the verification process
             value_difference = abs(tot_item_cost_value - total_value)
             if value_difference > Decimal('0.01'):
-                db.session.rollback()
-                flash(f'Total Donation Value (J${tot_item_cost_value:,.2f}) does not match the sum of item costs (J${total_value:,.2f}). Please verify and correct the total.', 'danger')
-                form_data = _get_donation_form_data()
-                form_data['form_data'] = request.form
-                return render_template('donations/create.html', **form_data)
+                flash(f'Note: Total Donation Value (J${tot_item_cost_value:,.2f}) differs from sum of item costs (J${total_value:,.2f}). This may be due to currency differences and will be reviewed during verification.', 'info')
             
-            # Set total item cost from manually entered value (validated above)
+            # Set total item cost from manually entered value
             donation.tot_item_cost = tot_item_cost_value
             
             # Handle document uploads - validate all first, then save
@@ -1518,18 +1516,14 @@ def verify_donation_detail(donation_id):
                     donation_item.verify_dtime = current_timestamp
                     db.session.add(donation_item)
             
-            # Validate that manually entered total matches computed sum from items
-            # Allow small tolerance for rounding (0.01 JMD)
+            # Note: Total donation value may differ from sum of item costs due to currency differences
+            # (e.g., donation received in USD, items valued in JMD)
+            # LM should review and confirm the values are acceptable
             value_difference = abs(tot_item_cost_value - total_value)
             if value_difference > Decimal('0.01'):
-                db.session.rollback()
-                flash(f'Total Donation Value (J${tot_item_cost_value:,.2f}) does not match the sum of item costs (J${total_value:,.2f}). Please verify and correct the total.', 'danger')
-                form_data = _get_donation_form_data()
-                form_data['donation'] = donation
-                form_data['form_data'] = request.form
-                return render_template('donations/verify.html', **form_data)
+                flash(f'Note: Total Donation Value (J${tot_item_cost_value:,.2f}) differs from sum of item costs (J${total_value:,.2f}). Please confirm this is correct (e.g., due to currency differences).', 'warning')
             
-            # Set total item cost from manually entered value (validated above)
+            # Set total item cost from manually entered value
             donation.tot_item_cost = tot_item_cost_value
             
             # Handle document uploads - validate all first, then save
