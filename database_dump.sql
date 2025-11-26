@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict SKhlQwyoaESQQuV7TLBQKLShK1azhA0OZ1PAzX0p70SdGJovx7vgC5L2Ne6qkNP
+\restrict AlAmNfugLI2IFnXQWhf01njQq048psKIFi2SNiFKZI6amGQfY7uXlQ58WmsgpRZ
 
 -- Dumped from database version 16.9 (415ebe8)
 -- Dumped by pg_dump version 16.10
@@ -483,7 +483,7 @@ CREATE TABLE public.dnintake_item (
     CONSTRAINT c_dnintake_item_1b CHECK ((batch_date <= CURRENT_DATE)),
     CONSTRAINT c_dnintake_item_1c CHECK ((expiry_date >= batch_date)),
     CONSTRAINT c_dnintake_item_1d CHECK ((avg_unit_value > 0.00)),
-    CONSTRAINT c_dnintake_item_1e CHECK ((ext_item_cost >= 0.00)),
+    CONSTRAINT c_dnintake_item_1e CHECK ((ext_item_cost = (((COALESCE(usable_qty, (0)::numeric) + COALESCE(defective_qty, (0)::numeric)) + COALESCE(expired_qty, (0)::numeric)) * avg_unit_value))),
     CONSTRAINT c_dnintake_item_2 CHECK ((usable_qty >= 0.00)),
     CONSTRAINT c_dnintake_item_3 CHECK ((defective_qty >= 0.00)),
     CONSTRAINT c_dnintake_item_4 CHECK ((expired_qty >= 0.00)),
@@ -2272,6 +2272,8 @@ COPY public.distribution_package_item (id, package_id, item_id, quantity, notes)
 COPY public.dnintake (donation_id, inventory_id, intake_date, comments_text, status_code, create_by_id, create_dtime, update_by_id, update_dtime, verify_by_id, verify_dtime, version_nbr) FROM stdin;
 16	1	2025-11-25	\N	V	ADMIN	2025-11-25 18:36:41	ADMIN	2025-11-25 18:47:21	ADMIN	2025-11-25 18:47:21	2
 12	2	2025-11-25	\N	V	ADMIN	2025-11-25 18:49:42	ADMIN	2025-11-25 19:04:25	ADMIN	2025-11-25 19:04:25	2
+15	1	2025-11-26	\N	V	ADMIN	2025-11-26 10:25:08	ADMIN	2025-11-26 10:25:44	ADMIN	2025-11-26 10:25:44	2
+17	2	2025-11-26	\N	V	ADMIN	2025-11-26 13:01:36	ADMIN	2025-11-26 13:45:43	ADMIN	2025-11-26 13:45:43	2
 \.
 
 
@@ -2280,8 +2282,11 @@ COPY public.dnintake (donation_id, inventory_id, intake_date, comments_text, sta
 --
 
 COPY public.dnintake_item (donation_id, inventory_id, item_id, batch_no, batch_date, expiry_date, uom_code, avg_unit_value, usable_qty, defective_qty, expired_qty, ext_item_cost, status_code, comments_text, create_by_id, create_dtime, update_by_id, update_dtime, version_nbr) FROM stdin;
-16	1	5	SOAP-01	2025-11-25	2035-11-23	BOX	300.00	444.00	5.00	1.00	133200.00	V	\N	ADMIN	2025-11-25 18:36:41	ADMIN	2025-11-25 18:47:21	2
-12	2	2	WATA-01	2025-11-25	2035-11-23	GALLON	500.00	88.00	10.00	2.00	44000.00	V	\N	ADMIN	2025-11-25 18:49:42	ADMIN	2025-11-25 19:04:25	2
+16	1	5	SOAP-01	2025-11-25	2035-11-23	BOX	300.00	444.00	5.00	1.00	135000.00	V	\N	ADMIN	2025-11-25 18:36:41	ADMIN	2025-11-25 18:47:21	2
+12	2	2	WATA-01	2025-11-25	2035-11-23	GALLON	500.00	88.00	10.00	2.00	50000.00	V	\N	ADMIN	2025-11-25 18:49:42	ADMIN	2025-11-25 19:04:25	2
+15	1	5	SOAP-02	2025-11-26	2035-11-24	BOX	50.00	986.00	12.00	2.00	50000.00	V	TWO MORE WERE DEFECTIVE.	ADMIN	2025-11-26 10:25:08	ADMIN	2025-11-26 10:25:44	2
+17	2	2	WATA-03	2025-11-26	2035-11-24	GALLON	300.00	180.00	10.00	10.00	60000.00	V	\N	ADMIN	2025-11-26 13:01:36	ADMIN	2025-11-26 13:45:43	2
+17	2	6	BLANKET-FLEECE	2025-11-26	2035-11-24	UNIT	400.00	28.00	10.00	2.00	16000.00	V	\N	ADMIN	2025-11-26 13:01:36	ADMIN	2025-11-26 13:45:43	2
 \.
 
 
@@ -2290,9 +2295,10 @@ COPY public.dnintake_item (donation_id, inventory_id, item_id, batch_no, batch_d
 --
 
 COPY public.donation (donation_id, donor_id, donation_desc, origin_country_id, origin_address1_text, origin_address2_text, event_id, custodian_id, received_date, tot_item_cost, storage_cost, haulage_cost, other_cost, other_cost_desc, status_code, comments_text, create_by_id, create_dtime, update_by_id, update_dtime, verify_by_id, verify_dtime, version_nbr) FROM stdin;
+15	1	CARE PACKAGE	826	\N	\N	1	1	2025-11-23	7000000.00	0.00	0.00	0.00	\N	P	\N	ADMIN	2025-11-25 17:27:15	ADMIN	2025-11-26 10:25:45	ADMIN	2025-11-26 10:24:05	5
+17	1	CRATE 10	170	\N	\N	1	1	2025-11-26	500000.00	20000.00	2200.00	3000.00	LABOUR COSTS	P	\N	BRIAN	2025-11-26 12:50:35	ADMIN	2025-11-26 13:45:43	ADMIN	2025-11-26 12:56:03	5
 13	1	CARE PACKAGE #10	52	\N	\N	1	1	2025-11-25	500000.00	20000.00	5000.00	3000.00	LOADERS COST	E	\N	BRIAN	2025-11-25 15:50:32	BRIAN	2025-11-25 15:50:32	BRIAN	2025-11-25 15:50:32	2
 16	1	GOODIES BAG 3	52	\N	\N	1	1	2025-11-25	200000.00	3000.00	2000.00	1000.00	LOADERS COST	P	\N	BRIAN	2025-11-25 17:51:40	ADMIN	2025-11-25 18:47:22	ADMIN	2025-11-25 18:03:33	6
-15	1	CARE PACKAGE	826	\N	\N	1	1	2025-11-23	7000000.00	0.00	0.00	0.00	\N	E	\N	ADMIN	2025-11-25 17:27:15	ADMIN	2025-11-25 18:49:09	\N	\N	3
 12	1	CARE PACKAGE	124	\N	\N	1	1	2025-11-25	2000000.00	7500.00	15000.00	100.00	LABOUR COST	P	\N	ADMIN	2025-11-25 15:03:48	ADMIN	2025-11-25 19:04:25	ADMIN	2025-11-25 15:14:25	4
 \.
 
@@ -2324,8 +2330,11 @@ COPY public.donation_item (donation_id, item_id, donation_type, item_qty, item_c
 16	5	GOODS	450.00	300.00	BOX	\N	KINGSTON HQTR	V	SOAP COMMENT	BRIAN	2025-11-25 17:51:40	ADMIN	2025-11-25 18:03:33	ADMIN	2025-11-25 18:03:33	3
 16	9	FUNDS	1.00	100000.00	\N	CUP	CONSOLIDATED FUND	V	MEDICAL FUNDS	BRIAN	2025-11-25 17:51:40	ADMIN	2025-11-25 18:03:33	ADMIN	2025-11-25 18:03:33	3
 16	10	FUNDS	1.00	67000.00	\N	USD	CONSOLIDATED FUND	V	\N	BRIAN	2025-11-25 18:01:01	ADMIN	2025-11-25 18:03:33	ADMIN	2025-11-25 18:03:33	2
-15	5	GOODS	1000.00	50.00	BOX	\N	DONATION RECEIVED	P	\N	ADMIN	2025-11-25 17:27:15	ADMIN	2025-11-25 18:49:09	\N	\N	2
-15	7	FUNDS	1.00	300000.00	\N	EUR	DONATION RECEIVED	P	\N	ADMIN	2025-11-25 17:27:15	ADMIN	2025-11-25 18:49:09	\N	\N	2
+15	5	GOODS	1000.00	50.00	BOX	\N	DONATION RECEIVED	V	\N	ADMIN	2025-11-25 17:27:15	ADMIN	2025-11-26 10:24:05	ADMIN	2025-11-26 10:24:05	3
+15	7	FUNDS	1.00	300000.00	\N	EUR	DONATION RECEIVED	V	\N	ADMIN	2025-11-25 17:27:15	ADMIN	2025-11-26 10:24:05	ADMIN	2025-11-26 10:24:05	3
+17	6	GOODS	40.00	400.00	UNIT	\N	DONATION RECEIVED	V	\N	BRIAN	2025-11-26 12:52:51	ADMIN	2025-11-26 12:56:03	ADMIN	2025-11-26 12:56:03	2
+17	8	FUNDS	1.00	2000000.00	\N	JMD	DONATION RECEIVED	V	\N	BRIAN	2025-11-26 12:50:35	ADMIN	2025-11-26 12:56:03	ADMIN	2025-11-26 12:56:03	3
+17	2	GOODS	200.00	300.00	GALLON	\N	DONATION RECEIVED	V	\N	ADMIN	2025-11-26 12:56:03	ADMIN	2025-11-26 12:56:03	ADMIN	2025-11-26 12:56:03	1
 \.
 
 
@@ -2352,8 +2361,9 @@ COPY public.event (event_id, event_type, start_date, event_name, event_desc, imp
 --
 
 COPY public.inventory (inventory_id, item_id, usable_qty, reserved_qty, defective_qty, expired_qty, uom_code, last_verified_by, last_verified_date, status_code, comments_text, create_by_id, create_dtime, update_by_id, update_dtime, version_nbr, reorder_qty) FROM stdin;
-1	5	444.00	0.00	5.00	1.00	BOX	\N	\N	A	\N	ADMIN	2025-11-25 18:47:22	ADMIN	2025-11-25 18:47:22	1	0.00
-2	2	88.00	0.00	10.00	2.00	GALLON	\N	\N	A	\N	ADMIN	2025-11-25 19:04:25	ADMIN	2025-11-25 19:04:25	1	0.00
+1	5	1430.00	0.00	17.00	3.00	BOX	\N	\N	A	\N	ADMIN	2025-11-25 18:47:22	ADMIN	2025-11-26 10:25:45	2	0.00
+2	2	268.00	0.00	20.00	12.00	GALLON	\N	\N	A	\N	ADMIN	2025-11-25 19:04:25	ADMIN	2025-11-26 13:45:43	2	0.00
+2	6	28.00	0.00	10.00	2.00	UNIT	\N	\N	A	\N	ADMIN	2025-11-26 13:45:43	ADMIN	2025-11-26 13:45:43	1	0.00
 \.
 
 
@@ -2390,6 +2400,9 @@ COPY public.item_location (inventory_id, item_id, location_id, create_by_id, cre
 COPY public.itembatch (batch_id, inventory_id, item_id, batch_no, batch_date, expiry_date, usable_qty, reserved_qty, defective_qty, expired_qty, uom_code, size_spec, avg_unit_value, last_verified_by, last_verified_date, status_code, comments_text, create_by_id, create_dtime, update_by_id, update_dtime, version_nbr) FROM stdin;
 1	1	5	SOAP-01	2025-11-25	2035-11-23	444.0000	0.0000	5.0000	1.0000	BOX	\N	300.00	\N	\N	A	\N	ADMIN	2025-11-25 18:47:22	ADMIN	2025-11-25 18:47:22	1
 2	2	2	WATA-01	2025-11-25	2035-11-23	88.0000	0.0000	10.0000	2.0000	GALLON	\N	500.00	\N	\N	A	\N	ADMIN	2025-11-25 19:04:25	ADMIN	2025-11-25 19:04:25	1
+3	1	5	SOAP-02	2025-11-26	2035-11-24	986.0000	0.0000	12.0000	2.0000	BOX	\N	50.00	\N	\N	A	TWO MORE WERE DEFECTIVE.	ADMIN	2025-11-26 10:25:45	ADMIN	2025-11-26 10:25:45	1
+4	2	2	WATA-03	2025-11-26	2035-11-24	180.0000	0.0000	10.0000	10.0000	GALLON	\N	300.00	\N	\N	A	\N	ADMIN	2025-11-26 13:45:43	ADMIN	2025-11-26 13:45:43	1
+5	2	6	BLANKET-FLEECE	2025-11-26	2035-11-24	28.0000	0.0000	10.0000	2.0000	UNIT	\N	400.00	\N	\N	A	\N	ADMIN	2025-11-26 13:45:43	ADMIN	2025-11-26 13:45:43	1
 \.
 
 
@@ -2643,8 +2656,9 @@ SHEET	Sheets	\N	SYSTEM	2025-11-24 02:54:50	SYSTEM	2025-11-24 02:54:50	1	A
 
 COPY public."user" (user_id, email, password_hash, first_name, last_name, full_name, is_active, organization, job_title, phone, timezone, language, notification_preferences, assigned_warehouse_id, last_login_at, create_dtime, update_dtime, username, password_algo, mfa_enabled, mfa_secret, failed_login_count, lock_until_at, password_changed_at, agency_id, status_code, version_nbr, user_name) FROM stdin;
 1	admin@odpem.gov.jm	scrypt:32768:8:1$tw5i5qADic8YJpSt$e7e234d2febee94551bf5b8f3f2a065faefefb5f4a00f73c5c66f3c02ce3c3eb68a340372989f7bff2fb5e67e3ec5b7149282dc65011b19e8dc8e811da413a02	System	Administrator	System Administrator	t	OFFICE OF DISASTER PREPAREDNESS AND EMERGENCY MANAGEMENT (ODPEM)	System Administrator	\N	America/Jamaica	en	\N	\N	\N	2025-11-24 03:00:14.938854	2025-11-24 03:03:25.800858	\N	scrypt	f	\N	0	\N	\N	\N	A	2	ADMIN
-2	brian.stewat@odpem.gov.jm	scrypt:32768:8:1$EYdcKTp2jpBtoSg0$d3d1cf7f6e9dbaafe370311f3f2bb444e4361e735ff1ed0c06ebc9b116a2c01a3b57278b4969cc4817acd9d895ad37d3973892ca749477b5f7c8ecb29d8bd7cb	Brian	Stewart	Brian Stewart	t	OFFICE OF DISASTER PREPAREDNESS AND EMERGENCY MANAGEMENT (ODPEM)	Logistics Officer	\N	America/Jamaica	en	\N	\N	\N	2025-11-25 09:27:13.737573	2025-11-25 09:27:13.737589	\N	argon2id	f	\N	0	\N	\N	\N	A	1	BRIAN
 3	michelle.ried@odpem.gov.jm	scrypt:32768:8:1$ZOaMgqafSj0XlWjy$e3a4cd118a6b35c3f4ca62178c167a9f0e3a69a7c71b4fbe49158ae78ab81c44b938dde1fb4f4ac8b9dc3ab59626d52b417a432e8d150af4867ec054a72294ed	Michelle	Reid	Michelle Reid	t	OFFICE OF DISASTER PREPAREDNESS AND EMERGENCY MANAGEMENT (ODPEM)	Logistics Manager	\N	America/Jamaica	en	\N	\N	\N	2025-11-25 09:28:36.488576	2025-11-25 09:28:36.48859	\N	argon2id	f	\N	0	\N	\N	\N	A	1	MICHELLE
+4	adam.graham@odpem.gov.jm	scrypt:32768:8:1$PWCNt3Prq7SwkxZJ$f6553114878a24a8114a7d3d29d43ad509871bf1cd5bd3a3a5b709e86dcf0016125b503623397d8aac8526bd04a33a2a96ffec98ce720c3195bf1c2e7e29f64b	Adam	Graham	Adam Graham	t	OFFICE OF DISASTER PREPAREDNESS AND EMERGENCY MANAGEMENT (ODPEM)	\N	8769989011	America/Jamaica	en	\N	\N	\N	2025-11-26 09:36:58.206326	2025-11-26 09:36:58.206339	\N	argon2id	f	\N	0	\N	\N	\N	A	1	ADAM
+2	brian.stewat@odpem.gov.jm	scrypt:32768:8:1$EYdcKTp2jpBtoSg0$d3d1cf7f6e9dbaafe370311f3f2bb444e4361e735ff1ed0c06ebc9b116a2c01a3b57278b4969cc4817acd9d895ad37d3973892ca749477b5f7c8ecb29d8bd7cb	Brian	Stewart	Brian Stewart	t	OFFICE OF DISASTER PREPAREDNESS AND EMERGENCY MANAGEMENT (ODPEM)	Logistics Officer	\N	America/Jamaica	en	\N	\N	2025-11-26 12:48:17.609233	2025-11-25 09:27:13.737573	2025-11-26 17:48:17.457716	\N	argon2id	f	\N	0	\N	\N	\N	A	2	BRIAN
 \.
 
 
@@ -2659,6 +2673,7 @@ COPY public.user_role (user_id, role_id, assigned_at, assigned_by, create_by_id,
 2	3	2025-11-25 09:27:13.824918	\N	system	2025-11-25 09:27:14	system	2025-11-25 09:27:14	1
 3	2	2025-11-25 11:25:00.842104	\N	system	2025-11-25 11:25:01	system	2025-11-25 11:25:01	1
 3	9	2025-11-25 11:25:00.842123	\N	system	2025-11-25 11:25:01	system	2025-11-25 11:25:01	1
+4	11	2025-11-26 09:36:58.293563	\N	system	2025-11-26 09:36:58	system	2025-11-26 09:36:58	1
 \.
 
 
@@ -2749,7 +2764,7 @@ SELECT pg_catalog.setval('public.donation_doc_document_id_seq', 4, true);
 -- Name: donation_donation_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.donation_donation_id_seq', 16, true);
+SELECT pg_catalog.setval('public.donation_donation_id_seq', 17, true);
 
 
 --
@@ -2777,7 +2792,7 @@ SELECT pg_catalog.setval('public.item_new_item_id_seq', 35, true);
 -- Name: itembatch_batch_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.itembatch_batch_id_seq', 2, true);
+SELECT pg_catalog.setval('public.itembatch_batch_id_seq', 5, true);
 
 
 --
@@ -2861,7 +2876,7 @@ SELECT pg_catalog.setval('public.transfer_transfer_id_seq', 1, false);
 -- Name: user_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.user_id_seq', 3, true);
+SELECT pg_catalog.setval('public.user_id_seq', 4, true);
 
 
 --
@@ -4744,5 +4759,5 @@ ALTER TABLE ONLY public.xfreturn_item
 -- PostgreSQL database dump complete
 --
 
-\unrestrict SKhlQwyoaESQQuV7TLBQKLShK1azhA0OZ1PAzX0p70SdGJovx7vgC5L2Ne6qkNP
+\unrestrict AlAmNfugLI2IFnXQWhf01njQq048psKIFi2SNiFKZI6amGQfY7uXlQ58WmsgpRZ
 
