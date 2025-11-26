@@ -37,7 +37,7 @@ CREATE INDEX IF NOT EXISTS idx_currency_rate_date ON currency_rate(rate_date DES
 COMMENT ON TABLE currency_rate IS 'Cached exchange rates to JMD. Used for display-only currency conversion. Rates can be inserted manually or via API.';
 COMMENT ON COLUMN currency_rate.currency_code IS 'ISO 4217 currency code (uppercase), e.g., USD, EUR, GBP';
 COMMENT ON COLUMN currency_rate.rate_to_jmd IS 'Exchange rate: how many JMD for 1 unit of the currency';
-COMMENT ON COLUMN currency_rate.source IS 'Rate source identifier (e.g., MANUAL, API provider name)';
+COMMENT ON COLUMN currency_rate.source IS 'Rate source identifier. Values: MANUAL (user-entered), LEGACY (historical imported rates), UNCONFIGURED (default when no provider configured).';
 COMMENT ON COLUMN currency_rate.rate_date IS 'The date the rate applies to';
 COMMENT ON COLUMN currency_rate.create_dtime IS 'Timestamp when the rate was cached';
 

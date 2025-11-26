@@ -38,6 +38,7 @@ The application employs a modular blueprint architecture with a database-first a
   - Service layer in `app/services/currency_service.py` with rate caching and conversion
   - External API integration currently disabled - system operates with manual/cached rates only
   - Rates can be inserted manually via `store_rate()` or `set_usd_jmd_rate()` methods
+  - Source column values: MANUAL (user-entered), LEGACY (historical imported rates), UNCONFIGURED (default)
   - Display-only conversion - no stored values are modified
   - Graceful degradation if rates unavailable
   - Designed for easy integration with any future exchange rate API provider
