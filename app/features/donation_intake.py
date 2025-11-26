@@ -720,7 +720,7 @@ def _process_verification_submission(intake, donation, warehouse):
                 errors.append(f'{item.item_name}: Invalid expiry date format')
                 continue
         
-        ext_item_cost = usable_qty * intake_item.avg_unit_value
+        ext_item_cost = intake_item_total * intake_item.avg_unit_value
         
         verified_items_data.append({
             'intake_item': intake_item,
