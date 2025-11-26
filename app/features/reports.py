@@ -166,6 +166,23 @@ def funds_donations():
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
     funds_donations_list = pagination.items
     
+    total_donations = pagination.total
+    unique_countries = db.session.query(
+        func.count(func.distinct(Country.country_id))
+    ).join(
+        Donation, Country.country_id == Donation.origin_country_id
+    ).join(
+        DonationItem, Donation.donation_id == DonationItem.donation_id
+    ).filter(
+        DonationItem.donation_type == 'FUNDS'
+    ).scalar() or 0
+    
+    unique_currencies = db.session.query(
+        func.count(func.distinct(DonationItem.currency_code))
+    ).filter(
+        DonationItem.donation_type == 'FUNDS'
+    ).scalar() or 0
+    
     countries = Country.query.filter_by(status_code='A').order_by(Country.country_name).all()
     
     currencies = db.session.query(
@@ -183,6 +200,9 @@ def funds_donations():
         pagination=pagination,
         countries=countries,
         currencies=currencies,
+        total_donations=total_donations,
+        unique_countries=unique_countries,
+        unique_currencies=unique_currencies,
         filters={
             'country_id': country_filter,
             'date_from': date_from,
