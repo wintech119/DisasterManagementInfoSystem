@@ -616,6 +616,11 @@ def _process_verification_submission(intake, donation, warehouse):
         donation_id=intake.donation_id,
         inventory_id=intake.inventory_id
     ).all()
+
+    donation_items = DonationItem.query.filter_by(
+        donation_id=donation.donation_id
+    ).all()
+    donation_items_by_id = {di.item_id: di for di in donation_items}
     
     verified_items_data = []
     
@@ -639,13 +644,18 @@ def _process_verification_submission(intake, donation, warehouse):
                 errors.append(f'{item.item_name}: Quantities cannot be negative')
                 continue
 
-            donation_item = DonationItem.query.filter_by(
-                donation_id=donation.donation_id,
-                item_id=item_id
-            ).first()
+            donation_item = donation_items_by_id.get(item_id)
 
             if not donation_item:
                 errors.append(f'{item.item_name}: Donation item not found')
+                continue
+
+            donation_qty = donation_item.item_qty or Decimal('0')
+
+            if donation_qty <= 0:
+                errors.append(
+                    f"{item.item_name}: Donation quantity must be greater than zero before verification"
+                )
                 continue
 
             intake_item_total = (
@@ -654,6 +664,12 @@ def _process_verification_submission(intake, donation, warehouse):
                 + (intake_item.expired_qty or Decimal('0'))
             )
 
+            if intake_item_total <= 0:
+                errors.append(
+                    f"{item.item_name}: Intake quantity must be greater than zero before verification"
+                )
+                continue
+
             total_deductions = defective_qty + expired_qty
             if total_deductions > intake_item_total:
                 errors.append(
@@ -661,9 +677,9 @@ def _process_verification_submission(intake, donation, warehouse):
                 )
                 continue
 
-            if total_deductions > donation_item.item_qty:
+            if total_deductions > donation_qty:
                 errors.append(
-                    f'{item.item_name}: Defective + Expired cannot exceed donated quantity ({donation_item.item_qty})'
+                    f"{item.item_name}: Defective + Expired cannot exceed donated quantity ({donation_qty})"
                 )
                 continue
 
