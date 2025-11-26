@@ -1,0 +1,129 @@
+diff --git a/templates/inventory/list.html b/templates/inventory/list.html
+index ad6c0135219fa4e7fc5b5e0ac237587f0fafa1aa..6d5334ffec25bd73f1ca62053a4eee484cd660c8 100644
+--- a/templates/inventory/list.html
++++ b/templates/inventory/list.html
+@@ -21,96 +21,115 @@
+             </a>
+             {% endif %}
+         </div>
+     </div>
+ 
+     <!-- Filter Bar -->
+     <div class="filter-bar">
+         <form method="GET" class="d-flex align-items-center gap-3">
+             <label for="warehouse_id" class="form-label mb-0 font-semibold text-nowrap">
+                 <i class="bi bi-building me-1"></i>
+                 Warehouse:
+             </label>
+             <select class="form-control filter-select" name="warehouse_id" id="warehouse_id" data-auto-submit="true">
+                 <option value="">All Warehouses</option>
+                 {% for warehouse in warehouses %}
+                 <option value="{{ warehouse.warehouse_id }}" {% if selected_warehouse_id == warehouse.warehouse_id %}selected{% endif %}>
+                     {{ warehouse.warehouse_name }}
+                 </option>
+                 {% endfor %}
+             </select>
+         </form>
+     </div>
+ 
+     <!-- Inventory Table -->
+     {% if inventory_items %}
++    {% set totals = namespace(usable=0, reserved=0, defective=0, expired=0) %}
++    {% for inv, _, _, _ in inventory_items %}
++        {% set totals.usable = totals.usable + inv.usable_qty %}
++        {% set totals.reserved = totals.reserved + inv.reserved_qty %}
++        {% set totals.defective = totals.defective + inv.defective_qty %}
++        {% set totals.expired = totals.expired + inv.expired_qty %}
++    {% endfor %}
++
+     <div class="table-responsive-mobile">
+         <table class="modern-table">
++            <caption class="visually-hidden">Inventory quantities by warehouse and item</caption>
+             <thead>
+                 <tr>
+-                    <th>Warehouse</th>
+-                    <th>Item</th>
+-                    <th>SKU</th>
+-                    <th>Usable</th>
+-                    <th>Reserved</th>
+-                    <th>Defective</th>
+-                    <th>Expired</th>
+-                    <th>UOM</th>
+-                    <th>Status</th>
++                    <th scope="col">Warehouse</th>
++                    <th scope="col">Item</th>
++                    <th scope="col">SKU</th>
++                    <th scope="col">Usable</th>
++                    <th scope="col">Reserved</th>
++                    <th scope="col">Defective</th>
++                    <th scope="col">Expired</th>
++                    <th scope="col">UOM</th>
++                    <th scope="col">Status</th>
+                 </tr>
+             </thead>
+             <tbody>
+                 {% for inv, item_name, sku_code, warehouse_name in inventory_items %}
+                 <tr>
+                     <td>
+                         <strong>{{ warehouse_name }}</strong>
+                     </td>
+                     <td>{{ item_name }}</td>
+                     <td>
+                         <code class="code-pill">{{ sku_code }}</code>
+                     </td>
+                     <td>
+                         <strong class="text-success">{{ inv.usable_qty }}</strong>
+                     </td>
+                     <td>
+                         <span class="text-warning">{{ inv.reserved_qty }}</span>
+                     </td>
+                     <td>
+                         <span class="text-danger">{{ inv.defective_qty }}</span>
+                     </td>
+                     <td>
+                         <span class="text-muted">{{ inv.expired_qty }}</span>
+                     </td>
+                     <td>{{ inv.uom_code }}</td>
+                     <td>
+                         <span class="status-badge status-badge-{{ inv.status_code|status_badge('inventory') }}">
+                             {{ inv.status_code|status_label('inventory') }}
+                         </span>
+                     </td>
+                 </tr>
+                 {% endfor %}
+             </tbody>
++            <tfoot>
++                <tr>
++                    <th scope="row" colspan="3">Totals</th>
++                    <td><strong class="text-success">{{ totals.usable }}</strong></td>
++                    <td><span class="text-warning">{{ totals.reserved }}</span></td>
++                    <td><span class="text-danger">{{ totals.defective }}</span></td>
++                    <td><span class="text-muted">{{ totals.expired }}</span></td>
++                    <td colspan="2"></td>
++                </tr>
++            </tfoot>
+         </table>
+     </div>
+     {% else %}
+     <div class="empty-state">
+         <i class="bi bi-boxes"></i>
+         <h5>No Inventory Records</h5>
+         <p>No inventory records found for the selected warehouse.</p>
+         {% if has_feature('inventory_intake') %}
+         <a href="{{ url_for('intake.list_intakes') }}" class="btn btn-modern btn-primary">
+             <i class="bi bi-arrow-down-circle me-2"></i>
+             Record Intake
+         </a>
+         {% endif %}
+     </div>
+     {% endif %}
+ </div>
+ {% endblock %}
+ 
+ {% block scripts %}
+ <script nonce="{{ csp_nonce() }}">
+ // Auto-submit filter forms when dropdown changes
+ document.addEventListener('DOMContentLoaded', function() {
+     const autoSubmitSelects = document.querySelectorAll('select[data-auto-submit="true"]');
+     autoSubmitSelects.forEach(function(select) {
+         select.addEventListener('change', function() {

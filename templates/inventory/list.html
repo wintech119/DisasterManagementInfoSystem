@@ -43,19 +43,28 @@
 
     <!-- Inventory Table -->
     {% if inventory_items %}
+    {% set totals = namespace(usable=0, reserved=0, defective=0, expired=0) %}
+    {% for inv, _, _, _ in inventory_items %}
+        {% set totals.usable = totals.usable + inv.usable_qty %}
+        {% set totals.reserved = totals.reserved + inv.reserved_qty %}
+        {% set totals.defective = totals.defective + inv.defective_qty %}
+        {% set totals.expired = totals.expired + inv.expired_qty %}
+    {% endfor %}
+
     <div class="table-responsive-mobile">
         <table class="modern-table">
+            <caption class="visually-hidden">Inventory quantities by warehouse and item</caption>
             <thead>
                 <tr>
-                    <th>Warehouse</th>
-                    <th>Item</th>
-                    <th>SKU</th>
-                    <th>Usable</th>
-                    <th>Reserved</th>
-                    <th>Defective</th>
-                    <th>Expired</th>
-                    <th>UOM</th>
-                    <th>Status</th>
+                    <th scope="col">Warehouse</th>
+                    <th scope="col">Item</th>
+                    <th scope="col">SKU</th>
+                    <th scope="col">Usable</th>
+                    <th scope="col">Reserved</th>
+                    <th scope="col">Defective</th>
+                    <th scope="col">Expired</th>
+                    <th scope="col">UOM</th>
+                    <th scope="col">Status</th>
                 </tr>
             </thead>
             <tbody>
@@ -89,6 +98,16 @@
                 </tr>
                 {% endfor %}
             </tbody>
+            <tfoot>
+                <tr>
+                    <th scope="row" colspan="3">Totals</th>
+                    <td><strong class="text-success">{{ totals.usable }}</strong></td>
+                    <td><span class="text-warning">{{ totals.reserved }}</span></td>
+                    <td><span class="text-danger">{{ totals.defective }}</span></td>
+                    <td><span class="text-muted">{{ totals.expired }}</span></td>
+                    <td colspan="2"></td>
+                </tr>
+            </tfoot>
         </table>
     </div>
     {% else %}
