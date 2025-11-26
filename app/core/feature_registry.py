@@ -37,6 +37,7 @@ Usage:
 """
 
 from typing import List, Dict, Optional, Set
+from app.core.rbac import EXECUTIVE_ROLES, LOGISTICS_ROLES, AGENCY_ROLES
 
 
 class FeatureRegistry:
@@ -132,12 +133,12 @@ class FeatureRegistry:
         },
         
         # =================================================================
-        # ELIGIBILITY REVIEW (ODPEM Directors)
+        # ELIGIBILITY REVIEW (ODPEM Executives - DG, DDG, Dir PEOD)
         # =================================================================
         'eligibility_review': {
             'name': 'Review Relief Requests',
             'description': 'Review and approve/deny relief request eligibility',
-            'roles': ['ODPEM_DG', 'ODPEM_DDG', 'ODPEM_DIR_PEOD'],
+            'roles': list(EXECUTIVE_ROLES),
             'route': 'eligibility.pending_list',
             'url': '/eligibility/pending',
             'icon': 'bi-clipboard-check',
@@ -147,9 +148,9 @@ class FeatureRegistry:
             'priority': 20
         },
         'director_dashboard': {
-            'name': 'Director Dashboard',
-            'description': 'Unified dashboard for ODPEM directors',
-            'roles': ['ODPEM_DG', 'ODPEM_DDG', 'ODPEM_DIR_PEOD'],
+            'name': 'Executive Dashboard',
+            'description': 'Unified dashboard for ODPEM executives',
+            'roles': list(EXECUTIVE_ROLES),
             'route': 'director.dashboard',
             'url': '/director/dashboard',
             'icon': 'bi-speedometer2',
@@ -161,7 +162,7 @@ class FeatureRegistry:
         'operations_dashboard': {
             'name': 'Operations Dashboard',
             'description': 'Executive performance metrics for donations and relief fulfillment',
-            'roles': ['ODPEM_DG', 'ODPEM_DDG', 'ODPEM_DIR_PEOD'],
+            'roles': list(EXECUTIVE_ROLES),
             'route': 'operations_dashboard.index',
             'url': '/executive/operations',
             'icon': 'bi-graph-up',
@@ -230,7 +231,7 @@ class FeatureRegistry:
         'inventory_view': {
             'name': 'View Inventory',
             'description': 'View current stock levels across warehouses',
-            'roles': ['LOGISTICS_OFFICER', 'LOGISTICS_MANAGER', 'INVENTORY_CLERK', 'ODPEM_DG', 'ODPEM_DDG', 'ODPEM_DIR_PEOD', 'SYSTEM_ADMINISTRATOR'],
+            'roles': list(LOGISTICS_ROLES) + ['INVENTORY_CLERK'] + list(EXECUTIVE_ROLES) + ['SYSTEM_ADMINISTRATOR'],
             'route': 'inventory.list_inventory',
             'url': '/inventory',
             'icon': 'bi-boxes',
@@ -380,7 +381,7 @@ class FeatureRegistry:
         'reports_main': {
             'name': 'Reports',
             'description': 'Access system reports',
-            'roles': ['LOGISTICS_OFFICER', 'LOGISTICS_MANAGER', 'ODPEM_DG', 'ODPEM_DDG', 'ODPEM_DIR_PEOD', 'SYSTEM_ADMINISTRATOR'],
+            'roles': list(LOGISTICS_ROLES) + list(EXECUTIVE_ROLES) + ['SYSTEM_ADMINISTRATOR'],
             'route': 'reports.index',
             'url': '/reports',
             'icon': 'bi-file-earmark-bar-graph',
@@ -391,7 +392,7 @@ class FeatureRegistry:
         'reports_inventory': {
             'name': 'Inventory Reports',
             'description': 'View inventory summary reports',
-            'roles': ['LOGISTICS_OFFICER', 'LOGISTICS_MANAGER', 'ODPEM_DG', 'ODPEM_DDG', 'ODPEM_DIR_PEOD', 'SYSTEM_ADMINISTRATOR'],
+            'roles': list(LOGISTICS_ROLES) + list(EXECUTIVE_ROLES) + ['SYSTEM_ADMINISTRATOR'],
             'route': 'reports.inventory_summary',
             'url': '/reports/inventory_summary',
             'icon': 'bi-bar-chart',
@@ -402,7 +403,7 @@ class FeatureRegistry:
         'reports_donations': {
             'name': 'Donation Reports',
             'description': 'View donations summary reports',
-            'roles': ['LOGISTICS_MANAGER', 'ODPEM_DG', 'ODPEM_DDG', 'ODPEM_DIR_PEOD', 'SYSTEM_ADMINISTRATOR'],
+            'roles': ['LOGISTICS_MANAGER'] + list(EXECUTIVE_ROLES) + ['SYSTEM_ADMINISTRATOR'],
             'route': 'reports.donations_summary',
             'url': '/reports/donations_summary',
             'icon': 'bi-graph-up',
@@ -413,7 +414,7 @@ class FeatureRegistry:
         'donations_analytics': {
             'name': 'Donation Analytics',
             'description': 'Interactive analytics dashboard for donation metrics and trends',
-            'roles': ['ODPEM_DG', 'ODPEM_DDG', 'ODPEM_DIR_PEOD', 'LOGISTICS_MANAGER'],
+            'roles': list(EXECUTIVE_ROLES) + ['LOGISTICS_MANAGER'],
             'route': 'dashboard.donations_analytics',
             'url': '/dashboard/donations-analytics',
             'icon': 'bi-graph-up-arrow',
@@ -424,7 +425,7 @@ class FeatureRegistry:
         'relief_package_analytics': {
             'name': 'Relief Package Analytics',
             'description': 'Analytics dashboard for dispatched relief packages to shelters and distributors',
-            'roles': ['ODPEM_DG', 'ODPEM_DDG', 'ODPEM_DIR_PEOD', 'LOGISTICS_MANAGER'],
+            'roles': list(EXECUTIVE_ROLES) + ['LOGISTICS_MANAGER'],
             'route': 'dashboard.relief_package_analytics',
             'url': '/dashboard/relief-package-analytics',
             'icon': 'bi-box-arrow-up-right',
@@ -466,7 +467,7 @@ class FeatureRegistry:
         'notifications': {
             'name': 'Notifications',
             'description': 'View system notifications',
-            'roles': ['LOGISTICS_OFFICER', 'LOGISTICS_MANAGER', 'ODPEM_DG', 'ODPEM_DDG', 'ODPEM_DIR_PEOD', 'AGENCY_DISTRIBUTOR', 'AGENCY_SHELTER', 'INVENTORY_CLERK', 'SYSTEM_ADMINISTRATOR'],
+            'roles': list(LOGISTICS_ROLES) + list(EXECUTIVE_ROLES) + list(AGENCY_ROLES) + ['INVENTORY_CLERK', 'SYSTEM_ADMINISTRATOR'],
             'route': 'notifications.index',
             'url': '/notifications',
             'icon': 'bi-bell',
@@ -653,11 +654,12 @@ class FeatureRegistry:
         
         Priority order (highest to lowest):
         1. SYSTEM_ADMINISTRATOR
-        2. ODPEM_DG, ODPEM_DDG, ODPEM_DIR_PEOD (Directors)
-        3. LOGISTICS_MANAGER
-        4. LOGISTICS_OFFICER
-        5. INVENTORY_CLERK
-        6. AGENCY_DISTRIBUTOR, AGENCY_SHELTER
+        2. EXECUTIVE_ROLES (DG, DDG, Dir PEOD) - Eligibility approval
+        3. CUSTODIAN
+        4. LOGISTICS_MANAGER
+        5. LOGISTICS_OFFICER
+        6. INVENTORY_CLERK
+        7. AGENCY_ROLES (Distributor, Shelter)
         
         Args:
             user: User object with roles
@@ -665,19 +667,15 @@ class FeatureRegistry:
         Returns:
             Primary role code or None
         """
-        ROLE_PRIORITY = [
-            'SYSTEM_ADMINISTRATOR',
-            'ODPEM_DG',
-            'ODPEM_DDG',
-            'ODPEM_DIR_PEOD',
-            'CUSTODIAN',
-            'LOGISTICS_MANAGER',
-            'LOGISTICS_OFFICER',
-            'INVENTORY_CLERK',
-            'AGENCY_DISTRIBUTOR',
-            'AGENCY_SHELTER',
-            'AUDITOR'
-        ]
+        ROLE_PRIORITY = (
+            ['SYSTEM_ADMINISTRATOR'] +
+            list(EXECUTIVE_ROLES) +
+            ['CUSTODIAN'] +
+            list(LOGISTICS_ROLES) +
+            ['INVENTORY_CLERK'] +
+            list(AGENCY_ROLES) +
+            ['AUDITOR']
+        )
         
         user_roles = cls.get_user_role_codes(user)
         

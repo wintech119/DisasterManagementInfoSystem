@@ -8,6 +8,20 @@ from app.db import db
 from sqlalchemy import text
 
 
+# =============================================================================
+# ROLE GROUP CONSTANTS
+# =============================================================================
+# Executive roles - Director General, Deputy DG, and Director PEOD
+# These roles share the same executive-level permissions for eligibility approval
+EXECUTIVE_ROLES = ('ODPEM_DG', 'ODPEM_DDG', 'ODPEM_DIR_PEOD')
+
+# Logistics team roles
+LOGISTICS_ROLES = ('LOGISTICS_MANAGER', 'LOGISTICS_OFFICER')
+
+# Agency roles
+AGENCY_ROLES = ('AGENCY_DISTRIBUTOR', 'AGENCY_SHELTER')
+
+
 def role_required(*role_codes):
     """
     Decorator to restrict access to routes based on user roles.
@@ -121,7 +135,7 @@ def can_access_relief_request(relief_request):
     User has access if:
     1. Request belongs to their agency (for agency users)
     2. User is a Logistics Manager or Logistics Officer (can access all requests)
-    3. User is a director-level executive (DG, Deputy DG, Director PEOD - read-only access to all requests)
+    3. User is an ODPEM Executive (DG, Deputy DG, Director PEOD - read-only access to all requests)
     
     Args:
         relief_request: ReliefRqst object to check access for
@@ -133,11 +147,11 @@ def can_access_relief_request(relief_request):
         return False
     
     # Logistics Managers and Officers have access to all relief requests
-    if has_role('LOGISTICS_MANAGER', 'LOGISTICS_OFFICER'):
+    if has_role(*LOGISTICS_ROLES):
         return True
     
-    # Director-level executives have read-only access to all relief requests
-    if has_role('ODPEM_DG', 'ODPEM_DDG', 'ODPEM_DIR_PEOD'):
+    # ODPEM Executives have read-only access to all relief requests
+    if has_role(*EXECUTIVE_ROLES):
         return True
     
     # Agency users can access their own agency's requests
@@ -231,7 +245,44 @@ def is_director_level():
     Returns:
         bool: True if user is director-level
     """
-    return has_role('ODPEM_DG', 'ODPEM_DDG', 'ODPEM_DIR_PEOD')
+    return has_role(*EXECUTIVE_ROLES)
+
+
+def is_executive():
+    """
+    Alias for is_director_level().
+    Check if the current user is an ODPEM Executive (DG, DDG, or Director PEOD).
+    These roles share executive-level permissions for eligibility approval.
+    
+    Returns:
+        bool: True if user is an executive
+    """
+    return is_director_level()
+
+
+def executive_required(f):
+    """
+    Decorator to restrict access to ODPEM Executive roles only.
+    Executive roles: Director General, Deputy Director General, Director PEOD.
+    
+    Usage:
+        @executive_required
+        def my_route():
+            # Only accessible to executives
+            ...
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            flash('Please log in to access this page.', 'warning')
+            return redirect(url_for('login'))
+        
+        if not is_executive():
+            flash('This page is only accessible to ODPEM Executives.', 'danger')
+            abort(403)
+        
+        return f(*args, **kwargs)
+    return decorated_function
 
 
 def can_manage_users():

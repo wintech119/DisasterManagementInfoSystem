@@ -17,7 +17,7 @@ from app.db.models import (
     db, Donation, DonationItem, ReliefRqst, ReliefPkg, 
     ReliefPkgItem, Agency, Event
 )
-from app.core.rbac import role_required
+from app.core.rbac import executive_required
 from app.services import relief_request_service as rr_service
 from datetime import datetime, timedelta
 from collections import defaultdict
@@ -27,7 +27,7 @@ operations_dashboard_bp = Blueprint('operations_dashboard', __name__)
 
 @operations_dashboard_bp.route('/executive/operations')
 @login_required
-@role_required('ODPEM_DG', 'ODPEM_DDG', 'ODPEM_DIR_PEOD')
+@executive_required
 def index():
     """
     Executive Operations Dashboard showing system-wide operational metrics.
