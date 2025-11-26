@@ -386,6 +386,21 @@
     color: var(--drims-text-primary);
 }
 
+/* Clickable Table Rows */
+.table-clickable tbody tr {
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.table-clickable tbody tr:hover {
+    background-color: var(--drims-bg-lighter, #fafbfc);
+    box-shadow: inset 0 0 0 1px var(--drims-border-light, #e9ecef);
+}
+
+.table-clickable tbody tr:active {
+    background-color: var(--drims-bg-gray, #f1f3f5);
+}
+
 /* ========================================
    BUTTONS
    ======================================== */
