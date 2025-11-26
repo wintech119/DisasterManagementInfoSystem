@@ -217,6 +217,10 @@ def login():
             elif user.is_locked:
                 flash('Your account is temporarily locked. Please contact your administrator.', 'warning')
             else:
+                from app.utils.timezone import now as jamaica_now
+                user.last_login_at = jamaica_now()
+                user.failed_login_count = 0
+                db.session.commit()
                 login_user(user)
                 next_page = request.args.get('next')
                 if next_page and is_safe_url(next_page):
