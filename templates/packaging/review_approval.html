@@ -358,6 +358,11 @@
                     </form>
                     <form method="POST" action="{{ url_for('packaging.review_approval', reliefrqst_id=relief_request.reliefrqst_id) }}" class="d-inline">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="relief_request_version" value="{{ relief_request.version_nbr }}">
+                        <input type="hidden" name="package_version" value="{{ relief_pkg.version_nbr }}">
+                        <button type="submit" name="action" value="reject" class="btn btn-outline-danger">
+                            <i class="bi bi-x-octagon"></i> Reject
+                        </button>
                         <button type="submit" name="action" value="approve_and_dispatch" class="btn-relief-primary">
                             <i class="bi bi-check-circle"></i> Approve & Dispatch to Inventory Clerk
                         </button>
