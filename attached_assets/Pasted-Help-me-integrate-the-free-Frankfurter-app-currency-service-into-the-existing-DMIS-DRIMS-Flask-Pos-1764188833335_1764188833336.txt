@@ -1,0 +1,166 @@
+Help me integrate the free Frankfurter.app currency service into the existing DMIS/DRIMS Flask + PostgreSQL system WITHOUT breaking any existing code, logic, workflows, behaviour, security fixes, or database schema.
+
+ABSOLUTE RULES
+- Do NOT modify or drop any existing tables, columns, constraints, indexes, triggers, routes, views, or templates.
+- Do NOT change any existing behaviours such as:
+  - Donation entry logic
+  - The rule that total donation value is manually entered by the user
+  - Existing cost breakdown logic
+  - Any validation that is already implemented
+- Do NOT weaken or remove any existing security measures (CSP, CSRF, authentication, authorization, secure cookies, headers, etc.).
+- Do NOT change existing URL routes, navigation structure, or workflow sequencing.
+- Only ADD:
+  - A new small, self-contained currency rate table
+  - A small service layer for calling Frankfurter.app
+  - Optional helper usage in views/templates (read-only) to show converted JMD values WITHOUT changing saved data.
+
+GOAL
+Add a robust, production-safe “currency conversion service” using Frankfurter.app so that the system can:
+- Fetch and cache exchange rates (e.g., USD→JMD, EUR→JMD, GBP→JMD) locally in the database.
+- Use those cached rates in application logic (e.g., to display equivalents in JMD) WITHOUT altering existing stored values or business rules.
+- Avoid calling the external API on every request (use caching).
+
+EXTERNAL SERVICE TO USE
+- Service: Frankfurter.app (ECB-backed)
+- Docs: https://www.frankfurter.app/
+- No API key required.
+- Use endpoints like:
+  - Latest:   https://api.frankfurter.app/latest?from=USD&to=JMD
+  - Historic: https://api.frankfurter.app/2025-01-15?from=USD&to=JMD
+- Handle HTTP/network errors gracefully and log them without breaking the app.
+
+1) DATABASE: ADD A NEW TABLE FOR CACHED RATES (NO CHANGES TO EXISTING TABLES)
+
+Create a NEW table (do NOT modify existing ones) named something like `currency_rate` with this structure (PostgreSQL):
+
+- currency_rate
+  - currency_code  varchar(3) not null
+  - rate_to_jmd    numeric(18,8) not null  -- how many JMD for 1 unit of currency_code
+  - source         varchar(50) not null    -- e.g., 'FRANKFURTER_ECB'
+  - rate_date      date not null           -- date the rate applies to
+  - create_dtime   timestamp(0) without time zone not null
+  - primary key on (currency_code, rate_date)
+
+Requirements:
+- Use upper-case for currency_code (e.g., 'USD', 'JMD').
+- Enforce a check constraint that currency_code = upper(currency_code).
+- Do NOT add foreign keys into existing tables.
+- This table must be completely additive and compatible with existing schema.
+
+Implement this using safe migration SQL, for example:
+
+- `CREATE TABLE currency_rate (...)`
+- Add a PK and constraints as described.
+- Ensure this runs without dropping or altering existing tables.
+
+2) PYTHON SERVICE LAYER: CENTRAL CURRENCY SERVICE MODULE
+
+Create a new Python module, for example: `services/currency_service.py` (or follow the project’s existing folder conventions).
+
+In this module, implement:
+
+- A function to fetch a rate from the local DB cache:
+  - `get_cached_rate(currency_code: str, rate_date: date) -> Decimal | None`
+  - Normalise currency_code to upper-case.
+  - First try an exact match on (currency_code, rate_date).
+  - If none exists for that date, optionally fall back to the most recent rate_date <= requested date.
+  - Never call external API here; this is DB-only.
+
+- A function to save/update a rate:
+  - `store_rate(currency_code: str, rate_date: date, rate_to_jmd: Decimal, source: str = 'FRANKFURTER_ECB')`
+  - Upsert behaviour:
+    - If the (currency_code, rate_date) row exists, update rate_to_jmd.
+    - Otherwise insert a new row.
+  - Use the project’s existing DB session/transaction patterns.
+
+- A function to call Frankfurter.app and refresh the rate(s):
+  - `fetch_rate_from_frankfurter(currency_code: str, rate_date: Optional[date] = None) -> Decimal`
+  - If rate_date is None: call the “latest” endpoint.
+  - If rate_date is provided: call a URL like `https://api.frankfurter.app/YYYY-MM-DD?from=XXX&to=JMD`.
+  - Parse JSON safely, handle HTTP/network errors, and raise or return a clear error if it fails.
+  - Never call Frankfurter for JMD→JMD (just return 1.0).
+
+- A high-level function:
+  - `get_or_update_rate_to_jmd(currency_code: str, rate_date: date) -> Decimal`
+    - If currency_code is 'JMD', immediately return Decimal('1').
+    - Try `get_cached_rate(currency_code, rate_date)` first.
+    - If no cached rate exists:
+      - Call `fetch_rate_from_frankfurter`.
+      - Store the fetched rate via `store_rate`.
+      - Return the fetched value.
+  - Ensure this function is the central point used by the rest of the app.
+
+Make sure:
+- All HTTP calls use the existing HTTP client pattern in the project if there is one; otherwise, use `requests` with timeouts.
+- No blocking long operations occur inside HTTP request handlers. If needed, keep rate fetching short and favour pre-populating via a scheduled job (see below).
+- Proper logging is done using the app’s logging configuration.
+
+3) SCHEDULED/JOB-BASED REFRESH (NOT PER REQUEST)
+
+Create a background refresh mechanism that can be triggered via:
+- A Flask CLI command (e.g., `flask currency-refresh`), OR
+- A small management script consistent with the repo’s patterns, OR
+- A scheduled cron-like function if the app already uses something like APScheduler.
+
+Behaviour:
+- Identify the distinct set of currencies currently used in the system for donations (e.g., from the donation header `currency_code` column or similar).
+- For each non-JMD currency:
+  - Call `get_or_update_rate_to_jmd(currency_code, today)` which will:
+    - Use the cache if present, otherwise call Frankfurter and store the rate.
+- Run this job once per day (or as configured) outside of HTTP request context, using a cron job in the server OS or the platform’s scheduler.
+
+Constraints:
+- Do NOT change any existing job schedules.
+- Add a new job/command in a way that is consistent with the project.
+- This job must be idempotent and safe to run multiple times.
+
+4) APPLICATION USAGE (READ-ONLY, NO CHANGE TO EXISTING DATA RULES)
+
+Integrate the currency service into the application in a conservative, read-only way:
+
+- Do NOT change how total donation value, haulage cost, storage cost, other cost, etc. are stored or validated. The user still manually enters JMD where required, as per existing rules.
+- Instead, add optional helper logic to DISPLAY equivalent JMD values to users (for information only), where appropriate.
+
+Examples of safe usage:
+- On a donation detail or report page, if the donation has a currency_code != 'JMD' and an amount (e.g., total donation value or funds amount):
+  - Call the currency service from the view (or a small helper function) to compute an “Equivalent in JMD (reference only)” using the cached rate.
+  - Show this in the UI as a separate field or note, clearly labelled as informational and not stored as a new column.
+- Do NOT:
+  - Overwrite user-entered amounts.
+  - Automatically backfill or adjust historical values.
+  - Change any existing validation logic.
+
+Implementation details:
+- If the project uses blueprints for donations/reports, add minimal helper functions inside those blueprints or a shared utils layer that calls `get_or_update_rate_to_jmd`.
+- Ensure all calls to the currency service are wrapped in try/except; if the rate cannot be retrieved, fail gracefully with a user-friendly message or simply omit the converted JMD display.
+
+5) CONFIGURATION, TESTS, AND SAFETY
+
+Configuration:
+- Add configuration entries for:
+  - FRANKFURTER base URL (default: `https://api.frankfurter.app`).
+  - Timeout values for HTTP calls (e.g., 3–5 seconds).
+- Use the existing config system (e.g., Flask config object, environment variables) and do NOT hard-code into business logic.
+
+Tests:
+- Add unit or integration tests for:
+  - currency_rate DB table (insert / read / upsert).
+  - `get_cached_rate`, `store_rate`, and `get_or_update_rate_to_jmd`.
+  - HTTP logic against Frankfurter (mock responses, including failure cases).
+- Ensure all existing tests still pass unchanged.
+
+Security & Performance:
+- All HTTP calls must be via HTTPS.
+- Handle failures gracefully; do not crash the app if Frankfurter is down.
+- Do NOT log sensitive data (though currency codes and amounts are generally safe).
+- Keep request/response sizes minimal and use caching to avoid rate limiting or slow pages.
+
+SUMMARY
+- Add a new `currency_rate` table WITHOUT touching existing tables.
+- Create a dedicated `currency_service` module that:
+  - Calls Frankfurter.app when needed,
+  - Stores and reads cached JMD conversion rates,
+  - Provides a single helper `get_or_update_rate_to_jmd`.
+- Add a periodic refresh mechanism (CLI command or job) to pre-fetch rates once per day.
+- Use this service only to DISPLAY JMD equivalents in the UI (read-only), without changing any existing stored values or business rules.
+- Ensure absolutely no existing workflows, security measures, database schema, or behaviours are broken or altered.
