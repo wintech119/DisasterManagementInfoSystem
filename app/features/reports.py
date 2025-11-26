@@ -1,11 +1,12 @@
-from flask import Blueprint, render_template, Response
+from flask import Blueprint, render_template, Response, request
 from flask_login import login_required
-from sqlalchemy import func
-from app.db.models import db, Inventory, Item, Warehouse, Event, Donor, Donation, DonationIntakeItem
+from sqlalchemy import func, desc
+from app.db.models import db, Inventory, Item, Warehouse, Event, Donor, Donation, DonationItem, DonationIntakeItem, Country, Currency
 from datetime import datetime
 import csv
 from io import StringIO
 from app.utils.timezone import now as jamaica_now
+from app.core.rbac import executive_required
 
 reports_bp = Blueprint('reports', __name__)
 
@@ -99,3 +100,93 @@ def donations_summary():
     ).all()
     
     return render_template('reports/donations_summary.html', donations=donations)
+
+
+@reports_bp.route('/funds_donations')
+@login_required
+@executive_required
+def funds_donations():
+    """
+    Funds Donations Report - Read-only report for ODPEM Executives.
+    Shows all FUNDS-type donations with filters for country, date range, and currency.
+    Only accessible to DG, Deputy DG, and Director PEOD.
+    """
+    page = request.args.get('page', 1, type=int)
+    per_page = 25
+    
+    country_filter = request.args.get('country_id', '', type=str)
+    date_from = request.args.get('date_from', '', type=str)
+    date_to = request.args.get('date_to', '', type=str)
+    currency_filter = request.args.get('currency_code', '', type=str)
+    
+    query = db.session.query(
+        Donation.donation_id,
+        Donation.received_date,
+        Country.country_name.label('origin_country'),
+        DonationItem.item_cost.label('donation_amount'),
+        DonationItem.currency_code,
+        Currency.currency_name,
+        Currency.currency_sign,
+        DonationItem.location_name
+    ).join(
+        DonationItem, Donation.donation_id == DonationItem.donation_id
+    ).join(
+        Country, Donation.origin_country_id == Country.country_id
+    ).join(
+        Currency, DonationItem.currency_code == Currency.currency_code
+    ).filter(
+        DonationItem.donation_type == 'FUNDS'
+    )
+    
+    if country_filter:
+        try:
+            query = query.filter(Donation.origin_country_id == int(country_filter))
+        except ValueError:
+            pass
+    
+    if date_from:
+        try:
+            from_date = datetime.strptime(date_from, '%Y-%m-%d').date()
+            query = query.filter(Donation.received_date >= from_date)
+        except ValueError:
+            pass
+    
+    if date_to:
+        try:
+            to_date = datetime.strptime(date_to, '%Y-%m-%d').date()
+            query = query.filter(Donation.received_date <= to_date)
+        except ValueError:
+            pass
+    
+    if currency_filter:
+        query = query.filter(DonationItem.currency_code == currency_filter)
+    
+    query = query.order_by(desc(Donation.received_date))
+    
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    funds_donations_list = pagination.items
+    
+    countries = Country.query.filter_by(status_code='A').order_by(Country.country_name).all()
+    
+    currencies = db.session.query(
+        Currency.currency_code,
+        Currency.currency_name
+    ).join(
+        DonationItem, Currency.currency_code == DonationItem.currency_code
+    ).filter(
+        DonationItem.donation_type == 'FUNDS'
+    ).distinct().order_by(Currency.currency_name).all()
+    
+    return render_template(
+        'reports/funds_donations.html',
+        donations=funds_donations_list,
+        pagination=pagination,
+        countries=countries,
+        currencies=currencies,
+        filters={
+            'country_id': country_filter,
+            'date_from': date_from,
+            'date_to': date_to,
+            'currency_code': currency_filter
+        }
+    )

@@ -1,0 +1,122 @@
+Help me add a new read-only “Funds Donations Report” in the existing DIMS/DRIMS Flask + PostgreSQL app WITHOUT breaking any existing code, logic, workflows, behaviour, security fixes (CSP, CSRF, headers, auth), or database schema.
+
+GENERAL RULES
+- Do NOT change or drop any existing tables, constraints, triggers, indexes, or columns.
+- Do NOT rename any existing routes, functions, templates, blueprints, or menus.
+- Do NOT modify existing security hardening (CSP, cookies, CSRF, auth, role checks).
+- Only ADD the minimum new route(s), query logic, and template(s) needed for this report.
+- Use the existing RBAC/role system and the existing base layout and navigation patterns.
+
+GOAL
+Create a new “Funds Donations Report” that shows all donations of type FUNDS and allows DG, Deputy DG, and Director, PEOD to view and filter them.
+
+SCOPE OF DATA
+- Only include donations that represent FUNDS, not GOODS.
+- Use the existing schema and relationships, for example:
+  - donation / donation header table (received_date, currency_code, origin_country_id, etc.)
+  - donation_item and related item/itemcatg tables (where category_type = 'FUNDS')
+  - any existing tables/fields used to store the “location” or “account number” where funds are received.
+- Do NOT introduce new columns. Instead:
+  - Use the existing “funds account” / “location” / “account number” field already used in the system for monetary donations. If there are multiple candidates, pick the field that best represents the bank account or location the funds go to.
+
+REPORT FIELDS
+For each funds donation row in the report, show at least:
+
+1. Received Date  
+   - Use the donation header received_date field already in the schema.
+
+2. Origin Country  
+   - Join the existing reference table that stores country names (e.g., origin_country_id → country table).
+
+3. Donation Amount  
+   - Use the existing monetary field that best represents the donation amount for FUNDS.
+   - Prefer the donation header’s “total donation value” (or similar) for funds donations if that field already stores the overall amount.
+   - If the logic is cleaner in our schema, you may derive the donation amount by summing donation_item values where the related item/category has category_type = 'FUNDS'.
+   - In all cases, do NOT add new columns. Reuse existing monetary fields.
+
+4. Currency  
+   - Use the existing currency field (e.g., donation.currency_code or equivalent) used for funds donations.
+
+5. Location (Account #)  
+   - Display the account / location / bank account number that indicates where the funds are held.
+   - Use the existing field in the schema where fund/financial donations store their account or location. Do NOT add new columns.
+   - If a lookup table exists (e.g., account table), join to it to get a nice display value.
+
+FILTERS
+At the top of the report page, add a filter section with:
+
+1. Origin Country filter
+   - Dropdown populated from the existing country / origin_country reference table.
+   - Optional; if not selected, show all countries.
+
+2. Received Date filter (range)
+   - Two date inputs: “Received Date From” and “Received Date To”.
+   - If only “from” is filled, filter records with received_date >= from.
+   - If only “to” is filled, filter records with received_date <= to.
+   - If both are filled, filter received_date between from and to (inclusive).
+   - If neither is filled, no date filter is applied.
+
+3. Currency filter
+   - Dropdown populated from the existing currency reference or from distinct currency_code values used in donations.
+   - Optional; if not selected, show all currencies.
+
+Add buttons:
+- “Filter” to apply the selected filters.
+- “Reset” to clear filters and reload the full list.
+
+BEHAVIOUR & QUERY LOGIC
+- Implement a new Flask route that returns only funds donations (category_type = 'FUNDS').
+  - For example, something like: /reports/donations/funds (or similar), but align with existing routing patterns and blueprints used for operations/reports.
+- The query should:
+  - Join donation with donation_item and item/itemcatg to restrict to FUNDS (itemcatg.category_type = 'FUNDS').
+  - Group/summarize at the donation level where appropriate (e.g., a single row per donation_id).
+  - Join to origin country reference table for country name.
+  - Join or read from the existing “account/location” field/table for the account number.
+  - Apply filters based on query parameters (country, date range, currency).
+  - Use parameterized queries / ORM filters to avoid SQL injection.
+- Add pagination and sensible default sorting:
+  - Default sort by received_date DESC (most recent funds first).
+  - Keep page size reasonable (e.g., 25 rows per page) and allow navigating pages.
+
+PERMISSIONS & NAVIGATION
+- This report MUST be available only for the roles:
+  - DG
+  - Deputy DG
+  - Director, PEOD
+- Use the existing role/feature mapping system to enforce this:
+  - Require login and appropriate role/feature before accessing route.
+  - Make the page fully read-only: no edit, delete, or status change buttons; no navigation to edit donation or intake pages.
+- In the main navigation/menu for these roles:
+  - Add a menu item under the main menu (e.g., “Operations” → “Reports” or equivalent location used for operational reports) labeled:
+    - “Funds Donations Report”
+  - Only show this menu item when the logged-in user’s role is DG, Deputy DG, or Director, PEOD.
+  - Clicking the menu item should open the new funds donations report page with filters at the top and table results below.
+
+UI/UX REQUIREMENTS
+- Reuse the existing base template, styles, and security (CSP, CSRF tokens).
+- Follow the existing DRIMS/DIMS style for pages:
+  - Page title at the top: “Funds Donations Report”.
+  - A clear filter panel at the top with labels aligned and inputs accessible.
+  - The data table below showing the columns (Received Date, Origin Country, Donation Amount, Currency, Location (Account #)).
+- Ensure the report is:
+  - Responsive and readable on common desktop resolutions.
+  - Accessible and consistent with the app’s existing WCAG-style best practices (labels, headings, table headers, etc.).
+- No buttons or links that allow data modification from this page – it is strictly read-only.
+
+TECHNICAL DETAILS
+- Follow existing patterns: if the app uses SQLAlchemy, use SQLAlchemy; if it uses raw SQL in a repository or DAO layer, follow that.
+- If needed, create a small helper/service function for building the filtered query instead of embedding all logic directly in the view function.
+- Wrap DB interactions in the existing transaction and error-handling patterns.
+- Make sure this new code compiles and runs with the current codebase, and passes any existing linting or tests.
+
+SUMMARY
+- Add a new route + template for a “Funds Donations Report”.
+- Show only FUNDS donations, with columns:
+  - Received Date
+  - Origin Country
+  - Donation Amount
+  - Currency
+  - Location (Account #)
+- Add filters for country, received date (range), and currency.
+- Place the report under the main menu for DG, Deputy DG, and Director, PEOD only.
+- Do NOT change schemas or break any existing logic, UI flows, or security.

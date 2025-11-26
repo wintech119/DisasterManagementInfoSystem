@@ -170,6 +170,18 @@ class FeatureRegistry:
             'navigation_group': 'dashboard',
             'priority': 24
         },
+        'funds_donations_report': {
+            'name': 'Funds Donations Report',
+            'description': 'View all monetary donations received',
+            'roles': list(EXECUTIVE_ROLES),
+            'route': 'reports.funds_donations',
+            'url': '/reports/funds_donations',
+            'icon': 'bi-currency-dollar',
+            'category': 'reports',
+            'dashboard_widget': None,
+            'navigation_group': 'reports',
+            'priority': 23
+        },
         
         # =================================================================
         # PACKAGE FULFILLMENT (Logistics Officers & Managers)
