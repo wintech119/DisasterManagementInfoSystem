@@ -1,0 +1,274 @@
+diff --git a/app/services/relief_request_service.py b/app/services/relief_request_service.py
+index f70c589d0eab15f6d7d1585f4b5718a133cb6936..36ac9de90b570974c36f423ac9ed9ebb175bc4dd 100644
+--- a/app/services/relief_request_service.py
++++ b/app/services/relief_request_service.py
+@@ -79,99 +79,124 @@ def get_workflow_steps(status_code: int) -> Dict:
+     elif status_code == STATUS_CLOSED:
+         return {'current_step': 4, 'step_name': 'Goods Dispatched', 'status': 'active'}
+     elif status_code == STATUS_FILLED:
+         return {'current_step': 5, 'step_name': 'Goods Received', 'status': 'completed'}
+     elif status_code in [STATUS_CANCELLED, STATUS_DENIED, STATUS_INELIGIBLE]:
+         # Terminal states where the request will not proceed further
+         return {'current_step': 2, 'step_name': 'Request Closed', 'status': 'terminated'}
+     else:
+         return {'current_step': 1, 'step_name': 'Unknown', 'status': 'active'}
+ 
+ 
+ def create_draft_request(agency_id: int, urgency_ind: str, eligible_event_id: Optional[int],
+                          rqst_notes_text: Optional[str], user_email: str) -> ReliefRqst:
+     """
+     Create a new draft relief request for an agency.
+     
+     Args:
+         agency_id: ID of the requesting agency
+         urgency_ind: H/M/L urgency indicator
+         eligible_event_id: Optional associated event ID
+         rqst_notes_text: Overall request notes
+         user_email: Email of creating user for audit trail
+         
+     Returns:
+         Newly created ReliefRqst instance
++
++    Raises:
++        ValueError: If the agency, eligible event, or user cannot be found or provided values are invalid
+     """
++    # Validate urgency indicator and agency
++    if urgency_ind not in ['H', 'M', 'L', 'C']:
++        raise ValueError("Invalid urgency indicator. Must be one of H, M, L, or C.")
++
++    agency = Agency.query.get(agency_id)
++    if not agency:
++        raise ValueError(f"Agency with id {agency_id} not found")
++
++    # Validate eligible event if provided
++    if eligible_event_id is not None:
++        event = Event.query.get(eligible_event_id)
++        if not event:
++            raise ValueError(f"Eligible event with id {eligible_event_id} not found")
++
+     relief_request = ReliefRqst()
+     relief_request.agency_id = agency_id
+     relief_request.request_date = date.today()
+     relief_request.urgency_ind = urgency_ind
+     relief_request.eligible_event_id = eligible_event_id
+     relief_request.rqst_notes_text = rqst_notes_text
+     relief_request.status_code = STATUS_DRAFT
+     relief_request.version_nbr = 1
+-    
++
+     # Audit fields - get user by email to retrieve user_name
+     user = User.query.filter_by(email=user_email).first()
+     if not user:
+         db.session.rollback()
+         raise ValueError(f"User with email {user_email} not found")
+-    
++
+     relief_request.create_by_id = user.user_name
+     relief_request.create_dtime = jamaica_now()
+-    
++
+     db.session.add(relief_request)
+     db.session.flush()
+-    
++
+     return relief_request
+ 
+ 
+ def add_or_update_request_item(reliefrqst_id: int, item_id: int, request_qty: Decimal,
+                                 urgency_ind: str, rqst_reason_desc: Optional[str],
+                                 required_by_date: Optional[date], user_email: str,
+                                 current_version: Optional[int] = None) -> ReliefRqstItem:
+     """
+     Add or update an item on a draft relief request.
+     Enforces optimistic locking if updating existing item.
+     
+     Args:
+         reliefrqst_id: Relief request ID
+         item_id: Item ID from catalog
+         request_qty: Requested quantity
+         urgency_ind: Item-level urgency (H/M/L)
+         rqst_reason_desc: Justification for requesting this item (required for High urgency)
+         required_by_date: Date when item must be delivered (YYYY-MM-DD format)
+         user_email: User performing the action
+         current_version: Current version number for optimistic locking (if updating)
+         
+     Returns:
+         ReliefRqstItem instance
+         
+     Raises:
+         OptimisticLockError: If version mismatch on update
++        ValueError: If quantity or urgency indicators are invalid
+     """
++    # Validate inputs
++    if request_qty <= 0:
++        raise ValueError("Requested quantity must be greater than zero")
++
++    if urgency_ind not in [URGENCY_HIGH, URGENCY_MEDIUM, URGENCY_LOW, URGENCY_CRITICAL]:
++        raise ValueError("Invalid item urgency indicator. Must be H, M, L, or C")
++
+     # Check if item already exists
+     existing_item = ReliefRqstItem.query.filter_by(
+         reliefrqst_id=reliefrqst_id,
+         item_id=item_id
+     ).first()
+     
+     if existing_item:
+         # Update existing item with optimistic locking
+         if current_version is not None and existing_item.version_nbr != current_version:
+             raise OptimisticLockError(
+                 f"Item {item_id} was modified by another user. Please refresh and try again."
+             )
+         
+         existing_item.request_qty = request_qty
+         existing_item.urgency_ind = urgency_ind
+         existing_item.rqst_reason_desc = rqst_reason_desc
+         existing_item.required_by_date = required_by_date
+         existing_item.version_nbr += 1
+         
+         return existing_item
+     else:
+         # Create new item
+         request_item = ReliefRqstItem()
+         request_item.reliefrqst_id = reliefrqst_id
+         request_item.item_id = item_id
+diff --git a/drims_app.py b/drims_app.py
+index 0262a4373f6ca4b444e23c7f61eea6956011bb2d..20fcfd6511480c0338e47ab7522166794d52b450 100644
+--- a/drims_app.py
++++ b/drims_app.py
+@@ -1,62 +1,81 @@
+ """
+ DRIMS - Disaster Relief Inventory Management System
+ Main Flask Application
+ """
+ from flask import Flask, render_template, redirect, url_for, flash, request
+ from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+ from flask_wtf.csrf import CSRFProtect, generate_csrf
+ from werkzeug.security import check_password_hash
+ import os
++from urllib.parse import urlparse, urljoin
+ 
+ from app.db import db, init_db
+ from app.db.models import User, Role, Event, Warehouse, Item, Inventory, Agency, ReliefRqst
+ from settings import Config
+ from app.security.csp import init_csp
+ from app.security.cache_control import init_cache_control
+ from app.security.header_sanitization import init_header_sanitization
+ from app.security.error_handling import init_error_handling
+ from app.security.query_string_protection import init_query_string_protection
+ from app.security.csrf_validation import init_csrf_origin_validation
+ 
+ app = Flask(__name__)
+ app.config.from_object(Config)
+ 
+ init_db(app)
+ init_csp(app)
+ init_cache_control(app)
+ init_header_sanitization(app)
+ init_error_handling(app)
+ init_query_string_protection(app)
+ 
+ csrf = CSRFProtect(app)
+ init_csrf_origin_validation(app)
+ 
+ login_manager = LoginManager()
+ login_manager.init_app(app)
+ login_manager.login_view = 'login'
+ 
++
++def is_safe_url(target):
++    """Validate that a redirect target stays within the same host."""
++    if not target:
++        return False
++
++    normalized_target = target.strip()
++    if not normalized_target:
++        return False
++
++    ref_url = urlparse(request.host_url)
++    test_url = urlparse(urljoin(request.host_url, normalized_target))
++    return (
++        test_url.scheme in ('http', 'https')
++        and ref_url.netloc == test_url.netloc
++        and not normalized_target.startswith('//')
++    )
++
+ @login_manager.user_loader
+ def load_user(user_id):
+     user = db.session.get(User, int(user_id))
+     if user and user.is_active and user.status_code == 'A' and not user.is_locked:
+         return user
+     return None
+ 
+ from app.features.events import events_bp
+ from app.features.warehouses import warehouses_bp
+ from app.features.items import items_bp
+ from app.features.item_categories import item_categories_bp
+ from app.features.uom import uom_bp
+ from app.features.inventory import inventory_bp
+ from app.features.requests_aidmgmt import requests_bp
+ from app.features.packaging import packaging_bp
+ from app.features.donations import donations_bp
+ from app.features.donation_intake import donation_intake_bp
+ from app.features.intake_aidmgmt import bp as intake_bp
+ from app.features.user_admin import user_admin_bp
+ from app.features.donors import donors_bp
+ from app.features.agencies import agencies_bp
+ from app.features.custodians import custodians_bp
+ from app.features.dashboard import dashboard_bp
+ from app.features.transfers import transfers_bp
+ from app.features.notifications import notifications_bp
+@@ -184,47 +203,53 @@ def block_static_directory():
+ @login_required
+ def index():
+     """Redirect to role-based dashboard"""
+     return redirect(url_for('dashboard.index'))
+ 
+ @app.route('/login', methods=['GET', 'POST'])
+ def login():
+     """User login"""
+     if current_user.is_authenticated:
+         return redirect(url_for('dashboard.index'))
+     
+     if request.method == 'POST':
+         email = request.form.get('email')
+         password = request.form.get('password')
+         
+         user = User.query.filter_by(email=email).first()
+         
+         if user and password and check_password_hash(user.password_hash, password):
+             if not user.is_active or user.status_code != 'A':
+                 flash('Your account is inactive. Please contact your administrator.', 'warning')
+             elif user.is_locked:
+                 flash('Your account is temporarily locked. Please contact your administrator.', 'warning')
+             else:
+                 login_user(user)
+                 next_page = request.args.get('next')
+-                return redirect(next_page if next_page else url_for('dashboard.index'))
++                if next_page and is_safe_url(next_page):
++                    return redirect(next_page)
++
++                if next_page:
++                    flash('Invalid redirect target. Redirecting to dashboard.', 'warning')
++
++                return redirect(url_for('dashboard.index'))
+         else:
+             flash('Invalid email or password', 'danger')
+     
+     return render_template('login.html')
+ 
+ @app.route('/test-feature-components')
+ @login_required
+ def test_feature_components():
+     """Test feature registry components"""
+     return render_template('test_feature_components.html')
+ 
+ @app.route('/logout')
+ @login_required
+ def logout():
+     """User logout"""
+     logout_user()
+     flash('You have been logged out', 'info')
+     return redirect(url_for('login'))
+ 
+ if __name__ == '__main__':
+     app.run(host='0.0.0.0', port=5000, debug=app.config['DEBUG'])
