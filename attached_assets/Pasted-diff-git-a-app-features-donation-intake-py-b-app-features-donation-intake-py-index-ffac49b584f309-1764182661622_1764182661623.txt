@@ -1,0 +1,482 @@
+diff --git a/app/features/donation_intake.py b/app/features/donation_intake.py
+index ffac49b584f309d96f6bfa02ad567129f2e8e2bf..91cc12e3212acffcee35fe1a8d0a74d0a65eaaf9 100644
+--- a/app/features/donation_intake.py
++++ b/app/features/donation_intake.py
+@@ -594,93 +594,123 @@ def verify_intake(donation_id, inventory_id):
+         UnitOfMeasure.uom_desc
+     ).all()
+     
+     return render_template('donation_intake/verify_form.html',
+                          intake=intake,
+                          donation=donation,
+                          warehouse=warehouse,
+                          intake_items=intake_items,
+                          uoms=uoms,
+                          today=date.today().isoformat(),
+                          mode='verify')
+ 
+ 
+ def _process_verification_submission(intake, donation, warehouse):
+     """
+     Process intake verification submission.
+     Updates intake status to V, creates/updates itembatch, updates inventory.
+     All operations in a single atomic transaction with optimistic locking.
+     """
+     errors = []
+     
+     intake_items = DonationIntakeItem.query.filter_by(
+         donation_id=intake.donation_id,
+         inventory_id=intake.inventory_id
+     ).all()
++
++    donation_items = DonationItem.query.filter_by(
++        donation_id=donation.donation_id
++    ).all()
++    donation_items_by_id = {di.item_id: di for di in donation_items}
+     
+     verified_items_data = []
+     
+     for intake_item in intake_items:
+         item_id = intake_item.item_id
+         item = intake_item.item
+         
+         defective_qty_str = request.form.get(f'defective_qty_{item_id}', str(intake_item.defective_qty))
+         expired_qty_str = request.form.get(f'expired_qty_{item_id}', str(intake_item.expired_qty))
+         batch_no_default = intake_item.batch_no or ''
+         batch_no_raw = request.form.get(f'batch_no_{item_id}', batch_no_default).strip().upper()
+         batch_date_str = request.form.get(f'batch_date_{item_id}', '')
+         expiry_date_str = request.form.get(f'expiry_date_{item_id}', '')
+         item_comments = request.form.get(f'item_comments_{item_id}', intake_item.comments_text or '').strip()
+         
+         try:
+             defective_qty = Decimal(defective_qty_str) if defective_qty_str else Decimal('0')
+             expired_qty = Decimal(expired_qty_str) if expired_qty_str else Decimal('0')
+-            
++
+             if defective_qty < 0 or expired_qty < 0:
+                 errors.append(f'{item.item_name}: Quantities cannot be negative')
+                 continue
+-            
+-            donation_item = DonationItem.query.filter_by(
+-                donation_id=donation.donation_id,
+-                item_id=item_id
+-            ).first()
+-            
++
++            donation_item = donation_items_by_id.get(item_id)
++
+             if not donation_item:
+                 errors.append(f'{item.item_name}: Donation item not found')
+                 continue
+-            
++
++            donation_qty = donation_item.item_qty or Decimal('0')
++
++            if donation_qty <= 0:
++                errors.append(
++                    f"{item.item_name}: Donation quantity must be greater than zero before verification"
++                )
++                continue
++
++            intake_item_total = (
++                (intake_item.usable_qty or Decimal('0'))
++                + (intake_item.defective_qty or Decimal('0'))
++                + (intake_item.expired_qty or Decimal('0'))
++            )
++
++            if intake_item_total <= 0:
++                errors.append(
++                    f"{item.item_name}: Intake quantity must be greater than zero before verification"
++                )
++                continue
++
+             total_deductions = defective_qty + expired_qty
+-            if total_deductions > donation_item.item_qty:
+-                errors.append(f'{item.item_name}: Defective + Expired cannot exceed donated quantity ({donation_item.item_qty})')
++            if total_deductions > intake_item_total:
++                errors.append(
++                    f'{item.item_name}: Defective + Expired cannot exceed the intake quantity ({intake_item_total})'
++                )
+                 continue
+-            
+-            usable_qty = donation_item.item_qty - defective_qty - expired_qty
+-            
++
++            if total_deductions > donation_qty:
++                errors.append(
++                    f"{item.item_name}: Defective + Expired cannot exceed donated quantity ({donation_qty})"
++                )
++                continue
++
++            usable_qty = intake_item_total - defective_qty - expired_qty
++
+             if usable_qty <= 0:
+                 errors.append(f'{item.item_name}: Usable quantity must be greater than zero')
+                 continue
+-            
++
+         except (InvalidOperation, ValueError):
+             errors.append(f'{item.item_name}: Invalid quantity values')
+             continue
+         
+         batch_no = batch_no_raw if batch_no_raw else intake_item.batch_no
+         
+         batch_date = intake_item.batch_date
+         if batch_date_str:
+             try:
+                 batch_date = datetime.strptime(batch_date_str, '%Y-%m-%d').date()
+                 if batch_date > date.today():
+                     errors.append(f'{item.item_name}: Batch date cannot be in the future')
+                     continue
+             except ValueError:
+                 errors.append(f'{item.item_name}: Invalid batch date format')
+                 continue
+         
+         expiry_date = intake_item.expiry_date
+         if expiry_date_str:
+             try:
+                 expiry_date = datetime.strptime(expiry_date_str, '%Y-%m-%d').date()
+                 if item.can_expire_flag and expiry_date < date.today():
+                     errors.append(f'{item.item_name}: Expiry date cannot be in the past for perishable items')
+                     continue
+                 if batch_date and expiry_date < batch_date:
+diff --git a/templates/donation_intake/intake_form.html b/templates/donation_intake/intake_form.html
+index 4ccdbe68c79bf2a504e899a23a221a5b67fcabc1..df90e43f213a7f498aec281a8e488ed28c9499a4 100644
+--- a/templates/donation_intake/intake_form.html
++++ b/templates/donation_intake/intake_form.html
+@@ -122,83 +122,84 @@ input[type=number] {
+                                 <input type="text" 
+                                        class="form-control" 
+                                        name="comments_text" 
+                                        id="comments_text" 
+                                        maxlength="255"
+                                        placeholder="Optional comments (max 255 characters)">
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+ 
+                 <!-- Donation Items Section -->
+                 <div class="card">
+                     <div class="card-header bg-light">
+                         <h5 class="card-title mb-0">
+                             <i class="bi bi-box-seam text-primary"></i>
+                             Donation Items ({{ donation_items|length }} items)
+                         </h5>
+                         <p class="mb-0 mt-1 text-muted small">
+                             <i class="bi bi-info-circle"></i>
+                             Enter batch details for each item. Total quantities must match donation quantities exactly.
+                         </p>
+                     </div>
+                     <div class="card-body">
+                         {% for di in donation_items %}
++                        {% set donated_qty = (di.item_qty or 0) | float %}
+                         <!-- Item Card -->
+                         <div class="item-card">
+                             <!-- Item Header -->
+                             <div class="item-header">
+                                 <div class="d-flex align-items-center">
+                                     <span class="batch-indicator"></span>
+                                     <div>
+                                         <strong class="d-block">{{ di.item.item_code }}</strong>
+                                         <small class="text-muted">{{ di.item.item_name }}</small>
+                                     </div>
+                                     <div class="ms-auto">
+                                         {% if di.item.is_batched_flag %}
+                                         <span class="badge bg-warning text-dark me-1" title="Batch tracking required">
+                                             <i class="bi bi-tag"></i> Batched
+                                         </span>
+                                         {% endif %}
+                                         {% if di.item.can_expire_flag %}
+                                         <span class="badge bg-danger" title="Expiry date required">
+                                             <i class="bi bi-calendar-x"></i> Perishable
+                                         </span>
+                                         {% endif %}
+                                     </div>
+                                 </div>
+                             </div>
+                             
+                             <!-- Item Body -->
+                             <div class="item-body">
+                                 <!-- Row 1: Item Details and Batch Information -->
+                                 <div class="row g-2 mb-2">
+                                     <div class="col-md-2">
+                                         <div class="field-label">Donated Qty</div>
+                                         <div class="donated-qty-box">
+-                                            <strong class="text-primary fs-6">{{ di.item_qty }}</strong>
++                                            <strong class="text-primary fs-6">{{ '%.2f'|format(donated_qty) }}</strong>
+                                             <small class="text-muted d-block fs-tiny">{{ di.uom_code }}</small>
+                                         </div>
+                                     </div>
+                                     <div class="col-md-3">
+                                         <label for="batch_no_{{ di.item_id }}" class="field-label">Batch No</label>
+                                         <input type="text" 
+                                                class="form-control form-control-sm batch-no-input text-uppercase" 
+                                                id="batch_no_{{ di.item_id }}"
+                                                name="batch_no_{{ di.item_id }}" 
+                                                data-item-id="{{ di.item_id }}"
+                                                data-is-batched="{{ 'true' if di.item.is_batched_flag else 'false' }}"
+                                                placeholder="{% if di.item.is_batched_flag %}Required{% else %}Optional{% endif %}"
+                                                {% if di.item.is_batched_flag %}required{% endif %}
+                                                data-validate="batch-pairing">
+                                     </div>
+                                     <div class="col-md-3">
+                                         <label for="batch_date_{{ di.item_id }}" class="field-label">Batch Date</label>
+                                         <input type="text" 
+                                                class="form-control form-control-sm iso-date-picker batch-date batch-date-input" 
+                                                id="batch_date_{{ di.item_id }}"
+                                                name="batch_date_{{ di.item_id }}" 
+                                                data-item-id="{{ di.item_id }}"
+                                                data-is-batched="{{ 'true' if di.item.is_batched_flag else 'false' }}"
+                                                data-max-date="{{ today }}"
+                                                placeholder="YYYY-MM-DD"
+@@ -238,64 +239,63 @@ input[type=number] {
+                                             <option value="">--</option>
+                                             {% for uom in uoms %}
+                                             <option value="{{ uom.uom_code }}" {% if uom.uom_code == di.uom_code %}selected{% endif %}>
+                                                 {{ uom.uom_code }}
+                                             </option>
+                                             {% endfor %}
+                                         </select>
+                                     </div>
+                                     <div class="col-md-2">
+                                         <label for="avg_unit_value_{{ di.item_id }}" class="field-label">Unit Cost ($J)</label>
+                                         <input type="number" 
+                                                class="form-control form-control-sm qty-input unit-cost-input" 
+                                                id="avg_unit_value_{{ di.item_id }}"
+                                                name="avg_unit_value_{{ di.item_id }}" 
+                                                step="0.01" 
+                                                min="0.01"
+                                                max="99999999.99"
+                                                data-item-id="{{ di.item_id }}"
+                                                placeholder="0.00"
+                                                data-validate="unit-cost"
+                                                required>
+                                         <div class="invalid-feedback unit-cost-error-{{ di.item_id }} d-none"></div>
+                                     </div>
+                                     <div class="col-md-3">
+                                         <label for="usable_qty_{{ di.item_id }}" class="field-label">Usable Qty</label>
+-                                        <input type="number" 
+-                                               class="form-control form-control-sm qty-input" 
++                                        <input type="number"
++                                               class="form-control form-control-sm qty-input bg-light"
+                                                id="usable_qty_{{ di.item_id }}"
+-                                               name="usable_qty_{{ di.item_id }}" 
+-                                               step="0.01" 
++                                               name="usable_qty_{{ di.item_id }}"
++                                               step="0.01"
+                                                min="0"
+-                                               value="{{ di.item_qty }}"
+-                                               data-expected="{{ di.item_qty }}"
++                                               value="{{ '%.2f'|format(donated_qty) }}"
++                                               data-expected="{{ donated_qty }}"
+                                                data-item-id="{{ di.item_id }}"
+                                                data-validate="quantities"
+                                                data-decimal-places="2"
+                                                required
+-                                               readonly
+-                                               class="form-control form-control-sm qty-input bg-light">
++                                               readonly>
+                                     </div>
+                                     <div class="col-md-2">
+                                         <label for="defective_qty_{{ di.item_id }}" class="field-label">Defective</label>
+                                         <input type="number" 
+                                                class="form-control form-control-sm qty-input" 
+                                                id="defective_qty_{{ di.item_id }}"
+                                                name="defective_qty_{{ di.item_id }}" 
+                                                step="0.01" 
+                                                min="0"
+                                                value="0"
+                                                data-item-id="{{ di.item_id }}"
+                                                data-validate="quantities"
+                                                data-decimal-places="2"
+                                                data-auto-adjust="usable-qty">
+                                     </div>
+                                     <div class="col-md-3">
+                                         <label for="expired_qty_{{ di.item_id }}" class="field-label">Expired</label>
+                                         <input type="number" 
+                                                class="form-control form-control-sm qty-input" 
+                                                id="expired_qty_{{ di.item_id }}"
+                                                name="expired_qty_{{ di.item_id }}" 
+                                                step="0.01" 
+                                                min="0"
+                                                value="0"
+                                                data-item-id="{{ di.item_id }}"
+diff --git a/templates/donation_intake/verify_form.html b/templates/donation_intake/verify_form.html
+index ed543294f9114e8ecdedfeb3a7b0d6f3ea5d38f3..750f76cb94d620d69b96f5fde5fe55f6dbc6d738 100644
+--- a/templates/donation_intake/verify_form.html
++++ b/templates/donation_intake/verify_form.html
+@@ -155,157 +155,160 @@ input[type=number] {
+                                 <div class="d-flex align-items-center">
+                                     <span class="batch-indicator"></span>
+                                     <div>
+                                         <strong class="d-block">{{ ii.item.item_code }}</strong>
+                                         <small class="text-muted">{{ ii.item.item_name }}</small>
+                                     </div>
+                                     <div class="ms-auto">
+                                         {% if ii.item.is_batched_flag %}
+                                         <span class="badge bg-warning text-dark me-1" title="Batch tracking required">
+                                             <i class="bi bi-tag"></i> Batched
+                                         </span>
+                                         {% endif %}
+                                         {% if ii.item.can_expire_flag %}
+                                         <span class="badge bg-danger" title="Expiry date required">
+                                             <i class="bi bi-calendar-x"></i> Perishable
+                                         </span>
+                                         {% endif %}
+                                     </div>
+                                 </div>
+                             </div>
+                             
+                             <div class="item-body">
+                                 <div class="row g-2 mb-2">
+                                     <div class="col-md-2">
+                                         <div class="field-label">Donated Qty</div>
+-                                        {% set donation_item = namespace(qty=0) %}
+-                                        {% for di in donation.items if di.item_id == ii.item_id %}
+-                                            {% set donation_item.qty = di.item_qty %}
+-                                        {% endfor %}
++                                        {% set donated_qty = (donation.items
++                                            | selectattr('item_id', 'equalto', ii.item_id)
++                                            | map(attribute='item_qty')
++                                            | list
++                                            | first
++                                            | default(0)
++                                        ) | float %}
+                                         <div class="donated-qty-box">
+-                                            <strong class="text-primary fs-6">{{ donation_item.qty }}</strong>
++                                            <strong class="text-primary fs-6">{{ '%.2f'|format(donated_qty) }}</strong>
+                                             <small class="text-muted d-block fs-tiny">{{ ii.uom_code }}</small>
+                                         </div>
+-                                        <input type="hidden" name="donated_qty_{{ ii.item_id }}" value="{{ donation_item.qty }}">
++                                        <input type="hidden" name="donated_qty_{{ ii.item_id }}" value="{{ donated_qty }}">
+                                     </div>
+                                     <div class="col-md-3">
+                                         <label for="batch_no_{{ ii.item_id }}" class="field-label">Batch No</label>
+                                         <input type="text" 
+                                                class="form-control form-control-sm text-uppercase" 
+                                                id="batch_no_{{ ii.item_id }}"
+                                                name="batch_no_{{ ii.item_id }}" 
+                                                value="{{ ii.batch_no }}"
+                                                placeholder="Batch number">
+                                     </div>
+                                     <div class="col-md-3">
+                                         <label for="batch_date_{{ ii.item_id }}" class="field-label">Batch Date</label>
+                                         <input type="text" 
+                                                class="form-control form-control-sm iso-date-picker batch-date" 
+                                                id="batch_date_{{ ii.item_id }}"
+                                                name="batch_date_{{ ii.item_id }}" 
+                                                value="{{ ii.batch_date.isoformat() if ii.batch_date else '' }}"
+                                                data-max-date="{{ today }}"
+                                                placeholder="YYYY-MM-DD">
+                                     </div>
+                                     <div class="col-md-4">
+                                         <label for="expiry_date_{{ ii.item_id }}" class="field-label">Expiry Date</label>
+                                         <input type="text" 
+                                                class="form-control form-control-sm iso-date-picker expiry-date" 
+                                                id="expiry_date_{{ ii.item_id }}"
+                                                name="expiry_date_{{ ii.item_id }}" 
+                                                value="{{ ii.expiry_date.isoformat() if ii.expiry_date else '' }}"
+                                                placeholder="YYYY-MM-DD"
+                                                {% if not ii.item.can_expire_flag %}disabled{% endif %}>
+                                     </div>
+                                 </div>
+                                 
+                                 <div class="row-divider"></div>
+                                 
+                                 <div class="row g-2 align-items-end">
+                                     <div class="col-md-2">
+                                         <label class="field-label">UOM</label>
+                                         <div class="form-control form-control-sm bg-light">{{ ii.uom_code }}</div>
+                                     </div>
+                                     <div class="col-md-2">
+                                         <label class="field-label">Unit Cost ($J)</label>
+                                         <div class="form-control form-control-sm bg-light text-end">{{ "%.2f"|format(ii.avg_unit_value) }}</div>
+                                     </div>
+                                     <div class="col-md-3">
+                                         <label for="usable_qty_{{ ii.item_id }}" class="field-label">Usable Qty</label>
+                                         <input type="number" 
+                                                class="form-control form-control-sm qty-input bg-light" 
+                                                id="usable_qty_{{ ii.item_id }}"
+                                                name="usable_qty_{{ ii.item_id }}" 
+-                                               value="{{ ii.usable_qty }}"
+-                                               data-donated-qty="{{ donation_item.qty }}"
++                                               value="{{ '%.2f'|format(ii.usable_qty or 0) }}"
++                                               data-donated-qty="{{ donated_qty }}"
+                                                data-item-id="{{ ii.item_id }}"
+                                                readonly>
+                                     </div>
+                                     <div class="col-md-2">
+                                         <label for="defective_qty_{{ ii.item_id }}" class="field-label">Defective</label>
+                                         <input type="number" 
+                                                class="form-control form-control-sm qty-input qty-adjust" 
+                                                id="defective_qty_{{ ii.item_id }}"
+                                                name="defective_qty_{{ ii.item_id }}" 
+                                                step="0.01" 
+                                                min="0"
+-                                               value="{{ ii.defective_qty }}"
++                                               value="{{ '%.2f'|format(ii.defective_qty or 0) }}"
+                                                data-item-id="{{ ii.item_id }}"
+-                                               data-donated-qty="{{ donation_item.qty }}">
++                                               data-donated-qty="{{ donated_qty }}">
+                                     </div>
+                                     <div class="col-md-3">
+                                         <label for="expired_qty_{{ ii.item_id }}" class="field-label">Expired</label>
+                                         <input type="number" 
+                                                class="form-control form-control-sm qty-input qty-adjust" 
+                                                id="expired_qty_{{ ii.item_id }}"
+                                                name="expired_qty_{{ ii.item_id }}" 
+                                                step="0.01" 
+                                                min="0"
+-                                               value="{{ ii.expired_qty }}"
++                                               value="{{ '%.2f'|format(ii.expired_qty or 0) }}"
+                                                data-item-id="{{ ii.item_id }}"
+-                                               data-donated-qty="{{ donation_item.qty }}">
++                                               data-donated-qty="{{ donated_qty }}">
+                                     </div>
+                                 </div>
+                                 
+                                 <div class="row g-2 mt-2">
+                                     <div class="col-12">
+                                         <label for="item_comments_{{ ii.item_id }}" class="field-label">Item Comments</label>
+                                         <input type="text" 
+                                                class="form-control form-control-sm" 
+                                                id="item_comments_{{ ii.item_id }}"
+                                                name="item_comments_{{ ii.item_id }}" 
+                                                value="{{ ii.comments_text or '' }}"
+                                                maxlength="255"
+                                                placeholder="Optional comments">
+                                     </div>
+                                 </div>
+                                 
+                                 <div class="row g-2 mt-1">
+                                     <div class="col-12">
+                                         <div class="invalid-feedback d-block qty-error-{{ ii.item_id }} d-none">
+                                             <i class="bi bi-exclamation-circle"></i>
+-                                            <span class="qty-error-text-{{ ii.item_id }}"></span>
++                                            <span class="qty-error-text qty-error-text-{{ ii.item_id }}"></span>
+                                         </div>
+                                     </div>
+                                 </div>
+                             </div>
+                         </div>
+                         {% endfor %}
+                     </div>
+                 </div>
+ 
+                 <div class="card mt-3">
+                     <div class="card-body">
+                         <div class="d-flex justify-content-between">
+                             <a href="{{ url_for('donation_intake.verify_list') }}" class="btn-relief-secondary">
+                                 <i class="bi bi-arrow-left"></i>
+                                 Cancel
+                             </a>
+                             <button type="submit" class="btn-relief-primary" id="verifyBtn">
+                                 <i class="bi bi-check-circle"></i>
+                                 Verify Intake
+                             </button>
+                         </div>
+                     </div>
+                 </div>
+             </div>
+ 
