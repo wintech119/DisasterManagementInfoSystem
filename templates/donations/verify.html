@@ -263,8 +263,9 @@
                                     <h5 class="mb-3"><i class="bi bi-plus-circle"></i> Add Donation Item</h5>
                                     
                                     <div id="addItemForm">
+                                        <!-- Row 1: Item, Type, Location -->
                                         <div class="row">
-                                            <div class="col-md-6 mb-3">
+                                            <div class="col-12 col-sm-6 col-md-5 mb-3">
                                                 <label for="new_item_id" class="form-label">Item *</label>
                                                 <select class="form-select" id="new_item_id">
                                                     <option value="">Select item...</option>
@@ -275,7 +276,7 @@
                                                     {% endfor %}
                                                 </select>
                                             </div>
-                                            <div class="col-md-3 mb-3">
+                                            <div class="col-6 col-sm-3 col-md-3 mb-3">
                                                 <label for="new_donation_type" class="form-label">
                                                     Type * 
                                                     <i class="bi bi-info-circle" data-bs-toggle="tooltip" title="Auto-set based on item category"></i>
@@ -283,14 +284,14 @@
                                                 <input type="text" class="form-control field-disabled-visual" id="new_donation_type" value="" readonly placeholder="Select item first">
                                                 <small class="text-muted" id="category_hint">Auto-set</small>
                                             </div>
-                                            <div class="col-md-3 mb-3">
-                                                <label for="new_quantity" class="form-label">Quantity *</label>
-                                                <input type="number" class="form-control" id="new_quantity" step="0.01" min="0" value="1.00" placeholder="1.00">
-                                                <small class="text-muted" id="quantity_hint">Default: 1.00</small>
+                                            <div class="col-6 col-sm-3 col-md-4 mb-3">
+                                                <label for="new_location_name" class="form-label">Location *</label>
+                                                <input type="text" class="form-control" id="new_location_name" value="DONATION RECEIVED" style="text-transform: uppercase;">
                                             </div>
                                         </div>
+                                        <!-- Row 2: Item Cost, Quantity, UOM -->
                                         <div class="row">
-                                            <div class="col-md-4 mb-3">
+                                            <div class="col-12 col-sm-4 col-md-4 mb-3">
                                                 <label for="new_item_cost" class="form-label">
                                                     Item Cost * 
                                                     <i class="bi bi-info-circle" data-bs-toggle="tooltip" title="Cost per unit"></i>
@@ -298,7 +299,12 @@
                                                 <input type="text" class="form-control" id="new_item_cost" data-money-format="true" value="" placeholder="$0.00">
                                                 <small class="text-muted" id="item_cost_hint">Cost per unit</small>
                                             </div>
-                                            <div class="col-md-4 mb-3">
+                                            <div class="col-6 col-sm-4 col-md-4 mb-3">
+                                                <label for="new_quantity" class="form-label">Quantity *</label>
+                                                <input type="number" class="form-control" id="new_quantity" step="0.01" min="0" value="1.00" placeholder="1.00">
+                                                <small class="text-muted" id="quantity_hint">Default: 1.00</small>
+                                            </div>
+                                            <div class="col-6 col-sm-4 col-md-4 mb-3">
                                                 <label class="form-label" id="uom_currency_label">UOM *</label>
                                                 <select class="form-select field-disabled-visual" id="new_uom_code" disabled>
                                                     <option value="">Select item first</option>
@@ -320,13 +326,10 @@
                                                 <input type="hidden" id="new_currency_code_hidden" value="">
                                                 <small class="text-muted" id="uom_hint"><span id="uom_currency_hint_text">Unit:</span> <span id="selected_uom">—</span></small>
                                             </div>
-                                            <div class="col-md-4 mb-3">
-                                                <label for="new_location_name" class="form-label">Location *</label>
-                                                <input type="text" class="form-control" id="new_location_name" value="DONATION RECEIVED" style="text-transform: uppercase;">
-                                            </div>
                                         </div>
+                                        <!-- Row 3: Item Comments -->
                                         <div class="row">
-                                            <div class="col-md-12 mb-3">
+                                            <div class="col-12 mb-3">
                                                 <label for="new_item_comments" class="form-label">Item Comments</label>
                                                 <input type="text" class="form-control" id="new_item_comments" placeholder="Optional comments about this item..." style="text-transform: uppercase;">
                                             </div>
