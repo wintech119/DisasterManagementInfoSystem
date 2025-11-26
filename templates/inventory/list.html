@@ -23,20 +23,6 @@
 .inventory-table td:nth-child(9) {
     text-align: center;
 }
-.inventory-totals-row {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border-top: 2px solid #0d6efd;
-    font-size: 1.05rem;
-}
-.inventory-totals-row th {
-    font-weight: 700;
-    color: #0d6efd;
-    padding: 0.875rem 0.75rem;
-}
-.inventory-totals-row td {
-    font-weight: 600;
-    padding: 0.875rem 0.75rem;
-}
 </style>
 {% endblock %}
 
@@ -197,18 +183,6 @@
                         </tr>
                         {% endfor %}
                     </tbody>
-                    <tfoot>
-                        <tr class="inventory-totals-row">
-                            <th scope="row" colspan="3">
-                                <i class="bi bi-calculator me-2"></i>Grand Total
-                            </th>
-                            <td><strong class="text-success">{{ totals.usable }}</strong></td>
-                            <td><strong class="text-warning">{{ totals.reserved }}</strong></td>
-                            <td><strong class="text-danger">{{ totals.defective }}</strong></td>
-                            <td><strong class="text-muted">{{ totals.expired }}</strong></td>
-                            <td colspan="2"></td>
-                        </tr>
-                    </tfoot>
                 </table>
             </div>
         </div>
