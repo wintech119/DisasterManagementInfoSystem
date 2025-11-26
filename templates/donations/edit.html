@@ -379,40 +379,99 @@ let itemCounter = 0;
 const donationItems = [];
 let currentCategoryType = null;
 
-// Load existing items from the database
+// Load existing items from the database (fallback when no form_data)
 const existingItems = {{ existing_items | tojson | safe if existing_items else '[]' }};
+
+// Check if we have form_data (validation error occurred) - restore items from form_data
+{% if form_data %}
+const restoredItems = [];
+{% for key, value in form_data.items() %}
+{% if key.startswith('item_id_') %}
+{% set num = key.split('_')[-1] %}
+restoredItems.push({
+    num: '{{ num }}',
+    item_id: '{{ form_data.get("item_id_" ~ num, "") }}',
+    donation_type: '{{ form_data.get("donation_type_" ~ num, "GOODS") }}',
+    quantity: parseFloat('{{ form_data.get("quantity_" ~ num, "0") }}') || 0,
+    item_cost: parseFloat('{{ form_data.get("item_cost_" ~ num, "0") }}') || 0,
+    uom_code: '{{ form_data.get("uom_id_" ~ num, "") }}',
+    currency_code: '{{ form_data.get("currency_code_" ~ num, "") }}',
+    location_name: '{{ form_data.get("location_name_" ~ num, "DONATION RECEIVED") }}',
+    comments: '{{ form_data.get("item_comments_" ~ num, "") }}',
+    is_existing: '{{ form_data.get("is_existing_" ~ num, "false") }}' === 'true'
+});
+{% endif %}
+{% endfor %}
+const hasFormData = true;
+{% else %}
+const restoredItems = [];
+const hasFormData = false;
+{% endif %}
 
 document.addEventListener('DOMContentLoaded', function() {
     const itemsDropdown = document.getElementById('new_item_id');
     
-    // Load existing items into the donationItems array
-    existingItems.forEach(function(item) {
-        const option = itemsDropdown.querySelector(`option[value="${item.item_id}"]`);
-        const itemName = option ? option.getAttribute('data-name') : item.item_name;
-        
-        let uomDesc;
-        if (item.donation_type === 'FUNDS') {
-            uomDesc = item.currency_code || '—';
-        } else {
-            uomDesc = item.uom_code || '—';
-        }
-        
-        itemCounter++;
-        donationItems.push({
-            id: itemCounter,
-            is_existing: true,
-            item_id: item.item_id,
-            item_name: itemName,
-            donation_type: item.donation_type,
-            quantity: item.quantity,
-            item_cost: item.item_cost,
-            uom_code: item.donation_type === 'GOODS' ? item.uom_code : null,
-            currency_code: item.donation_type === 'FUNDS' ? item.currency_code : null,
-            uom_desc: uomDesc,
-            location_name: item.location_name,
-            comments: item.comments
+    // If form_data exists (validation error), restore from form_data
+    // Otherwise load from existing database items
+    if (hasFormData && restoredItems.length > 0) {
+        restoredItems.forEach(function(item) {
+            const option = itemsDropdown.querySelector(`option[value="${item.item_id}"]`);
+            const itemName = option ? option.getAttribute('data-name') : 'Unknown Item';
+            const restoredType = (item.donation_type || 'GOODS').toUpperCase();
+            
+            let uomDesc;
+            if (restoredType === 'FUNDS') {
+                uomDesc = item.currency_code || '—';
+            } else {
+                uomDesc = item.uom_code || '—';
+            }
+            
+            itemCounter++;
+            donationItems.push({
+                id: itemCounter,
+                is_existing: item.is_existing,
+                item_id: item.item_id,
+                item_name: itemName,
+                donation_type: restoredType,
+                quantity: item.quantity,
+                item_cost: item.item_cost,
+                uom_code: restoredType === 'GOODS' ? item.uom_code : null,
+                currency_code: restoredType === 'FUNDS' ? item.currency_code : null,
+                uom_desc: uomDesc,
+                location_name: item.location_name,
+                comments: item.comments
+            });
         });
-    });
+    } else {
+        // Load existing items from database into the donationItems array
+        existingItems.forEach(function(item) {
+            const option = itemsDropdown.querySelector(`option[value="${item.item_id}"]`);
+            const itemName = option ? option.getAttribute('data-name') : item.item_name;
+            
+            let uomDesc;
+            if (item.donation_type === 'FUNDS') {
+                uomDesc = item.currency_code || '—';
+            } else {
+                uomDesc = item.uom_code || '—';
+            }
+            
+            itemCounter++;
+            donationItems.push({
+                id: itemCounter,
+                is_existing: true,
+                item_id: item.item_id,
+                item_name: itemName,
+                donation_type: item.donation_type,
+                quantity: item.quantity,
+                item_cost: item.item_cost,
+                uom_code: item.donation_type === 'GOODS' ? item.uom_code : null,
+                currency_code: item.donation_type === 'FUNDS' ? item.currency_code : null,
+                uom_desc: uomDesc,
+                location_name: item.location_name,
+                comments: item.comments
+            });
+        });
+    }
     
     if (donationItems.length > 0) {
         updateItemsTable();
