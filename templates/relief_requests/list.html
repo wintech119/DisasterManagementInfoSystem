@@ -64,33 +64,33 @@
 
     <!-- Filter Tabs -->
     <nav class="filter-tabs" role="navigation" aria-label="Relief request status filters">
-        <a href="{{ url_for('requests.list_requests', filter='all') }}" 
+        <a href="{{ url_for('requests.list_requests', filter='all') }}"
            class="filter-tab {% if current_filter == 'all' %}active{% endif %}"
-           aria-current="{% if current_filter == 'all' %}page{% endif %}">
+           {% if current_filter == 'all' %}aria-current="page"{% endif %}>
             All Requests
             <span class="filter-tab-count" aria-label="{{ counts.get('all', 0) }} total">{{ counts.get('all', 0) }}</span>
         </a>
-        <a href="{{ url_for('requests.list_requests', filter='awaiting') }}" 
+        <a href="{{ url_for('requests.list_requests', filter='awaiting') }}"
            class="filter-tab {% if current_filter == 'awaiting' %}active{% endif %}"
-           aria-current="{% if current_filter == 'awaiting' %}page{% endif %}">
+           {% if current_filter == 'awaiting' %}aria-current="page"{% endif %}>
             Pending Review
             <span class="filter-tab-count" aria-label="{{ counts.get('awaiting', 0) }} awaiting">{{ counts.get('awaiting', 0) }}</span>
         </a>
-        <a href="{{ url_for('requests.list_requests', filter='submitted') }}" 
+        <a href="{{ url_for('requests.list_requests', filter='submitted') }}"
            class="filter-tab {% if current_filter == 'submitted' or not current_filter %}active{% endif %}"
-           aria-current="{% if current_filter == 'submitted' or not current_filter %}page{% endif %}">
+           {% if current_filter == 'submitted' or not current_filter %}aria-current="page"{% endif %}>
             Approved
             <span class="filter-tab-count" aria-label="{{ counts.get('submitted', 0) }} approved">{{ counts.get('submitted', 0) }}</span>
         </a>
-        <a href="{{ url_for('requests.list_requests', filter='draft') }}" 
+        <a href="{{ url_for('requests.list_requests', filter='draft') }}"
            class="filter-tab {% if current_filter == 'draft' %}active{% endif %}"
-           aria-current="{% if current_filter == 'draft' %}page{% endif %}">
+           {% if current_filter == 'draft' %}aria-current="page"{% endif %}>
             Drafts
             <span class="filter-tab-count" aria-label="{{ counts.get('draft', 0) }} drafts">{{ counts.get('draft', 0) }}</span>
         </a>
-        <a href="{{ url_for('requests.list_requests', filter='completed') }}" 
+        <a href="{{ url_for('requests.list_requests', filter='completed') }}"
            class="filter-tab {% if current_filter == 'completed' %}active{% endif %}"
-           aria-current="{% if current_filter == 'completed' %}page{% endif %}">
+           {% if current_filter == 'completed' %}aria-current="page"{% endif %}>
             Completed
             <span class="filter-tab-count" aria-label="{{ counts.get('completed', 0) }} completed">{{ counts.get('completed', 0) }}</span>
         </a>
@@ -100,6 +100,7 @@
     {% if requests %}
     <div class="table-responsive-mobile">
         <table class="relief-requests-table" role="table" aria-label="Relief requests list">
+        <caption class="visually-hidden">All relief requests filtered by status with actions to view or edit.</caption>
         <thead>
             <tr>
                 <th scope="col">Request Number</th>

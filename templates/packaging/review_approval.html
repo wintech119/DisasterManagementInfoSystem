@@ -172,7 +172,8 @@
                 {% set ns = namespace(fully_filled=0, partially_filled=0, not_allocated=0) %}
                 {% for item in relief_request.items %}
                     {% set issue = item.issue_qty or 0 %}
-                    {% if issue >= item.request_qty %}
+                    {% set requested = item.request_qty or 0 %}
+                    {% if issue >= requested %}
                         {% set ns.fully_filled = ns.fully_filled + 1 %}
                     {% elif issue > 0 %}
                         {% set ns.partially_filled = ns.partially_filled + 1 %}
@@ -279,6 +280,8 @@
                         <tbody>
                             {% for item in relief_request.items %}
                             <tr>
+                                {% set requested_qty = item.request_qty or 0 %}
+                                {% set issue_qty = item.issue_qty or 0 %}
                                 <td>
                                     <strong>{{ item.item.item_name if item.item else 'Unknown' }}</strong>
                                     {% if item.item and item.item.category %}
@@ -286,12 +289,12 @@
                                     {% endif %}
                                 </td>
                                 <td class="text-center">
-                                    <strong>{{ item.request_qty }}</strong>
+                                    <strong>{{ requested_qty }}</strong>
                                     <div class="table-sku">{{ item.item.default_uom.uom_name if item.item and item.item.default_uom else 'EA' }}</div>
                                 </td>
                                 <td class="text-center">
-                                    <strong class="{% if item.issue_qty >= item.request_qty %}text-success{% elif item.issue_qty > 0 %}text-warning{% else %}text-danger{% endif %}">
-                                        {{ item.issue_qty if item.issue_qty else 0 }}
+                                    <strong class="{% if issue_qty >= requested_qty %}text-success{% elif issue_qty > 0 %}text-warning{% else %}text-danger{% endif %}">
+                                        {{ issue_qty }}
                                     </strong>
                                     <div class="table-sku">{{ item.item.default_uom.uom_name if item.item and item.item.default_uom else 'EA' }}</div>
                                 </td>
