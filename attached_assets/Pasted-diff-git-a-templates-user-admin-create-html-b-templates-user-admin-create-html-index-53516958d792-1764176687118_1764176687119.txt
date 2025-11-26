@@ -1,0 +1,367 @@
+diff --git a/templates/user_admin/create.html b/templates/user_admin/create.html
+index 53516958d79273b2b3845659ab1ebd0564983170..7093a61c6e572c9f69acfece636ff6da4b40231c 100644
+--- a/templates/user_admin/create.html
++++ b/templates/user_admin/create.html
+@@ -98,51 +98,51 @@
+                         <div class="col-md-6">
+                             <label for="password" class="form-label">
+                                 Password <span class="text-danger">*</span>
+                             </label>
+                             <div class="input-group">
+                                 <span class="input-group-text"><i class="bi bi-key"></i></span>
+                                 <input type="password" 
+                                        name="password" 
+                                        id="password" 
+                                        class="form-control" 
+                                        required 
+                                        minlength="8"
+                                        autocomplete="new-password"
+                                        placeholder="Min. 8 characters"
+                                        aria-describedby="passwordHelp">
+                                 <button class="btn btn-outline-secondary" 
+                                         type="button" 
+                                         id="togglePassword"
+                                         aria-label="Toggle password visibility">
+                                     <i class="bi bi-eye"></i>
+                                 </button>
+                             </div>
+                             <small id="passwordHelp" class="form-text text-muted">
+                                 <i class="bi bi-shield-check"></i> Minimum 8 characters required
+                             </small>
+-                            <div id="passwordStrength" class="mt-2" class="d-none">
++                            <div id="passwordStrength" class="mt-2 d-none">
+                                 {{ password_strength_indicator() }}
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+ 
+                 <!-- Personal Information -->
+                 <div class="info-card">
+                     <div class="info-card-header">
+                         <h3 class="info-card-title">
+                             <i class="bi bi-person"></i> Personal Information
+                         </h3>
+                     </div>
+                     
+                     <div class="row g-3">
+                         <div class="col-md-6">
+                             <label for="first_name" class="form-label">First Name</label>
+                             <input type="text" 
+                                    name="first_name" 
+                                    id="first_name" 
+                                    class="form-control"
+                                    placeholder="First name">
+                         </div>
+                         
+                         <div class="col-md-6">
+@@ -245,51 +245,51 @@
+                     <p class="text-muted mb-3">
+                         <i class="bi bi-info-circle"></i> Leave empty to grant access to all warehouses
+                     </p>
+                     
+                     <div class="warehouse-selection-grid">
+                         {% for warehouse in warehouses %}
+                         <div class="warehouse-option">
+                             <input type="checkbox" 
+                                    name="warehouses" 
+                                    value="{{ warehouse.warehouse_id }}" 
+                                    id="warehouse_{{ warehouse.warehouse_id }}" 
+                                    class="warehouse-checkbox">
+                             <label for="warehouse_{{ warehouse.warehouse_id }}" class="warehouse-label">
+                                 <i class="bi bi-building"></i>
+                                 <span>{{ warehouse.warehouse_name }}</span>
+                             </label>
+                         </div>
+                         {% endfor %}
+                     </div>
+                 </div>
+             </div>
+ 
+             <!-- Sidebar -->
+             <div class="col-lg-4">
+                 <!-- Account Status -->
+-                <div class="info-card sticky-top" class="sticky-top-1">
++                <div class="info-card sticky-top sticky-top-1">
+                     <div class="info-card-header">
+                         <h3 class="info-card-title">
+                             <i class="bi bi-toggle-on"></i> Account Status
+                         </h3>
+                     </div>
+                     
+                     <div class="form-check form-switch mb-3">
+                         <input type="checkbox" 
+                                name="is_active" 
+                                id="is_active" 
+                                class="form-check-input" 
+                                checked
+                                role="switch"
+                                aria-describedby="activeHelp">
+                         <label for="is_active" class="form-check-label">
+                             <strong>Active Account</strong>
+                         </label>
+                     </div>
+                     <small id="activeHelp" class="form-text text-muted d-block mb-3">
+                         Active users can log in and access the system immediately
+                     </small>
+ 
+                     <div class="alert alert-info">
+                         <i class="bi bi-lightbulb"></i>
+                         <strong>Tip:</strong> You can deactivate the account later if needed
+diff --git a/templates/user_admin/edit.html b/templates/user_admin/edit.html
+index 64e3925e204063a0215128bca0d6f641d286a13d..f40c1b21610850f95c3cddf7f6ff74578799d847 100644
+--- a/templates/user_admin/edit.html
++++ b/templates/user_admin/edit.html
+@@ -256,51 +256,51 @@
+                     </div>
+                     
+                     <div class="row g-3">
+                         <div class="col-12">
+                             <label for="password" class="form-label">New Password</label>
+                             <div class="input-group">
+                                 <span class="input-group-text"><i class="bi bi-key"></i></span>
+                                 <input type="password" 
+                                        name="password" 
+                                        id="password" 
+                                        class="form-control" 
+                                        minlength="8"
+                                        autocomplete="new-password"
+                                        placeholder="Leave blank to keep current password"
+                                        aria-describedby="passwordHelp">
+                                 <button class="btn btn-outline-secondary" 
+                                         type="button" 
+                                         id="togglePassword"
+                                         aria-label="Toggle password visibility">
+                                     <i class="bi bi-eye"></i>
+                                 </button>
+                             </div>
+                             <small id="passwordHelp" class="form-text text-muted">
+                                 <i class="bi bi-info-circle"></i> Leave blank to keep existing password
+                             </small>
+-                            <div id="passwordStrength" class="mt-2" class="d-none">
++                            <div id="passwordStrength" class="mt-2 d-none">
+                                 {{ password_strength_indicator() }}
+                             </div>
+                         </div>
+                     </div>
+                     </div>
+                 </div>
+ 
+                 <!-- Role Assignment -->
+                 <div class="card shadow-sm border-0 mb-3">
+                     <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                         <h6 class="card-title mb-0">
+                             <i class="bi bi-shield-lock text-primary"></i> Role Assignment
+                         </h6>
+                         <span class="badge bg-info" id="roleCount">{{ user_role_ids|length }} selected</span>
+                     </div>
+                     <div class="card-body">
+                     <p class="text-muted mb-3">
+                         <i class="bi bi-info-circle"></i> Modify user permissions by selecting or deselecting roles
+                     </p>
+                     
+                     <div class="role-selection-grid">
+                         {% for role in roles %}
+                         <div class="role-option">
+                             <input type="checkbox" 
+                                    name="roles" 
+@@ -339,51 +339,51 @@
+                     </p>
+                     
+                     <div class="warehouse-selection-grid">
+                         {% for warehouse in warehouses %}
+                         <div class="warehouse-option">
+                             <input type="checkbox" 
+                                    name="warehouses" 
+                                    value="{{ warehouse.warehouse_id }}" 
+                                    id="warehouse_{{ warehouse.warehouse_id }}" 
+                                    class="warehouse-checkbox"
+                                    {% if warehouse.warehouse_id in user_warehouse_ids %}checked{% endif %}>
+                             <label for="warehouse_{{ warehouse.warehouse_id }}" class="warehouse-label">
+                                 <i class="bi bi-building"></i>
+                                 <span>{{ warehouse.warehouse_name }}</span>
+                             </label>
+                         </div>
+                         {% endfor %}
+                     </div>
+                     </div>
+                 </div>
+             </div>
+ 
+             <!-- Sidebar -->
+             <div class="col-lg-4">
+                 <!-- Account Status -->
+-                <div class="card shadow-sm border-0 mb-3 sticky-top" class="sticky-top-1">
++                <div class="card shadow-sm border-0 mb-3 sticky-top sticky-top-1">
+                     <div class="card-header bg-white border-0 pb-0">
+                         <h6 class="card-title mb-0">
+                             <i class="bi bi-toggle-on text-success"></i> Account Status
+                         </h6>
+                     </div>
+                     <div class="card-body">
+                     
+                     <div class="form-check form-switch mb-3">
+                         <input type="checkbox" 
+                                name="is_active" 
+                                id="is_active" 
+                                class="form-check-input" 
+                                {% if user.is_active %}checked{% endif %}
+                                role="switch"
+                                aria-describedby="activeHelp">
+                         <label for="is_active" class="form-check-label">
+                             <strong>Active Account</strong>
+                         </label>
+                     </div>
+                     <small id="activeHelp" class="form-text text-muted d-block mb-3">
+                         {% if user.is_active %}
+                             Deactivate to prevent user login
+                         {% else %}
+                             Activate to allow user login
+                         {% endif %}
+diff --git a/templates/user_admin/view.html b/templates/user_admin/view.html
+index 445d6b2da4df6e4ff3f6833c046ef28e34702a67..7160a3c4717565616792da71c432fae4187468d4 100644
+--- a/templates/user_admin/view.html
++++ b/templates/user_admin/view.html
+@@ -165,51 +165,51 @@
+                             <a href="{{ url_for('user_admin.edit', user_id=user.user_id) }}" class="btn-user-action primary">
+                                 <i class="bi bi-pencil"></i> Edit Profile
+                             </a>
+                             {% if user.is_active %}
+                             <form method="POST" action="{{ url_for('user_admin.deactivate', user_id=user.user_id) }}" id="deactivateUserForm">
+                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                 <button type="submit" class="btn-user-action danger w-100">
+                                     <i class="bi bi-person-x"></i> Deactivate Account
+                                 </button>
+                             </form>
+                             {% else %}
+                             <form method="POST" action="{{ url_for('user_admin.activate', user_id=user.user_id) }}" id="activateUserForm">
+                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                 <button type="submit" class="btn-user-action primary w-100">
+                                     <i class="bi bi-person-check"></i> Activate Account
+                                 </button>
+                             </form>
+                             {% endif %}
+                         </div>
+                     </div>
+                 </div>
+             </div>
+         </div>
+ 
+         <!-- Tab Content: Roles & Privileges -->
+-        <div class="profile-tab-content" id="roles-panel" role="tabpanel" class="d-none">
++        <div class="profile-tab-content d-none" id="roles-panel" role="tabpanel">
+             <div class="row g-4">
+                 <div class="col-md-6">
+                     <div class="info-card">
+                         <div class="info-card-header">
+                             <h3 class="info-card-title">Assigned Roles</h3>
+                             <span class="badge bg-primary">{{ user.roles|length }}</span>
+                         </div>
+                         {% if user.roles %}
+                             {% for role in user.roles %}
+                                 <div class="info-row">
+                                     <div class="d-flex align-items-center gap-2">
+                                         <i class="bi bi-shield-fill-check text-success"></i>
+                                         <div>
+                                             <div class="fw-bold">{{ role.name }}</div>
+                                             {% if role.role_desc %}
+                                                 <small class="text-muted">{{ role.role_desc }}</small>
+                                             {% endif %}
+                                         </div>
+                                     </div>
+                                 </div>
+                             {% endfor %}
+                         {% else %}
+                             <p class="text-muted text-center py-4">
+                                 <i class="bi bi-inbox icon-lg d-block mb-3"></i>
+                                 No roles assigned to this user
+@@ -226,87 +226,87 @@
+                         </div>
+                         {% if user.warehouses %}
+                             {% for warehouse in user.warehouses %}
+                                 <div class="info-row">
+                                     <div class="d-flex align-items-center gap-2">
+                                         <i class="bi bi-building text-primary"></i>
+                                         <div>
+                                             <div class="fw-bold">{{ warehouse.warehouse_name }}</div>
+                                             <small class="text-muted">{{ warehouse.physical_addr or 'No address specified' }}</small>
+                                         </div>
+                                     </div>
+                                 </div>
+                             {% endfor %}
+                         {% else %}
+                             <p class="text-muted text-center py-4">
+                                 <i class="bi bi-building-check icon-lg d-block mb-3 text-success"></i>
+                                 Access to all warehouses
+                             </p>
+                         {% endif %}
+                     </div>
+                 </div>
+             </div>
+         </div>
+ 
+         <!-- Tab Content: Security Controls -->
+-        <div class="profile-tab-content" id="security-panel" role="tabpanel" class="d-none">
++        <div class="profile-tab-content d-none" id="security-panel" role="tabpanel">
+             <div class="row g-4">
+                 <div class="col-md-6">
+                     <div class="info-card">
+                         <div class="info-card-header">
+                             <h3 class="info-card-title">Authentication & Access</h3>
+                         </div>
+                         {{ info_row('Multi-Factor Authentication', badge=mfa_status_badge(user.mfa_enabled, user.mfa_secret is not none), icon='shield-check') }}
+                         {{ info_row('Account Lock Status', badge=status_badge('locked') if user.is_locked else '<span class="text-success"><i class="bi bi-unlock-fill"></i> Unlocked</span>', icon='lock') }}
+                         {{ info_row('Failed Login Attempts', user.failed_login_attempts or '0', icon='exclamation-triangle') }}
+                         {{ info_row('Last Password Change', user.password_changed_dtime.strftime('%Y-%m-%d') if user.password_changed_dtime else 'Never', icon='key') }}
+                     </div>
+                 </div>
+ 
+                 <div class="col-md-6">
+                     <div class="info-card">
+                         <div class="info-card-header">
+                             <h3 class="info-card-title">Session Information</h3>
+                         </div>
+                         {{ info_row('Current Session', 'Active' if user.user_id == current_user.user_id else 'No active session', icon='broadcast') }}
+                         {{ info_row('Last Login IP', user.last_login_ip or '-', icon='geo-alt') }}
+                         {{ info_row('Last Login Time', user.last_login_dtime.strftime('%Y-%m-%d %H:%M:%S') if user.last_login_dtime else 'Never', icon='clock') }}
+                         {{ info_row('Login Count', user.login_count or '0', icon='arrow-repeat') }}
+                     </div>
+ 
+                     {{ compliance_alert(
+                         type='info',
+                         title='GDPR Compliance',
+                         message='Personal data is stored securely and used only for system access management.',
+                         icon='shield-check'
+                     ) }}
+                 </div>
+             </div>
+         </div>
+ 
+         <!-- Tab Content: Activity Timeline -->
+-        <div class="profile-tab-content" id="activity-panel" role="tabpanel" class="d-none">
++        <div class="profile-tab-content d-none" id="activity-panel" role="tabpanel">
+             <div class="info-card">
+                 <div class="info-card-header">
+                     <h3 class="info-card-title">Recent Activity</h3>
+                 </div>
+                 <div class="audit-timeline">
+                     {% if user.create_dtime %}
+                         {{ audit_event(
+                             title='Account Created',
+                             details='User account was created in the system',
+                             timestamp=user.create_dtime.strftime('%Y-%m-%d %H:%M') if user.create_dtime else '',
+                             event_type='success',
+                             icon='person-plus-fill',
+                             meta='Created by: System Administrator'
+                         ) }}
+                     {% endif %}
+                     
+                     {% if user.last_login_dtime %}
+                         {{ audit_event(
+                             title='Last Login',
+                             details='User successfully logged into the system',
+                             timestamp=user.last_login_dtime.strftime('%Y-%m-%d %H:%M') if user.last_login_dtime else '',
+                             event_type='success',
+                             icon='box-arrow-in-right',
+                             meta='IP Address: ' + (user.last_login_ip or 'Unknown')
+                         ) }}
