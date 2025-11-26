@@ -25,7 +25,7 @@
 
     <!-- Filter Bar -->
     <div class="filter-bar">
-        <form method="GET" class="d-flex align-items-center gap-3">
+        <form method="GET" class="d-flex align-items-center gap-3 flex-wrap">
             <label for="warehouse_id" class="form-label mb-0 font-semibold text-nowrap">
                 <i class="bi bi-building me-1"></i>
                 Warehouse:
@@ -35,6 +35,19 @@
                 {% for warehouse in warehouses %}
                 <option value="{{ warehouse.warehouse_id }}" {% if selected_warehouse_id == warehouse.warehouse_id %}selected{% endif %}>
                     {{ warehouse.warehouse_name }}
+                </option>
+                {% endfor %}
+            </select>
+            
+            <label for="item_id" class="form-label mb-0 font-semibold text-nowrap ms-3">
+                <i class="bi bi-box-seam me-1"></i>
+                Item:
+            </label>
+            <select class="form-control filter-select" name="item_id" id="item_id" data-auto-submit="true">
+                <option value="">All Items</option>
+                {% for item in items %}
+                <option value="{{ item.item_id }}" {% if selected_item_id == item.item_id %}selected{% endif %}>
+                    {{ item.item_name }}
                 </option>
                 {% endfor %}
             </select>

@@ -47,6 +47,7 @@ def list_inventory():
     from flask_login import current_user
     
     warehouse_id = request.args.get('warehouse_id', type=int)
+    item_id = request.args.get('item_id', type=int)
     
     query = db.session.query(
         Inventory,
@@ -64,14 +65,21 @@ def list_inventory():
             # If no warehouses assigned, show nothing
             inventory_items = []
             warehouses = []
+            items = []
             return render_template('inventory/list.html', 
                                  inventory_items=inventory_items,
                                  warehouses=warehouses,
-                                 selected_warehouse_id=warehouse_id)
+                                 items=items,
+                                 selected_warehouse_id=warehouse_id,
+                                 selected_item_id=item_id)
     
     # Apply additional warehouse filter if specified
     if warehouse_id:
         query = query.filter(Inventory.inventory_id == warehouse_id)
+    
+    # Apply item filter if specified
+    if item_id:
+        query = query.filter(Inventory.item_id == item_id)
     
     inventory_items = query.filter(Inventory.status_code == 'A').all()
     
@@ -85,7 +93,12 @@ def list_inventory():
     else:
         warehouses = Warehouse.query.filter_by(status_code='A').order_by(Warehouse.warehouse_name).all()
     
+    # Get all active items for the filter dropdown
+    items = Item.query.filter_by(status_code='A').order_by(Item.item_name).all()
+    
     return render_template('inventory/list.html', 
                          inventory_items=inventory_items,
                          warehouses=warehouses,
-                         selected_warehouse_id=warehouse_id)
+                         items=items,
+                         selected_warehouse_id=warehouse_id,
+                         selected_item_id=item_id)
