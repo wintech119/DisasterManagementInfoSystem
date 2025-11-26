@@ -17,6 +17,55 @@
     margin-bottom: 2rem;
 }
 
+.kpi-grid-secondary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.kpi-card-featured {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kpi-card-featured:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+}
+
+.kpi-card-featured .kpi-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: 2rem;
+}
+
+.kpi-card-featured .kpi-value {
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-weight: 700;
+    color: white;
+    line-height: 1.2;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+.kpi-card-featured .kpi-label {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin-top: 0.5rem;
+    font-weight: 500;
+}
+
 .kpi-card {
     background: white;
     border-radius: 12px;
@@ -166,6 +215,12 @@
     font-size: 1.125rem;
 }
 
+@media (max-width: 992px) {
+    .kpi-grid-secondary {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
 @media (max-width: 768px) {
     .analytics-grid {
         grid-template-columns: 1fr;
@@ -175,11 +230,41 @@
         grid-template-columns: repeat(2, 1fr);
     }
     
+    .kpi-grid-secondary {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
     .chart-container {
         height: 250px;
     }
     
     .kpi-value {
+        font-size: 1.5rem;
+    }
+    
+    .kpi-card-featured {
+        padding: 1.5rem;
+    }
+    
+    .kpi-card-featured .kpi-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 1.75rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .kpi-grid-secondary {
+        grid-template-columns: 1fr;
+    }
+    
+    .kpi-card-featured {
+        flex-direction: column;
+        text-align: center;
+        padding: 1.5rem 1rem;
+    }
+    
+    .kpi-card-featured .kpi-value {
         font-size: 1.5rem;
     }
 }
@@ -204,7 +289,17 @@
         <p class="page-subtitle">Overview of donation metrics, trends, and distribution</p>
     </div>
 
-    <div class="kpi-grid">
+    <div class="kpi-card-featured">
+        <div class="kpi-icon">
+            <i class="bi bi-currency-dollar"></i>
+        </div>
+        <div class="kpi-content">
+            <div class="kpi-value">J${{ "{:,.2f}".format(total_value) }}</div>
+            <div class="kpi-label">Total Donation Value</div>
+        </div>
+    </div>
+
+    <div class="kpi-grid-secondary">
         <div class="kpi-card">
             <div class="kpi-icon primary">
                 <i class="bi bi-gift"></i>
@@ -212,16 +307,6 @@
             <div class="kpi-content">
                 <div class="kpi-value">{{ total_donations | default(0) }}</div>
                 <div class="kpi-label">Total Donations</div>
-            </div>
-        </div>
-        
-        <div class="kpi-card">
-            <div class="kpi-icon success">
-                <i class="bi bi-currency-dollar"></i>
-            </div>
-            <div class="kpi-content">
-                <div class="kpi-value">J${{ "{:,.2f}".format(total_value) }}</div>
-                <div class="kpi-label">Total Donation Value</div>
             </div>
         </div>
         
