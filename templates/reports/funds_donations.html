@@ -62,8 +62,8 @@
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-body">
                 <form method="get" action="{{ url_for('reports.funds_donations') }}" id="filterForm">
-                    <div class="row g-3 align-items-end">
-                        <div class="col-md-3">
+                    <div class="row g-3">
+                        <div class="col-lg-3 col-md-6">
                             <label for="country_id" class="form-label small fw-semibold">Origin Country</label>
                             <select class="form-select" id="country_id" name="country_id">
                                 <option value="">All Countries</option>
@@ -74,17 +74,17 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-lg-2 col-md-6">
                             <label for="date_from" class="form-label small fw-semibold">Received From</label>
                             <input type="date" class="form-control" id="date_from" name="date_from" 
                                    value="{{ filters.date_from }}">
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-lg-2 col-md-6">
                             <label for="date_to" class="form-label small fw-semibold">Received To</label>
                             <input type="date" class="form-control" id="date_to" name="date_to" 
                                    value="{{ filters.date_to }}">
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-lg-3 col-md-6">
                             <label for="currency_code" class="form-label small fw-semibold">Currency</label>
                             <select class="form-select" id="currency_code" name="currency_code">
                                 <option value="">All Currencies</option>
@@ -95,11 +95,11 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-2 d-flex gap-2">
-                            <button type="submit" class="btn-relief-primary">
+                        <div class="col-lg-2 col-md-12 d-flex align-items-end gap-2">
+                            <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-search"></i> Filter
                             </button>
-                            <a href="{{ url_for('reports.funds_donations') }}" class="btn-relief-secondary">
+                            <a href="{{ url_for('reports.funds_donations') }}" class="btn btn-outline-secondary">
                                 <i class="bi bi-x-circle"></i> Reset
                             </a>
                         </div>
