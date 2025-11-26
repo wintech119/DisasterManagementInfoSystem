@@ -1,0 +1,133 @@
+Help me update the Logistics Manager (LM) “Select Batches” side drawer behaviour in the existing DRIMS/DIMS Flask + PostgreSQL app so that it follows the workflow below.
+
+IMPORTANT CONSTRAINTS
+- DO NOT change or break any existing workflows outside of this drawer behaviour.
+- DO NOT modify the database schema (no new tables, no dropped or altered columns/constraints).
+- DO NOT change existing security (auth, RBAC, CSRF, CSP, headers).
+- DO NOT rename or remove existing routes, blueprints, or templates.
+- Only adjust the logic for the LM “Select Batches” side drawer used during relief package preparation/adjustment.
+
+==================================================
+WORKFLOW C – LM Drawer: Select Batches Behaviour
+==================================================
+
+1. OPENING THE DRAWER FOR LM
+--------------------------------
+
+1.1 Clicking “Select Batches”
+- When the LM clicks “Select Batches” on an item in the relief package page:
+  - Open the SAME side drawer UI component that is already used in “Prepare Relief Package” (reuse the existing drawer, not a new modal).
+  - The main page must remain visible in the background (no full-page navigation/redirect).
+
+1.2 Pre-populated allocations
+- Each time the drawer opens for a given item:
+  - It must display ALL existing batch allocations for that item, including:
+    - Warehouse name.
+    - Batch number.
+    - Batch date.
+    - Expiry date (where applicable).
+    - Previously allocated quantities per batch (from Prepare + any LM adjustments).
+  - The quantity input fields for each batch must be pre-filled with the CURRENT allocated quantity for that batch.
+  - DO NOT reset these inputs to zero when reopening the drawer.
+  - This means:
+    - Read the current allocations from the backing data model (e.g. in-memory LM plan or DB record for reliefpkg_item) and bind them as the initial values in the drawer inputs.
+
+2. WAREHOUSES SHOWN IN THE DRAWER
+------------------------------------
+
+2.1 Warehouse filtering
+- The drawer must list ONLY warehouses (inventory locations) where, for that item:
+
+    total_usable_for_warehouse = SUM(itembatch.usable_qty for that item and warehouse)
+    total_reserved_for_warehouse = SUM(itembatch.reserved_qty for that item and warehouse)
+
+  and:
+
+    total_usable_for_warehouse - total_reserved_for_warehouse > 0
+
+- Any warehouse where the item has no net available stock (i.e. usable - reserved <= 0) must NOT appear in the drawer for that item.
+
+2.2 Warehouse grouping
+- Within the drawer:
+  - Group batches by warehouse.
+  - Show a clear label above each group, for example:
+    - "Warehouse: [Warehouse Name or Code]"
+  - Under each warehouse heading, list the applicable batches (see section 3).
+
+3. BATCHES PER WAREHOUSE (FILTERING, SORTING, TRUNCATION)
+------------------------------------------------------------
+
+3.1 Batch filtering
+- For each warehouse group, only display batches for that item where:
+
+    itembatch.usable_qty > 0
+
+- Additionally, if usable_qty - reserved_qty = 0 (no effective free quantity), the batch must NOT be shown (see 3.4).
+
+3.2 Sorting rules per warehouse
+- Sorting is PER WAREHOUSE ONLY (no cross-warehouse ordering).
+
+- If the item can expire (can_expire_flag = TRUE):
+  - Sort batches in this order:
+    1) Earliest expiry_date first (ascending).
+    2) For equal expiry_date, oldest batch_date first (ascending batch_date).
+
+- If the item does NOT expire (can_expire_flag = FALSE):
+  - Sort batches by oldest batch_date first (FIFO).
+
+3.3 Stop when warehouse can fully cover item quantity
+- For each warehouse, when building the list of batches in the drawer:
+
+  - Start from the first batch in the sorted list.
+  - Maintain a running sum of usable_qty (or usable_qty - reserved_qty, depending on your existing logic) for that warehouse.
+
+  - Once the cumulative usable quantity for that warehouse reaches or exceeds the remaining requested quantity for the item:
+    - STOP adding further batches for that warehouse to the drawer.
+    - Do not show additional later batches from that warehouse.
+
+- This logic must run independently for each warehouse:
+  - Warehouse A may show 2 batches.
+  - Warehouse B may show 1 batch.
+  - Each warehouse stops once it alone could theoretically fulfil the item’s requested quantity.
+
+3.4 Expired / unusable batches
+- Any batch where:
+
+    usable_qty - reserved_qty = 0
+
+  must NOT be displayed in the drawer.
+
+- The drawer must only show batches that have strictly positive available stock.
+
+4. CROSS-WAREHOUSE FREEDOM
+----------------------------
+
+- The user (LM) must be allowed to allocate from ANY warehouse shown in the drawer, regardless of cross-warehouse ordering.
+
+- That means:
+  - Even if Warehouse B has “later dated” batches than Warehouse A, the LM can still choose Warehouse B.
+  - There is NO global FEFO/FIFO across warehouses; the FEFO/FIFO ordering is enforced only within each warehouse group.
+
+- The only ordering requirement is:
+  - Within a warehouse: by expiry_date (if applicable) then batch_date.
+  - Across warehouses: no enforced priority; LM can choose freely.
+
+==================================================
+IMPLEMENTATION NOTES
+==================================================
+
+- Reuse the existing side drawer component used in Prepare Relief Package; only adjust its data-loading logic and pre-fill behaviour.
+- Implement the warehouse and batch filtering/sorting logic in the backend service or API that supplies data to the drawer (or, if already in place, refine it according to the rules above).
+- Ensure that:
+  - Reopening the drawer for the same item reflects the current in-memory/DB allocations.
+  - No full-page reload is required; the drawer opens over the existing page.
+- Do NOT change the underlying transaction/submit logic for saving LM allocations; only change how the drawer displays and pre-populates data.
+
+- After implementation, verify:
+  - Drawer opens correctly for LM using the shared component.
+  - Quantities are pre-filled with current allocations.
+  - Only valid warehouses and batches are shown according to availability rules.
+  - Sorting and truncation per warehouse behave as specified.
+  - LM can allocate from any shown warehouse without cross-warehouse FEFO/FIFO constraints.
+
+Only implement the above behaviour. Do not modify any other workflows or screens.
