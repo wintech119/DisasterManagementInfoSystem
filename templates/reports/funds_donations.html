@@ -4,6 +4,7 @@
 
 {% block extra_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/relief-requests-ui.css') }}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" integrity="sha384-RkASv+6KfBMW9eknReJIJ6b3UnjKOKC5bOUaNgIY778NFbQ8MtWq9Lr/khUgqtTt" crossorigin="anonymous">
 <style nonce="{{ csp_nonce() }}">
     @media (max-width: 767.98px) {
         .filter-buttons {
@@ -28,6 +29,20 @@
     .table-responsive-wrapper {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
+    }
+    .date-input-wrapper {
+        position: relative;
+    }
+    .date-input-wrapper .form-control {
+        padding-right: 2.5rem;
+    }
+    .date-input-wrapper .calendar-icon {
+        position: absolute;
+        right: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+        pointer-events: none;
     }
 </style>
 {% endblock %}
@@ -104,14 +119,20 @@
                         <!-- Received From -->
                         <div class="col-6 col-sm-6 col-lg-2">
                             <label for="date_from" class="form-label small fw-semibold">Received From</label>
-                            <input type="date" class="form-control" id="date_from" name="date_from" 
-                                   value="{{ filters.date_from }}">
+                            <div class="date-input-wrapper">
+                                <input type="text" class="form-control" id="date_from" name="date_from" 
+                                       value="{{ filters.date_from }}" placeholder="YYYY-MM-DD" autocomplete="off">
+                                <i class="bi bi-calendar3 calendar-icon"></i>
+                            </div>
                         </div>
                         <!-- Received To -->
                         <div class="col-6 col-sm-6 col-lg-2">
                             <label for="date_to" class="form-label small fw-semibold">Received To</label>
-                            <input type="date" class="form-control" id="date_to" name="date_to" 
-                                   value="{{ filters.date_to }}">
+                            <div class="date-input-wrapper">
+                                <input type="text" class="form-control" id="date_to" name="date_to" 
+                                       value="{{ filters.date_to }}" placeholder="YYYY-MM-DD" autocomplete="off">
+                                <i class="bi bi-calendar3 calendar-icon"></i>
+                            </div>
                         </div>
                         <!-- Currency -->
                         <div class="col-12 col-sm-6 col-lg-3">
@@ -243,4 +264,45 @@
     </div>
     {% endif %}
 </div>
+
+<script nonce="{{ csp_nonce() }}" src="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.js" integrity="sha384-5JqMv4L/Xa0hfvtF06qboNdhvuYXUku9ZrhZh3bSk8VXF0A/RuSLHpLsSV9Zqhl6" crossorigin="anonymous"></script>
+<script nonce="{{ csp_nonce() }}">
+document.addEventListener('DOMContentLoaded', function() {
+    const dateConfig = {
+        dateFormat: "Y-m-d",
+        allowInput: true,
+        clickOpens: true,
+        disableMobile: false
+    };
+    
+    const dateFromPicker = flatpickr("#date_from", {
+        ...dateConfig,
+        onChange: function(selectedDates, dateStr) {
+            if (dateStr && dateToPicker.selectedDates.length > 0) {
+                dateToPicker.set('minDate', dateStr);
+            }
+        }
+    });
+    
+    const dateToPicker = flatpickr("#date_to", {
+        ...dateConfig,
+        onChange: function(selectedDates, dateStr) {
+            if (dateStr && dateFromPicker.selectedDates.length > 0) {
+                dateFromPicker.set('maxDate', dateStr);
+            }
+        }
+    });
+    
+    // Set initial constraints if dates are already selected
+    const dateFromValue = document.getElementById('date_from').value;
+    const dateToValue = document.getElementById('date_to').value;
+    
+    if (dateFromValue) {
+        dateToPicker.set('minDate', dateFromValue);
+    }
+    if (dateToValue) {
+        dateFromPicker.set('maxDate', dateToValue);
+    }
+});
+</script>
 {% endblock %}
