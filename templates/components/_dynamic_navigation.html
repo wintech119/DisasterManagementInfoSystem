@@ -55,7 +55,7 @@ Renders clean sidebar with MAIN, INVENTORY, OPERATIONS, MANAGEMENT sections
         
         {% for feature in category_features %}
             <a href="{{ url_for(feature.route) }}" 
-               class="sidebar-nav-item {% if active_page == feature.key %}active{% endif %}"
+               class="sidebar-nav-item {% if active_page == feature.id %}active{% endif %}"
                title="{{ feature.description }}">
                 <i class="bi {{ feature.icon }}"></i>
                 <span>{{ feature.name }}</span>
