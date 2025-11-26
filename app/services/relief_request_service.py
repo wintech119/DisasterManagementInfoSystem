@@ -94,14 +94,32 @@ def create_draft_request(agency_id: int, urgency_ind: str, eligible_event_id: Op
     
     Args:
         agency_id: ID of the requesting agency
-        urgency_ind: H/M/L urgency indicator
+        urgency_ind: H/M/L/C urgency indicator
         eligible_event_id: Optional associated event ID
         rqst_notes_text: Overall request notes
         user_email: Email of creating user for audit trail
         
     Returns:
         Newly created ReliefRqst instance
+        
+    Raises:
+        ValueError: If the agency, eligible event, or user cannot be found or provided values are invalid
     """
+    # Validate urgency indicator
+    if urgency_ind not in [URGENCY_HIGH, URGENCY_MEDIUM, URGENCY_LOW, URGENCY_CRITICAL]:
+        raise ValueError("Invalid urgency indicator. Must be one of H, M, L, or C.")
+    
+    # Validate agency exists
+    agency = Agency.query.get(agency_id)
+    if not agency:
+        raise ValueError(f"Agency with id {agency_id} not found")
+    
+    # Validate eligible event if provided
+    if eligible_event_id is not None:
+        event = Event.query.get(eligible_event_id)
+        if not event:
+            raise ValueError(f"Eligible event with id {eligible_event_id} not found")
+    
     relief_request = ReliefRqst()
     relief_request.agency_id = agency_id
     relief_request.request_date = date.today()
@@ -138,7 +156,7 @@ def add_or_update_request_item(reliefrqst_id: int, item_id: int, request_qty: De
         reliefrqst_id: Relief request ID
         item_id: Item ID from catalog
         request_qty: Requested quantity
-        urgency_ind: Item-level urgency (H/M/L)
+        urgency_ind: Item-level urgency (H/M/L/C)
         rqst_reason_desc: Justification for requesting this item (required for High urgency)
         required_by_date: Date when item must be delivered (YYYY-MM-DD format)
         user_email: User performing the action
@@ -149,7 +167,15 @@ def add_or_update_request_item(reliefrqst_id: int, item_id: int, request_qty: De
         
     Raises:
         OptimisticLockError: If version mismatch on update
+        ValueError: If quantity or urgency indicators are invalid
     """
+    # Validate inputs
+    if request_qty <= 0:
+        raise ValueError("Requested quantity must be greater than zero")
+    
+    if urgency_ind not in [URGENCY_HIGH, URGENCY_MEDIUM, URGENCY_LOW, URGENCY_CRITICAL]:
+        raise ValueError("Invalid item urgency indicator. Must be H, M, L, or C")
+    
     # Check if item already exists
     existing_item = ReliefRqstItem.query.filter_by(
         reliefrqst_id=reliefrqst_id,
