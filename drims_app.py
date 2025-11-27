@@ -108,6 +108,8 @@ def inject_csrf_token():
     """Make CSRF token available to all templates."""
     return dict(csrf_token=generate_csrf)
 
+from app.utils.timezone import now as get_now
+
 app.jinja_env.globals.update(
     has_role=has_role,
     has_all_roles=has_all_roles,
@@ -126,7 +128,8 @@ app.jinja_env.globals.update(
     get_user_features=lambda: FeatureRegistry.get_accessible_features(current_user),
     get_user_primary_role=lambda: FeatureRegistry.get_primary_role(current_user),
     get_role_display_name=FeatureRegistry.get_role_display_name,
-    get_feature_details=get_feature_details
+    get_feature_details=get_feature_details,
+    now=get_now
 )
 
 # Date formatting filter moved below to use timezone utilities
