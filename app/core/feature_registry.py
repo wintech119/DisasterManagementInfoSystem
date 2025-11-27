@@ -173,7 +173,7 @@ class FeatureRegistry:
         'funds_donations_report': {
             'name': 'Funds Donations Report',
             'description': 'View all monetary donations received',
-            'roles': list(EXECUTIVE_ROLES),
+            'roles': list(EXECUTIVE_ROLES) + ['LOGISTICS_MANAGER'],
             'route': 'reports.funds_donations',
             'url': '/reports/funds_donations',
             'icon': 'bi-currency-dollar',
