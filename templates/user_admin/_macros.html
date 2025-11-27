@@ -196,7 +196,7 @@
 {% macro last_login_display(last_login, never_text='Never logged in') %}
     {% if last_login %}
         <span title="{{ last_login.strftime('%Y-%m-%d %H:%M:%S') if last_login else '' }}">
-            {% set diff = (now() - last_login).days if last_login else 0 %}
+            {% set diff = (now - last_login).days if last_login else 0 %}
             {% if diff == 0 %}
                 <span class="text-success"><i class="bi bi-circle-fill icon-xxs"></i> Today</span>
             {% elif diff == 1 %}
