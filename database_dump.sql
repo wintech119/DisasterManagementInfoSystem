@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict AlAmNfugLI2IFnXQWhf01njQq048psKIFi2SNiFKZI6amGQfY7uXlQ58WmsgpRZ
+\restrict td4xpXJ9n98OWl2z9eEagudDWxdaWFieVk9XBcOa5U3flt4t3EeGCL5hSoH1aJA
 
 -- Dumped from database version 16.9 (415ebe8)
 -- Dumped by pg_dump version 16.10
@@ -224,6 +224,63 @@ CREATE TABLE public.currency (
     CONSTRAINT c_currency_1 CHECK ((status_code = ANY (ARRAY['A'::bpchar, 'I'::bpchar]))),
     CONSTRAINT c_currency_1a CHECK ((length((currency_name)::text) <= 130))
 );
+
+
+--
+-- Name: currency_rate; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.currency_rate (
+    currency_code character varying(3) NOT NULL,
+    rate_to_jmd numeric(18,8) NOT NULL,
+    source character varying(50) DEFAULT 'UNCONFIGURED'::character varying NOT NULL,
+    rate_date date NOT NULL,
+    create_dtime timestamp(0) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT c_currency_rate_code_upper CHECK (((currency_code)::text = upper((currency_code)::text))),
+    CONSTRAINT c_currency_rate_positive CHECK ((rate_to_jmd > (0)::numeric))
+);
+
+
+--
+-- Name: TABLE currency_rate; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.currency_rate IS 'Cached exchange rates to JMD from Frankfurter.app (ECB-backed). Used for display-only currency conversion.';
+
+
+--
+-- Name: COLUMN currency_rate.currency_code; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.currency_rate.currency_code IS 'ISO 4217 currency code (uppercase), e.g., USD, EUR, GBP';
+
+
+--
+-- Name: COLUMN currency_rate.rate_to_jmd; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.currency_rate.rate_to_jmd IS 'Exchange rate: how many JMD for 1 unit of the currency';
+
+
+--
+-- Name: COLUMN currency_rate.source; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.currency_rate.source IS 'Rate source identifier, default is FRANKFURTER_ECB';
+
+
+--
+-- Name: COLUMN currency_rate.rate_date; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.currency_rate.rate_date IS 'The date the rate applies to';
+
+
+--
+-- Name: COLUMN currency_rate.create_dtime; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.currency_rate.create_dtime IS 'Timestamp when the rate was cached';
 
 
 --
@@ -2225,6 +2282,19 @@ VED/VES	Venezuelan bolívar	Bs.	A	system	2025-11-24 02:50:25	system	2025-11-24 0
 
 
 --
+-- Data for Name: currency_rate; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.currency_rate (currency_code, rate_to_jmd, source, rate_date, create_dtime) FROM stdin;
+USD	157.50000000	MANUAL_INITIAL	2025-11-26	2025-11-26 20:35:25
+EUR	165.00000000	MANUAL_INITIAL	2025-11-26	2025-11-26 20:35:26
+TTD	23.00000000	MANUAL_INITIAL	2025-11-26	2025-11-26 20:35:26
+CUP	6.50000000	MANUAL_INITIAL	2025-11-26	2025-11-26 20:35:26
+EUR	181.44000000	LEGACY	2025-11-23	2025-11-26 20:45:36
+\.
+
+
+--
 -- Data for Name: custodian; Type: TABLE DATA; Schema: public; Owner: -
 --
 
@@ -2274,6 +2344,8 @@ COPY public.dnintake (donation_id, inventory_id, intake_date, comments_text, sta
 12	2	2025-11-25	\N	V	ADMIN	2025-11-25 18:49:42	ADMIN	2025-11-25 19:04:25	ADMIN	2025-11-25 19:04:25	2
 15	1	2025-11-26	\N	V	ADMIN	2025-11-26 10:25:08	ADMIN	2025-11-26 10:25:44	ADMIN	2025-11-26 10:25:44	2
 17	2	2025-11-26	\N	V	ADMIN	2025-11-26 13:01:36	ADMIN	2025-11-26 13:45:43	ADMIN	2025-11-26 13:45:43	2
+19	2	2025-11-26	\N	V	BRIAN	2025-11-26 16:39:47	MICHELLE	2025-11-26 16:40:08	MICHELLE	2025-11-26 16:40:08	2
+18	1	2025-11-26	\N	V	BRIAN	2025-11-26 16:39:08	MICHELLE	2025-11-26 16:40:15	MICHELLE	2025-11-26 16:40:15	2
 \.
 
 
@@ -2287,6 +2359,10 @@ COPY public.dnintake_item (donation_id, inventory_id, item_id, batch_no, batch_d
 15	1	5	SOAP-02	2025-11-26	2035-11-24	BOX	50.00	986.00	12.00	2.00	50000.00	V	TWO MORE WERE DEFECTIVE.	ADMIN	2025-11-26 10:25:08	ADMIN	2025-11-26 10:25:44	2
 17	2	2	WATA-03	2025-11-26	2035-11-24	GALLON	300.00	180.00	10.00	10.00	60000.00	V	\N	ADMIN	2025-11-26 13:01:36	ADMIN	2025-11-26 13:45:43	2
 17	2	6	BLANKET-FLEECE	2025-11-26	2035-11-24	UNIT	400.00	28.00	10.00	2.00	16000.00	V	\N	ADMIN	2025-11-26 13:01:36	ADMIN	2025-11-26 13:45:43	2
+19	2	5	B002	2025-09-25	2035-11-24	BOX	150.00	15.00	0.00	0.00	2250.00	V	\N	BRIAN	2025-11-26 16:39:47	MICHELLE	2025-11-26 16:40:08	2
+19	2	6	B002	2025-10-16	2035-11-24	UNIT	300.00	10.00	0.00	0.00	3000.00	V	\N	BRIAN	2025-11-26 16:39:47	MICHELLE	2025-11-26 16:40:08	2
+18	1	5	B001	2025-10-01	2035-11-24	BOX	2000.00	25.00	0.00	0.00	50000.00	V	\N	BRIAN	2025-11-26 16:39:08	MICHELLE	2025-11-26 16:40:15	2
+18	1	6	B001	2025-09-04	2035-11-24	UNIT	1000.00	10.00	0.00	0.00	10000.00	V	\N	BRIAN	2025-11-26 16:39:08	MICHELLE	2025-11-26 16:40:15	2
 \.
 
 
@@ -2297,6 +2373,8 @@ COPY public.dnintake_item (donation_id, inventory_id, item_id, batch_no, batch_d
 COPY public.donation (donation_id, donor_id, donation_desc, origin_country_id, origin_address1_text, origin_address2_text, event_id, custodian_id, received_date, tot_item_cost, storage_cost, haulage_cost, other_cost, other_cost_desc, status_code, comments_text, create_by_id, create_dtime, update_by_id, update_dtime, verify_by_id, verify_dtime, version_nbr) FROM stdin;
 15	1	CARE PACKAGE	826	\N	\N	1	1	2025-11-23	7000000.00	0.00	0.00	0.00	\N	P	\N	ADMIN	2025-11-25 17:27:15	ADMIN	2025-11-26 10:25:45	ADMIN	2025-11-26 10:24:05	5
 17	1	CRATE 10	170	\N	\N	1	1	2025-11-26	500000.00	20000.00	2200.00	3000.00	LABOUR COSTS	P	\N	BRIAN	2025-11-26 12:50:35	ADMIN	2025-11-26 13:45:43	ADMIN	2025-11-26 12:56:03	5
+19	1	BATCH #2 CRATE	826	\N	\N	1	1	2025-11-26	200000.00	0.00	0.00	0.00	\N	P	\N	BRIAN	2025-11-26 16:35:19	MICHELLE	2025-11-26 16:40:08	MICHELLE	2025-11-26 16:37:10	4
+18	1	BATCH #1 CRATE	533	\N	\N	1	1	2025-11-26	40000.00	0.00	0.00	0.00	\N	P	\N	BRIAN	2025-11-26 16:34:01	MICHELLE	2025-11-26 16:40:16	MICHELLE	2025-11-26 16:36:41	4
 13	1	CARE PACKAGE #10	52	\N	\N	1	1	2025-11-25	500000.00	20000.00	5000.00	3000.00	LOADERS COST	E	\N	BRIAN	2025-11-25 15:50:32	BRIAN	2025-11-25 15:50:32	BRIAN	2025-11-25 15:50:32	2
 16	1	GOODIES BAG 3	52	\N	\N	1	1	2025-11-25	200000.00	3000.00	2000.00	1000.00	LOADERS COST	P	\N	BRIAN	2025-11-25 17:51:40	ADMIN	2025-11-25 18:47:22	ADMIN	2025-11-25 18:03:33	6
 12	1	CARE PACKAGE	124	\N	\N	1	1	2025-11-25	2000000.00	7500.00	15000.00	100.00	LABOUR COST	P	\N	ADMIN	2025-11-25 15:03:48	ADMIN	2025-11-25 19:04:25	ADMIN	2025-11-25 15:14:25	4
@@ -2335,6 +2413,10 @@ COPY public.donation_item (donation_id, item_id, donation_type, item_qty, item_c
 17	6	GOODS	40.00	400.00	UNIT	\N	DONATION RECEIVED	V	\N	BRIAN	2025-11-26 12:52:51	ADMIN	2025-11-26 12:56:03	ADMIN	2025-11-26 12:56:03	2
 17	8	FUNDS	1.00	2000000.00	\N	JMD	DONATION RECEIVED	V	\N	BRIAN	2025-11-26 12:50:35	ADMIN	2025-11-26 12:56:03	ADMIN	2025-11-26 12:56:03	3
 17	2	GOODS	200.00	300.00	GALLON	\N	DONATION RECEIVED	V	\N	ADMIN	2025-11-26 12:56:03	ADMIN	2025-11-26 12:56:03	ADMIN	2025-11-26 12:56:03	1
+18	5	GOODS	25.00	2000.00	BOX	\N	DONATION RECEIVED	V	\N	BRIAN	2025-11-26 16:34:01	MICHELLE	2025-11-26 16:36:41	MICHELLE	2025-11-26 16:36:41	2
+18	6	GOODS	10.00	1000.00	UNIT	\N	DONATION RECEIVED	V	\N	BRIAN	2025-11-26 16:34:01	MICHELLE	2025-11-26 16:36:41	MICHELLE	2025-11-26 16:36:41	2
+19	5	GOODS	15.00	150.00	BOX	\N	DONATION RECEIVED	V	\N	BRIAN	2025-11-26 16:35:19	MICHELLE	2025-11-26 16:37:10	MICHELLE	2025-11-26 16:37:10	2
+19	6	GOODS	10.00	300.00	UNIT	\N	DONATION RECEIVED	V	\N	BRIAN	2025-11-26 16:35:19	MICHELLE	2025-11-26 16:37:10	MICHELLE	2025-11-26 16:37:10	2
 \.
 
 
@@ -2361,9 +2443,11 @@ COPY public.event (event_id, event_type, start_date, event_name, event_desc, imp
 --
 
 COPY public.inventory (inventory_id, item_id, usable_qty, reserved_qty, defective_qty, expired_qty, uom_code, last_verified_by, last_verified_date, status_code, comments_text, create_by_id, create_dtime, update_by_id, update_dtime, version_nbr, reorder_qty) FROM stdin;
-1	5	1430.00	0.00	17.00	3.00	BOX	\N	\N	A	\N	ADMIN	2025-11-25 18:47:22	ADMIN	2025-11-26 10:25:45	2	0.00
 2	2	268.00	0.00	20.00	12.00	GALLON	\N	\N	A	\N	ADMIN	2025-11-25 19:04:25	ADMIN	2025-11-26 13:45:43	2	0.00
-2	6	28.00	0.00	10.00	2.00	UNIT	\N	\N	A	\N	ADMIN	2025-11-26 13:45:43	ADMIN	2025-11-26 13:45:43	1	0.00
+2	5	15.00	0.00	0.00	0.00	BOX	\N	\N	A	\N	MICHELLE	2025-11-26 16:40:08	MICHELLE	2025-11-26 16:40:08	1	0.00
+2	6	38.00	0.00	10.00	2.00	UNIT	\N	\N	A	\N	ADMIN	2025-11-26 13:45:43	MICHELLE	2025-11-26 16:40:08	2	0.00
+1	5	1455.00	0.00	17.00	3.00	BOX	\N	\N	A	\N	ADMIN	2025-11-25 18:47:22	MICHELLE	2025-11-26 16:40:15	3	0.00
+1	6	10.00	0.00	0.00	0.00	UNIT	\N	\N	A	\N	MICHELLE	2025-11-26 16:40:16	MICHELLE	2025-11-26 16:40:16	1	0.00
 \.
 
 
@@ -2403,6 +2487,10 @@ COPY public.itembatch (batch_id, inventory_id, item_id, batch_no, batch_date, ex
 3	1	5	SOAP-02	2025-11-26	2035-11-24	986.0000	0.0000	12.0000	2.0000	BOX	\N	50.00	\N	\N	A	TWO MORE WERE DEFECTIVE.	ADMIN	2025-11-26 10:25:45	ADMIN	2025-11-26 10:25:45	1
 4	2	2	WATA-03	2025-11-26	2035-11-24	180.0000	0.0000	10.0000	10.0000	GALLON	\N	300.00	\N	\N	A	\N	ADMIN	2025-11-26 13:45:43	ADMIN	2025-11-26 13:45:43	1
 5	2	6	BLANKET-FLEECE	2025-11-26	2035-11-24	28.0000	0.0000	10.0000	2.0000	UNIT	\N	400.00	\N	\N	A	\N	ADMIN	2025-11-26 13:45:43	ADMIN	2025-11-26 13:45:43	1
+6	2	5	B002	2025-09-25	2035-11-24	15.0000	0.0000	0.0000	0.0000	BOX	\N	150.00	\N	\N	A	\N	MICHELLE	2025-11-26 16:40:08	MICHELLE	2025-11-26 16:40:08	1
+7	2	6	B002	2025-10-16	2035-11-24	10.0000	0.0000	0.0000	0.0000	UNIT	\N	300.00	\N	\N	A	\N	MICHELLE	2025-11-26 16:40:08	MICHELLE	2025-11-26 16:40:08	1
+8	1	5	B001	2025-10-01	2035-11-24	25.0000	0.0000	0.0000	0.0000	BOX	\N	2000.00	\N	\N	A	\N	MICHELLE	2025-11-26 16:40:15	MICHELLE	2025-11-26 16:40:15	1
+9	1	6	B001	2025-09-04	2035-11-24	10.0000	0.0000	0.0000	0.0000	UNIT	\N	1000.00	\N	\N	A	\N	MICHELLE	2025-11-26 16:40:16	MICHELLE	2025-11-26 16:40:16	1
 \.
 
 
@@ -2445,6 +2533,10 @@ COPY public.location (location_id, inventory_id, location_desc, status_code, com
 --
 
 COPY public.notification (id, user_id, warehouse_id, reliefrqst_id, title, message, type, status, link_url, payload, is_archived, created_at) FROM stdin;
+1	4	\N	2	New Relief Request Submitted	Agency NARCON submitted RR-000002 for event: Hurricane Melissa 2025. Click to review eligibility.	reliefrqst_submitted	read	/eligibility/review/2	\N	f	2025-11-26 16:03:46.85706
+3	3	\N	2	Relief Request Approved	RR-000002 from NARCON (Event: Hurricane Melissa 2025) approved by Adam Graham. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/2/prepare	\N	f	2025-11-26 16:20:03.395275
+4	2	\N	2	Relief Request Approved	RR-000002 from NARCON (Event: Hurricane Melissa 2025) approved by Adam Graham. Click to prepare fulfillment package.	reliefrqst_approved	unread	/packaging/2/prepare	\N	f	2025-11-26 16:20:03.438275
+2	1	\N	2	Relief Request Approved	RR-000002 from NARCON (Event: Hurricane Melissa 2025) approved by Adam Graham. Click to prepare fulfillment package.	reliefrqst_approved	read	/packaging/2/prepare	\N	f	2025-11-26 16:20:03.347936
 \.
 
 
@@ -2513,6 +2605,8 @@ COPY public.reliefpkg_item (reliefpkg_id, fr_inventory_id, batch_id, item_id, it
 
 COPY public.reliefrqst (reliefrqst_id, agency_id, request_date, urgency_ind, status_code, create_by_id, create_dtime, review_by_id, review_dtime, action_by_id, action_dtime, version_nbr, eligible_event_id, rqst_notes_text, review_notes_text, tracking_no, status_reason_desc, receive_by_id, receive_dtime) FROM stdin;
 1	1	2025-11-25	M	0	MICHELLE	2025-11-25 13:44:58	\N	\N	\N	\N	1	1	Testing 2025-11-25	\N	43EEA4F	\N	\N	\N
+2	1	2025-11-26	M	3	BRIAN	2025-11-26 16:01:16	ADAM	2025-11-26 16:20:03	\N	\N	3	1		\N	365DCD8	\N	\N	\N
+3	1	2025-11-26	M	0	ADMIN	2025-11-26 16:26:11	\N	\N	\N	\N	1	1		\N	432B960	\N	\N	\N
 \.
 
 
@@ -2522,6 +2616,8 @@ COPY public.reliefrqst (reliefrqst_id, agency_id, request_date, urgency_ind, sta
 
 COPY public.reliefrqst_item (reliefrqst_id, item_id, request_qty, issue_qty, urgency_ind, rqst_reason_desc, required_by_date, status_code, status_reason_desc, action_by_id, action_dtime, version_nbr) FROM stdin;
 1	5	10.00	0.00	H	Needed for sanitizing	2025-11-25	R	\N	\N	\N	1
+2	5	60.00	0.00	M		\N	R	\N	\N	\N	1
+2	6	37.00	0.00	M		\N	R	\N	\N	\N	1
 \.
 
 
@@ -2656,9 +2752,9 @@ SHEET	Sheets	\N	SYSTEM	2025-11-24 02:54:50	SYSTEM	2025-11-24 02:54:50	1	A
 
 COPY public."user" (user_id, email, password_hash, first_name, last_name, full_name, is_active, organization, job_title, phone, timezone, language, notification_preferences, assigned_warehouse_id, last_login_at, create_dtime, update_dtime, username, password_algo, mfa_enabled, mfa_secret, failed_login_count, lock_until_at, password_changed_at, agency_id, status_code, version_nbr, user_name) FROM stdin;
 1	admin@odpem.gov.jm	scrypt:32768:8:1$tw5i5qADic8YJpSt$e7e234d2febee94551bf5b8f3f2a065faefefb5f4a00f73c5c66f3c02ce3c3eb68a340372989f7bff2fb5e67e3ec5b7149282dc65011b19e8dc8e811da413a02	System	Administrator	System Administrator	t	OFFICE OF DISASTER PREPAREDNESS AND EMERGENCY MANAGEMENT (ODPEM)	System Administrator	\N	America/Jamaica	en	\N	\N	\N	2025-11-24 03:00:14.938854	2025-11-24 03:03:25.800858	\N	scrypt	f	\N	0	\N	\N	\N	A	2	ADMIN
-3	michelle.ried@odpem.gov.jm	scrypt:32768:8:1$ZOaMgqafSj0XlWjy$e3a4cd118a6b35c3f4ca62178c167a9f0e3a69a7c71b4fbe49158ae78ab81c44b938dde1fb4f4ac8b9dc3ab59626d52b417a432e8d150af4867ec054a72294ed	Michelle	Reid	Michelle Reid	t	OFFICE OF DISASTER PREPAREDNESS AND EMERGENCY MANAGEMENT (ODPEM)	Logistics Manager	\N	America/Jamaica	en	\N	\N	\N	2025-11-25 09:28:36.488576	2025-11-25 09:28:36.48859	\N	argon2id	f	\N	0	\N	\N	\N	A	1	MICHELLE
-4	adam.graham@odpem.gov.jm	scrypt:32768:8:1$PWCNt3Prq7SwkxZJ$f6553114878a24a8114a7d3d29d43ad509871bf1cd5bd3a3a5b709e86dcf0016125b503623397d8aac8526bd04a33a2a96ffec98ce720c3195bf1c2e7e29f64b	Adam	Graham	Adam Graham	t	OFFICE OF DISASTER PREPAREDNESS AND EMERGENCY MANAGEMENT (ODPEM)	\N	8769989011	America/Jamaica	en	\N	\N	\N	2025-11-26 09:36:58.206326	2025-11-26 09:36:58.206339	\N	argon2id	f	\N	0	\N	\N	\N	A	1	ADAM
 2	brian.stewat@odpem.gov.jm	scrypt:32768:8:1$EYdcKTp2jpBtoSg0$d3d1cf7f6e9dbaafe370311f3f2bb444e4361e735ff1ed0c06ebc9b116a2c01a3b57278b4969cc4817acd9d895ad37d3973892ca749477b5f7c8ecb29d8bd7cb	Brian	Stewart	Brian Stewart	t	OFFICE OF DISASTER PREPAREDNESS AND EMERGENCY MANAGEMENT (ODPEM)	Logistics Officer	\N	America/Jamaica	en	\N	\N	2025-11-26 12:48:17.609233	2025-11-25 09:27:13.737573	2025-11-26 17:48:17.457716	\N	argon2id	f	\N	0	\N	\N	\N	A	2	BRIAN
+4	adam.graham@odpem.gov.jm	scrypt:32768:8:1$PWCNt3Prq7SwkxZJ$f6553114878a24a8114a7d3d29d43ad509871bf1cd5bd3a3a5b709e86dcf0016125b503623397d8aac8526bd04a33a2a96ffec98ce720c3195bf1c2e7e29f64b	Adam	Graham	Adam Graham	t	OFFICE OF DISASTER PREPAREDNESS AND EMERGENCY MANAGEMENT (ODPEM)	\N	8769989011	America/Jamaica	en	\N	\N	2025-11-26 14:12:04.81633	2025-11-26 09:36:58.206326	2025-11-26 19:12:04.660117	\N	argon2id	f	\N	0	\N	\N	\N	A	2	ADAM
+3	michelle.ried@odpem.gov.jm	scrypt:32768:8:1$ZOaMgqafSj0XlWjy$e3a4cd118a6b35c3f4ca62178c167a9f0e3a69a7c71b4fbe49158ae78ab81c44b938dde1fb4f4ac8b9dc3ab59626d52b417a432e8d150af4867ec054a72294ed	Michelle	Reid	Michelle Reid	t	OFFICE OF DISASTER PREPAREDNESS AND EMERGENCY MANAGEMENT (ODPEM)	Logistics Manager	\N	America/Jamaica	en	\N	\N	2025-11-26 16:28:20.855035	2025-11-25 09:28:36.488576	2025-11-26 21:28:20.72781	\N	argon2id	f	\N	0	\N	\N	\N	A	3	MICHELLE
 \.
 
 
@@ -2764,7 +2860,7 @@ SELECT pg_catalog.setval('public.donation_doc_document_id_seq', 4, true);
 -- Name: donation_donation_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.donation_donation_id_seq', 17, true);
+SELECT pg_catalog.setval('public.donation_donation_id_seq', 19, true);
 
 
 --
@@ -2792,7 +2888,7 @@ SELECT pg_catalog.setval('public.item_new_item_id_seq', 35, true);
 -- Name: itembatch_batch_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.itembatch_batch_id_seq', 5, true);
+SELECT pg_catalog.setval('public.itembatch_batch_id_seq', 9, true);
 
 
 --
@@ -2820,7 +2916,7 @@ SELECT pg_catalog.setval('public.location_location_id_seq', 1, false);
 -- Name: notification_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.notification_id_seq', 1, false);
+SELECT pg_catalog.setval('public.notification_id_seq', 4, true);
 
 
 --
@@ -2841,7 +2937,7 @@ SELECT pg_catalog.setval('public.reliefpkg_reliefpkg_id_seq', 1, false);
 -- Name: reliefrqst_reliefrqst_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.reliefrqst_reliefrqst_id_seq', 1, true);
+SELECT pg_catalog.setval('public.reliefrqst_reliefrqst_id_seq', 3, true);
 
 
 --
@@ -3035,6 +3131,14 @@ ALTER TABLE ONLY public.batchlocation
 
 ALTER TABLE ONLY public.currency
     ADD CONSTRAINT pk_currency PRIMARY KEY (currency_code);
+
+
+--
+-- Name: currency_rate pk_currency_rate; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.currency_rate
+    ADD CONSTRAINT pk_currency_rate PRIMARY KEY (currency_code, rate_date);
 
 
 --
@@ -3647,6 +3751,20 @@ CREATE INDEX dk_xfreturn_2 ON public.xfreturn USING btree (fr_inventory_id);
 --
 
 CREATE INDEX dk_xfreturn_3 ON public.xfreturn USING btree (to_inventory_id);
+
+
+--
+-- Name: idx_currency_rate_code; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_currency_rate_code ON public.currency_rate USING btree (currency_code);
+
+
+--
+-- Name: idx_currency_rate_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_currency_rate_date ON public.currency_rate USING btree (rate_date DESC);
 
 
 --
@@ -4759,5 +4877,5 @@ ALTER TABLE ONLY public.xfreturn_item
 -- PostgreSQL database dump complete
 --
 
-\unrestrict AlAmNfugLI2IFnXQWhf01njQq048psKIFi2SNiFKZI6amGQfY7uXlQ58WmsgpRZ
+\unrestrict td4xpXJ9n98OWl2z9eEagudDWxdaWFieVk9XBcOa5U3flt4t3EeGCL5hSoH1aJA
 
