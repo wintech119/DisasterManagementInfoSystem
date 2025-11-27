@@ -173,8 +173,9 @@
                                 <input type="tel" 
                                        name="phone" 
                                        id="phone" 
-                                       class="form-control"
-                                       placeholder="+1 (876) XXX-XXXX">
+                                       class="form-control phone-mask"
+                                       maxlength="20"
+                                       placeholder="+1 (___) ___-____">
                             </div>
                         </div>
                         
@@ -325,6 +326,7 @@
 {% endblock %}
 
 {% block extra_scripts %}
+<script nonce="{{ csp_nonce() }}" src="{{ url_for('static', filename='js/phone-mask.js') }}"></script>
 <script nonce="{{ csp_nonce() }}">
 // Auto-generate user_name from email
 function generateUserName() {

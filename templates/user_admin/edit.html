@@ -204,9 +204,10 @@
                                 <input type="tel" 
                                        name="phone" 
                                        id="phone" 
-                                       class="form-control" 
+                                       class="form-control phone-mask" 
+                                       maxlength="20"
                                        value="{{ user.phone or '' }}"
-                                       placeholder="+1 (876) XXX-XXXX">
+                                       placeholder="+1 (___) ___-____">
                             </div>
                         </div>
                         
@@ -445,6 +446,7 @@
 {% endblock %}
 
 {% block extra_scripts %}
+<script nonce="{{ csp_nonce() }}" src="{{ url_for('static', filename='js/phone-mask.js') }}"></script>
 <script nonce="{{ csp_nonce() }}">
 // Update user_name character count
 function updateUserNameCount() {
