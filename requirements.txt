@@ -9,3 +9,14 @@ Flask-WTF==1.2.1
 Flask-WTF==1.2.1
 werkzeug
 requests
+click
+Flask==3.0.3
+Flask-Login==0.6.3
+Flask-SQLAlchemy==3.1.1
+Flask-WTF==1.2.1
+pandas>=2.2.0,<2.3.0
+psycopg2-binary>=2.9.0,<3.0.0
+python-dotenv==1.0.1
+requests
+SqlAlchemy>=2.0.30,<2.1.0
+werkzeug
