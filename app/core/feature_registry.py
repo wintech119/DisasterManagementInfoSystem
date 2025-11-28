@@ -457,7 +457,7 @@ class FeatureRegistry:
             'priority': 7
         },
         'aid_item_movement_detail': {
-            'name': 'Item Movement Detail',
+            'name': 'Item Distribution Dashboard',
             'description': 'Drill-down view of aid movement for a specific item across warehouses',
             'roles': list(EXECUTIVE_ROLES) + ['LOGISTICS_MANAGER'],
             'route': 'dashboard.aid_item_movement_detail',
