@@ -1142,6 +1142,8 @@ def aid_item_movement_detail():
     detail_rows = []
     selected_item = None
     selected_category = None
+    selected_warehouse = None
+    movement_type_label = None
     has_filter = item_id or category_id
     
     if has_filter:
@@ -1149,6 +1151,15 @@ def aid_item_movement_detail():
             selected_item = Item.query.get(int(item_id))
         if category_id:
             selected_category = ItemCategory.query.get(int(category_id))
+
+        if warehouse_id:
+            selected_warehouse = next((w for w in warehouses if str(w.warehouse_id) == warehouse_id), None)
+
+        if movement_type:
+            movement_type_label = {
+                'IN': 'Received Only',
+                'OUT': 'Issued Only'
+            }.get(movement_type, 'Received & Issued')
         
         base_conditions = []
         params = {}
@@ -1320,6 +1331,8 @@ def aid_item_movement_detail():
         'warehouses': warehouses,
         'selected_item': selected_item,
         'selected_category': selected_category,
+        'selected_warehouse': selected_warehouse,
+        'movement_type_label': movement_type_label,
         'has_filter': has_filter,
         'summary_totals': summary_totals,
         'detail_rows': detail_rows,

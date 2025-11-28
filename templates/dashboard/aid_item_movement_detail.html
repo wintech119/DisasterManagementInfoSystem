@@ -263,6 +263,30 @@
             Item: <strong>{{ selected_item.item_name }}</strong>
         </span>
         {% endif %}
+        {% if selected_warehouse %}
+        <span class="selected-item-badge">
+            <i class="bi bi-house"></i>
+            Warehouse: <strong>{{ selected_warehouse.warehouse_name }}</strong>
+        </span>
+        {% endif %}
+        {% if movement_type_label %}
+        <span class="selected-item-badge">
+            <i class="bi bi-arrow-left-right"></i>
+            Movement: <strong>{{ movement_type_label }}</strong>
+        </span>
+        {% endif %}
+        {% if filters.start_date %}
+        <span class="selected-item-badge">
+            <i class="bi bi-calendar3"></i>
+            From: <strong>{{ filters.start_date }}</strong>
+        </span>
+        {% endif %}
+        {% if filters.end_date %}
+        <span class="selected-item-badge">
+            <i class="bi bi-calendar2-check"></i>
+            To: <strong>{{ filters.end_date }}</strong>
+        </span>
+        {% endif %}
     </div>
 
     {% set summary_metrics = [
