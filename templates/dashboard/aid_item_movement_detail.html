@@ -115,18 +115,29 @@
             <div class="card-body">
                 <form method="get" action="{{ url_for('dashboard.aid_item_movement_detail') }}" id="filterForm">
                     <div class="row g-3 align-items-end">
+                        <div class="col-12 col-md-6 col-xl-2">
+                            <label for="category_id" class="form-label small fw-semibold">Category</label>
+                            <select class="form-select" id="category_id" name="category_id">
+                                <option value="">All Categories</option>
+                                {% for category in categories %}
+                                <option value="{{ category.category_id }}" {% if filters.category_id == category.category_id|string %}selected{% endif %}>
+                                    {{ category.category_desc }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
                         <div class="col-12 col-md-6 col-xl-3">
                             <label for="item_id" class="form-label small fw-semibold">Item <span class="text-danger">*</span></label>
                             <select class="form-select" id="item_id" name="item_id" required>
                                 <option value="">-- Select an Item --</option>
                                 {% for item in items %}
-                                <option value="{{ item.item_id }}" {% if filters.item_id == item.item_id|string %}selected{% endif %}>
+                                <option value="{{ item.item_id }}" data-category="{{ item.category_id }}" {% if filters.item_id == item.item_id|string %}selected{% endif %}>
                                     {{ item.item_name }}
                                 </option>
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-12 col-sm-6 col-md-3 col-xl-2">
+                        <div class="col-12 col-sm-6 col-md-4 col-xl-2">
                             <label for="warehouse_id" class="form-label small fw-semibold">Warehouse</label>
                             <select class="form-select" id="warehouse_id" name="warehouse_id">
                                 <option value="">All Warehouses</option>
@@ -137,7 +148,7 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-12 col-sm-6 col-md-3 col-xl-2">
+                        <div class="col-12 col-sm-6 col-md-4 col-xl-2">
                             <label for="movement_type" class="form-label small fw-semibold">Movement Type</label>
                             <select class="form-select" id="movement_type" name="movement_type">
                                 <option value="">Received & Issued</option>
@@ -145,7 +156,7 @@
                                 <option value="OUT" {% if filters.movement_type == 'OUT' %}selected{% endif %}>Issued Only</option>
                             </select>
                         </div>
-                        <div class="col-6 col-sm-6 col-md-3 col-xl-2">
+                        <div class="col-6 col-sm-6 col-md-4 col-xl-1">
                             <label for="start_date" class="form-label small fw-semibold">Date From</label>
                             <div class="date-input-wrapper">
                                 <input type="text" class="form-control" id="start_date" name="start_date" 
@@ -153,7 +164,7 @@
                                 <i class="bi bi-calendar3 calendar-icon"></i>
                             </div>
                         </div>
-                        <div class="col-6 col-sm-6 col-md-3 col-xl-1">
+                        <div class="col-6 col-sm-6 col-md-4 col-xl-1">
                             <label for="end_date" class="form-label small fw-semibold">Date To</label>
                             <div class="date-input-wrapper">
                                 <input type="text" class="form-control" id="end_date" name="end_date" 
@@ -161,7 +172,7 @@
                                 <i class="bi bi-calendar3 calendar-icon"></i>
                             </div>
                         </div>
-                        <div class="col-12 col-md-6 col-xl-2 d-flex gap-2 filter-buttons">
+                        <div class="col-12 col-md-4 col-xl-1 d-flex gap-2 filter-buttons">
                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-search"></i> Filter
                             </button>
@@ -314,6 +325,40 @@ document.addEventListener('DOMContentLoaded', function() {
     if (endDateValue) {
         startDatePicker.set('maxDate', endDateValue);
     }
+    
+    const categorySelect = document.getElementById('category_id');
+    const itemSelect = document.getElementById('item_id');
+    const allItemOptions = Array.from(itemSelect.querySelectorAll('option[data-category]'));
+    const defaultOption = itemSelect.querySelector('option[value=""]');
+    
+    function filterItemsByCategory() {
+        const selectedCategoryId = categorySelect.value;
+        const currentItemValue = itemSelect.value;
+        
+        while (itemSelect.options.length > 1) {
+            itemSelect.remove(1);
+        }
+        
+        let itemFound = false;
+        allItemOptions.forEach(function(option) {
+            if (!selectedCategoryId || option.getAttribute('data-category') === selectedCategoryId) {
+                const newOption = option.cloneNode(true);
+                itemSelect.appendChild(newOption);
+                if (newOption.value === currentItemValue) {
+                    newOption.selected = true;
+                    itemFound = true;
+                }
+            }
+        });
+        
+        if (!itemFound && currentItemValue) {
+            itemSelect.value = '';
+        }
+    }
+    
+    categorySelect.addEventListener('change', filterItemsByCategory);
+    
+    filterItemsByCategory();
 });
 </script>
 {% endblock %}

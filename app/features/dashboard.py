@@ -9,7 +9,7 @@ from flask import Blueprint, render_template, request, flash, abort
 from flask_login import login_required, current_user
 from sqlalchemy import func, desc, or_, and_, extract
 from app.db.models import (
-    db, Inventory, Item, Warehouse, 
+    db, Inventory, Item, ItemCategory, Warehouse, 
     Event, Donor, Agency, User, ReliefRqst, ReliefRequestFulfillmentLock, ReliefPkg, ReliefPkgItem,
     Donation, DonationItem, Country
 )
@@ -1112,23 +1112,25 @@ def aid_movement_dashboard():
 @role_required('ODPEM_DG', 'ODPEM_DDG', 'ODPEM_DIR_PEOD', 'LOGISTICS_MANAGER')
 def aid_item_movement_detail():
     """
-    Item Movement Detail Dashboard - Drill-down view for a specific item's movements.
+    Item Distribution Dashboard - Drill-down view for a specific item's movements.
     
     Access: DG, Deputy DG, Director PEOD, Logistics Manager
     
     Displays:
-    - Filters: Item selection (required), warehouse, movement type, date range
+    - Filters: Category, Item selection (required), warehouse, movement type, date range
     - Summary Cards: Total Received, Total Issued, In Store (for selected item)
     - Detail Table: Per-warehouse breakdown for the selected item
     """
     from sqlalchemy import text
     
+    category_id = request.args.get('category_id', '')
     item_id = request.args.get('item_id', '')
     warehouse_id = request.args.get('warehouse_id', '')
     movement_type = request.args.get('movement_type', '')
     start_date = request.args.get('start_date', '')
     end_date = request.args.get('end_date', '')
     
+    categories = ItemCategory.query.filter_by(status_code='A').order_by(ItemCategory.category_desc).all()
     items = Item.query.filter_by(status_code='A').order_by(Item.item_name).all()
     warehouses = Warehouse.query.filter_by(status_code='A').order_by(Warehouse.warehouse_name).all()
     
@@ -1225,6 +1227,7 @@ def aid_item_movement_detail():
                 })
     
     filters = {
+        'category_id': category_id,
         'item_id': item_id,
         'warehouse_id': warehouse_id,
         'movement_type': movement_type,
@@ -1233,6 +1236,7 @@ def aid_item_movement_detail():
     }
     
     context = {
+        'categories': categories,
         'items': items,
         'warehouses': warehouses,
         'selected_item': selected_item,
