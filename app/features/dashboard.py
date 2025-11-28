@@ -981,6 +981,7 @@ def aid_movement_dashboard():
     item_search = request.args.get('item_search', '')
     date_from = request.args.get('date_from', '')
     date_to = request.args.get('date_to', '')
+    movement_type = request.args.get('movement_type', '')
     page = request.args.get('page', 1, type=int)
     per_page = 25
     
@@ -1004,6 +1005,10 @@ def aid_movement_dashboard():
     if date_to:
         base_conditions.append("t.created_at <= (:date_to)::date + interval '1 day'")
         params['date_to'] = date_to
+    
+    if movement_type:
+        base_conditions.append("t.ttype = :movement_type")
+        params['movement_type'] = movement_type
     
     where_clause = "WHERE " + " AND ".join(base_conditions) if base_conditions else ""
     
@@ -1085,7 +1090,8 @@ def aid_movement_dashboard():
         'warehouse_id': warehouse_id,
         'item_search': item_search,
         'date_from': date_from,
-        'date_to': date_to
+        'date_to': date_to,
+        'movement_type': movement_type
     }
     
     context = {

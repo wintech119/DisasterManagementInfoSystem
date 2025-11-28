@@ -133,7 +133,15 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-6 col-sm-6 col-lg-2">
+                        <div class="col-12 col-sm-6 col-lg-2">
+                            <label for="movement_type" class="form-label small fw-semibold">Movement Type</label>
+                            <select class="form-select" id="movement_type" name="movement_type">
+                                <option value="">All Movements</option>
+                                <option value="IN" {% if filters.movement_type == 'IN' %}selected{% endif %}>Received (IN)</option>
+                                <option value="OUT" {% if filters.movement_type == 'OUT' %}selected{% endif %}>Issued (OUT)</option>
+                            </select>
+                        </div>
+                        <div class="col-6 col-sm-6 col-lg-1">
                             <label for="date_from" class="form-label small fw-semibold">Date From</label>
                             <div class="date-input-wrapper">
                                 <input type="text" class="form-control" id="date_from" name="date_from" 
@@ -141,7 +149,7 @@
                                 <i class="bi bi-calendar3 calendar-icon"></i>
                             </div>
                         </div>
-                        <div class="col-6 col-sm-6 col-lg-2">
+                        <div class="col-6 col-sm-6 col-lg-1">
                             <label for="date_to" class="form-label small fw-semibold">Date To</label>
                             <div class="date-input-wrapper">
                                 <input type="text" class="form-control" id="date_to" name="date_to" 
@@ -149,7 +157,7 @@
                                 <i class="bi bi-calendar3 calendar-icon"></i>
                             </div>
                         </div>
-                        <div class="col-12 col-lg-3 d-flex align-items-end gap-2 filter-buttons">
+                        <div class="col-12 col-lg-2 d-flex align-items-end gap-2 filter-buttons">
                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-search"></i> Filter
                             </button>
