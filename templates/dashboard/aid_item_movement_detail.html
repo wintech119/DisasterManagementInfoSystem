@@ -127,8 +127,8 @@
                             </select>
                         </div>
                         <div class="col-12 col-md-6 col-lg-3">
-                            <label for="item_id" class="form-label small fw-semibold">Item <span class="text-danger">*</span></label>
-                            <select class="form-select" id="item_id" name="item_id" required>
+                            <label for="item_id" class="form-label small fw-semibold">Item</label>
+                            <select class="form-select" id="item_id" name="item_id">
                                 <option value="">-- Select an Item --</option>
                                 {% for item in items %}
                                 <option value="{{ item.item_id }}" data-category="{{ item.category_id }}" {% if filters.item_id == item.item_id|string %}selected{% endif %}>
