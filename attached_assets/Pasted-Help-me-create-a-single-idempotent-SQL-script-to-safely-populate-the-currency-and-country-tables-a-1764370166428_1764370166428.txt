@@ -1,0 +1,269 @@
+Help me create a single, idempotent SQL script to safely populate the currency and country tables (and optionally parish) using the definitions and inserts below.
+
+🔒 Critical constraints
+
+DO NOT:
+
+Drop or alter existing constraints in a breaking way.
+
+Drop or recreate existing tables.
+
+Remove or modify existing rows.
+
+The script must be idempotent:
+
+Safe to run multiple times.
+
+If rows already exist (same PK or unique key), do not error or duplicate.
+
+Only add:
+
+Missing columns/checks/indexes that are already intended in the design.
+
+Missing rows in currency, country, and parish.
+
+📦 Current intended DDL & data (from my existing script)
+
+Use this as the source of truth for content, but make it safe:
+
+create table currency
+(
+    currency_code varchar(10) not null
+        constraint pk_currency primary key,
+    currency_name citext not null
+        constraint c_currency_1a check(length(currency_name) <= 130)
+        constraint uk_currency unique,
+    currency_sign varchar(6) not null,
+    status_code char(1) not null
+        constraint c_currency_1 check (status_code in ('A','I')),
+    create_by_id varchar(20) not null,
+    create_dtime timestamp(0) without time zone not null,
+    update_by_id varchar(20) not null,
+    update_dtime timestamp(0) without time zone not null,
+    version_nbr integer not null
+);
+
+insert into currency values ('JMD','Jamaican dollar','J$','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('USD','US Dollar','$','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('CAD','Canadian dollar','C$','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('GBP','Pound sterling','£','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('EUR','Euro','€','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('XCD','East Caribbean dollar','$','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('JPY','Japanese yen','¥','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('CNY','Chinese yuan','元','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('BSD','Bahamian dollar','B$','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('BBD','Barbadian dollar','Bds$','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('KYD','Cayman Islands dollar','CI$','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('TTD','Trinidad and Tobago dollar','TT$','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('GYD','Guyanese dollar','G$','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('BMD','Bermudian dollar','$','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('MXN','Mexican peso','$','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('KRW','South Korean won','₩','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('BRL','Brazilian real','R$','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('COP','Colombian peso','$','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('DKK','Danish krone','kr','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('NOK','Norwegian krone','kr','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('SEK','Swedish krona','kr','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('ISK','Icelandic króna','kr','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('CHF','Swiss franc','Fr','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('UAH','Ukrainian hryvnia','₴','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('AWG','Aruban florin','ƒ','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('CUP','Cuban peso','₱','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('XCG','Caribbean guilder','Cg','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('DOP','Dominican peso','RD$','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('ARS','Argentine peso','$','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('BOB','Bolivian boliviano','Bs','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('CLP','Chilean peso','$','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('FKP','Falkland Islands pound','£','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('PYG','Paraguayan guaraní','₲','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('PEN','Peruvian sol','S/.','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('SRD','Surinamese dollar','Sr$','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('UYU','Uruguayan peso','$U','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into currency values ('VED/VES','Venezuelan bolívar','Bs.','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+
+/*
+create unique index uk_country on country(country_name);
+create table country
+(
+    country_id smallint not null
+        constraint pk_country primary key,
+    country_name citext not null
+        constraint c_country_1 check(length(country_name) <= 120),
+    currency_code varchar(10) not null
+        constraint fk_country_currency references currency,
+    status_code char(1) not null
+        constraint c_country_2 check (status_code in ('A','I')),
+    create_by_id varchar(20) not null,
+    create_dtime timestamp(0) without time zone not null,
+    update_by_id varchar(20) not null,
+    update_dtime timestamp(0) without time zone not null,
+    version_nbr integer not null
+);
+*/
+alter table country alter column country_name type citext;
+alter table country add constraint c_country_1 check(length(country_name) <= 120);
+
+alter table country
+    add column currency_code varchar(10) not null
+        constraint fk_country_currency references currency,
+    add column status_code char(1) not null
+        constraint c_country_2 check (status_code in ('A','I')),
+    add column create_by_id varchar(20) not null,
+    add column create_dtime timestamp(0) without time zone not null,
+    add column update_by_id varchar(20) not null,
+    add column update_dtime timestamp(0) without time zone not null,
+    add column version_nbr integer not null;
+create unique index uk_country on country(country_name);
+create index dk_country on country(currency_code);
+
+insert into country values ('840','United States','USD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('124','Canada','CAD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('826','United Kingdom','GBP','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('250','France','EUR','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('276','Germany','EUR','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('380','Italy','EUR','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('724','Spain','EUR','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('620','Portugal','EUR','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('372','Ireland','EUR','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('056','Belgium','EUR','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('528','Netherlands','EUR','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('040','Austria','EUR','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('300','Greece','EUR','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('208','Denmark','DKK','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('578','Norway','NOK','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('752','Sweden','SEK','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('246','Finland','EUR','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('352','Iceland','ISK','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('756','Switzerland','CHF','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('484','Mexico','MXN','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('392','Japan','JPY','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('156','China','CNY','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('410','South Korea','KRW','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('804','Ukraine','UAH','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('660','Anguilla','XCD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('028','Antigua and Barbuda','XCD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('533','Aruba','AWG','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('044','The Bahamas','BSD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('052','Barbados','BBD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('060','Bermuda','BMD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('535','Bonaire, Sint Eustatius and Saba','USD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('092','British Virgin Islands','USD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('136','Cayman Islands','KYD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('192','Cuba','CUP','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('531','Curaçao','XCG','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('212','Dominica','XCD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('214','Dominican Republic','DOP','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('308','Grenada','XCD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('312','Guadeloupe','EUR','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('388','Jamaica','JMD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('474','Martinique','EUR','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('500','Montserrat','XCD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('630','Puerto Rico','USD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('652','Saint Barthélemy','EUR','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('659','Saint Kitts and Nevis','XCD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('662','Saint Lucia','XCD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('663','Saint Martin','EUR','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('670','Saint Vincent and the Grenadines','XCD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('534','Sint Maarten','XCG','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('780','Trinidad and Tobago','TTD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('796','Turks and Caicos Islands','USD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('850','U.S. Virgin Islands','USD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('032','Argentina','ARS','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('068','Bolivia','BOB','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('076','Brazil','BRL','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('152','Chile','CLP','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('170','Colombia','COP','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('218','Ecuador','USD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('238','Falkland Islands','FKP','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('254','French Guiana','EUR','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('328','Guyana','GYD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('600','Paraguay','PYG','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('604','Peru','PEN','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('740','Suriname','SRD','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('858','Uruguay','UYU','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+insert into country values ('862','Venezuela','VED/VES','A','system',CURRENT_TIMESTAMP,'system',CURRENT_TIMESTAMP,0);
+
+-- Parish table
+insert into parish values ('01','Kingston');
+insert into parish values ('02','St. Andrew');
+insert into parish values ('03','St. Thomas');
+insert into parish values ('04','Portland');
+insert into parish values ('05','St. Mary');
+insert into parish values ('06','St. Ann');
+insert into parish values ('07','Trelawny');
+insert into parish values ('08','St. James');
+insert into parish values ('09','Hanover');
+insert into parish values ('10','Westmoreland');
+insert into parish values ('11','St. Elizabeth');
+insert into parish values ('12','Manchester');
+insert into parish values ('13','Clarendon');
+insert into parish values ('14','St. Catherine');
+
+🧠 What I want you to generate
+
+Please transform this into a single, safe SQL script that:
+
+Wraps everything in a transaction:
+
+BEGIN;
+...
+COMMIT;
+
+
+For the currency table:
+
+Only creates it if it does not already exist (e.g. using CREATE TABLE IF NOT EXISTS or an equivalent conditional pattern for PostgreSQL).
+
+For each insert into currency ... row:
+
+Use INSERT ... ON CONFLICT (currency_code) DO NOTHING
+or a WHERE NOT EXISTS pattern so I can run the script more than once.
+
+For the country table:
+
+Do not recreate the table.
+
+Before running ALTER TABLE:
+
+Check if each column / constraint / index already exists.
+
+Only add:
+
+currency_code column + FK
+
+status_code column + check constraint
+
+create_by_id, create_dtime, update_by_id, update_dtime, version_nbr
+
+c_country_1 check
+
+uk_country unique index
+
+dk_country index
+if they don’t already exist.
+
+For each insert into country ... row:
+
+Use INSERT ... ON CONFLICT (country_id) DO NOTHING
+or a WHERE NOT EXISTS pattern so it is safe to run multiple times.
+
+For the parish table:
+
+Assume parish table already exists.
+
+For each insert into parish ... row:
+
+Use INSERT ... ON CONFLICT (parish_code) (or the actual PK) DO NOTHING
+or a WHERE NOT EXISTS pattern.
+
+Ensure:
+
+All FK references (country.currency_code → currency.currency_code) are valid.
+
+All status_code values are 'A' or 'I' as per the check constraints.
+
+The script runs cleanly even if some rows were already inserted manually.
+
+At the end of the script, add a short commented section indicating that it is idempotent and can be re-run safely to ensure reference data is present.
+
+Please output just the final SQL script, ready for me to paste into my project and run against PostgreSQL.
