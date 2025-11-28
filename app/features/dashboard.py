@@ -1002,7 +1002,7 @@ def aid_movement_dashboard():
         params['date_from'] = date_from
     
     if date_to:
-        base_conditions.append("t.created_at <= :date_to::date + interval '1 day'")
+        base_conditions.append("t.created_at <= (:date_to)::date + interval '1 day'")
         params['date_to'] = date_to
     
     where_clause = "WHERE " + " AND ".join(base_conditions) if base_conditions else ""
