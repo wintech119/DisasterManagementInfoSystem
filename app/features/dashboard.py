@@ -1206,7 +1206,7 @@ def aid_item_movement_detail():
             for row in detail_results
         ]
         
-        if not detail_rows and summary_totals['total_received'] == 0 and summary_totals['total_issued'] == 0:
+        if len(detail_rows) == 0 and summary_totals['total_received'] == 0.0 and summary_totals['total_issued'] == 0.0:
             kw_warehouse = Warehouse.query.filter(
                 Warehouse.warehouse_name.ilike('%kingston%')
             ).first()
@@ -1214,14 +1214,14 @@ def aid_item_movement_detail():
                 kw_warehouse = Warehouse.query.filter_by(warehouse_id=1).first()
             
             if kw_warehouse:
-                detail_rows = [{
+                detail_rows.append({
                     'warehouse_id': kw_warehouse.warehouse_id,
                     'warehouse_name': kw_warehouse.warehouse_name,
                     'warehouse_type': kw_warehouse.warehouse_type,
                     'total_received': 0.0,
                     'total_issued': 0.0,
                     'in_store': 0.0
-                }]
+                })
     
     filters = {
         'item_id': item_id,
