@@ -151,7 +151,7 @@
             <div class="chart-card">
                 <h3 class="chart-card-title">
                     <i class="bi bi-pie-chart"></i>
-                    Movement Breakdown
+                    Movement Breakdown{% if selected_category %} - {{ selected_category.category_desc }}{% endif %}
                 </h3>
                 <div class="chart-container" style="height: 350px;">
                     {% if category_chart_data.labels %}
