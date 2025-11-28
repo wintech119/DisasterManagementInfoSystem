@@ -1206,17 +1206,13 @@ def aid_item_movement_detail():
             for row in detail_results
         ]
         
-        print(f"DEBUG: detail_rows length={len(detail_rows)}, received={summary_totals['total_received']}, issued={summary_totals['total_issued']}", flush=True)
-        
         if len(detail_rows) == 0:
             kw_warehouse = Warehouse.query.filter(
                 Warehouse.warehouse_name.ilike('%kingston%')
             ).first()
-            print(f"DEBUG: KW warehouse lookup result: {kw_warehouse}", flush=True)
             
             if not kw_warehouse:
                 kw_warehouse = Warehouse.query.filter_by(warehouse_id=1).first()
-                print(f"DEBUG: Fallback warehouse lookup result: {kw_warehouse}", flush=True)
             
             if kw_warehouse:
                 detail_rows.append({
@@ -1227,7 +1223,6 @@ def aid_item_movement_detail():
                     'total_issued': 0.0,
                     'in_store': 0.0
                 })
-                print(f"DEBUG: Added KW row, detail_rows now has {len(detail_rows)} rows", flush=True)
     
     filters = {
         'item_id': item_id,
