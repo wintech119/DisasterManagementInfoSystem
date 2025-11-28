@@ -151,7 +151,7 @@
             <div class="chart-card">
                 <h3 class="chart-card-title">
                     <i class="bi bi-pie-chart"></i>
-                    Movement by Category
+                    Movement Breakdown
                 </h3>
                 <div class="chart-container" style="height: 350px;">
                     {% if category_chart_data.labels %}
@@ -393,14 +393,18 @@ document.addEventListener('DOMContentLoaded', function() {
     ];
     
     {% if category_chart_data.labels %}
+    const totalReceived = {{ category_chart_data.received | sum }};
+    const totalIssued = {{ category_chart_data.issued | sum }};
+    const totalInStore = {{ category_chart_data.in_store | sum }};
+    
     const categoryCtx = document.getElementById('categoryChart').getContext('2d');
     new Chart(categoryCtx, {
         type: 'pie',
         data: {
-            labels: {{ category_chart_data.labels | tojson }},
+            labels: ['Total Received', 'Total Issued', 'In Store'],
             datasets: [{
-                data: {{ category_chart_data.in_store | tojson }},
-                backgroundColor: colorPalette.slice(0, {{ category_chart_data.labels | length }}),
+                data: [totalReceived, totalIssued, totalInStore],
+                backgroundColor: [chartColors.success, chartColors.danger, chartColors.primary],
                 borderWidth: 2,
                 borderColor: '#fff'
             }]
@@ -412,18 +416,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 legend: {
                     position: 'right',
                     labels: {
-                        padding: 12,
-                        font: { size: 12 },
-                        boxWidth: 14,
+                        padding: 15,
+                        font: { size: 13 },
+                        boxWidth: 16,
                         generateLabels: function(chart) {
                             const data = chart.data;
                             const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
                             return data.labels.map((label, i) => {
                                 const value = data.datasets[0].data[i];
                                 const pct = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                                const displayLabel = label.length > 20 ? label.substring(0, 20) + '...' : label;
                                 return {
-                                    text: displayLabel + ' (' + pct + '%)',
+                                    text: label + ': ' + value.toLocaleString() + ' (' + pct + '%)',
                                     fillStyle: data.datasets[0].backgroundColor[i],
                                     hidden: false,
                                     index: i
