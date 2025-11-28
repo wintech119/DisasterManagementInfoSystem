@@ -1,0 +1,260 @@
+Help me write a single SQL script that will safely populate the inventory and itembatch tables using the existing transaction, item, and warehouse data, without breaking anything.
+
+🔒 Non-negotiable constraints
+
+✅ Do NOT change the database schema at all.
+
+No ALTER TABLE, no dropping constraints, no dropping or renaming anything.
+
+✅ Do NOT change or delete any existing data, logic, triggers, or functions.
+
+Only insert new rows into inventory and itembatch.
+
+✅ Do NOT affect workflows or security fixes.
+
+This script must be data-only and safe to run on a dev/staging database.
+
+✅ Assume this runs in a feature branch context – but the DB structure is shared with main, so it must be 100% backward-compatible.
+
+📦 Goal
+
+Using the existing transaction data (already loaded from the HADR Excel):
+
+For each (warehouse, item) pair, compute net quantity in store:
+
+net_qty = SUM(qty where ttype = 'IN') - SUM(qty where ttype = 'OUT')
+
+
+For each (warehouse_id, item_id) where net_qty > 0:
+
+Ensure an inventory row exists with:
+
+inventory_id = warehouse_id (this is how the model is set up in this DB)
+
+item_id = item_id
+
+usable_qty = net_qty
+
+reserved_qty, defective_qty, expired_qty = 0
+
+uom_code = the item’s default UOM
+
+status_code = 'A'
+
+comments_text includes a marker like 'Seeded from HADR import'
+
+Ensure at least one itembatch row exists for that (warehouse, item):
+
+One synthetic batch per (warehouse_id, item_id)
+
+usable_qty = net_qty
+
+reserved_qty, defective_qty, expired_qty = 0
+
+batch_no, batch_date, expiry_date can be NULL or a synthetic value
+
+uom_code = item’s default UOM
+
+status_code = 'A'
+
+comments_text includes 'Seeded from HADR import'
+
+If an inventory or itembatch row already exists for a given combination, the script must not duplicate it and must not update it. Only insert where missing.
+
+🧱 Tables / columns to use
+
+Please first inspect the current schema in the connected database and then adapt the SQL to the actual column names and types, but you can assume something like:
+
+transaction (or "transaction" if quoted):
+
+ttype ('IN' or 'OUT')
+
+qty
+
+item_id
+
+warehouse_id
+
+timestamp column (e.g. create_dtime or similar)
+
+item:
+
+item_id
+
+item_name
+
+default_uom_code (or similar UOM column)
+
+warehouse:
+
+warehouse_id
+
+warehouse_name
+
+inventory:
+
+inventory_id (FK to warehouse)
+
+item_id
+
+usable_qty
+
+reserved_qty
+
+defective_qty
+
+expired_qty
+
+uom_code
+
+status_code
+
+comments_text
+
+create_by_id, create_dtime, update_by_id, update_dtime, version_nbr
+
+itembatch:
+
+batch_id (identity / serial)
+
+inventory_id
+
+item_id
+
+batch_no
+
+batch_date
+
+expiry_date
+
+usable_qty
+
+reserved_qty
+
+defective_qty
+
+expired_qty
+
+uom_code
+
+status_code
+
+comments_text
+
+create_by_id, create_dtime, update_by_id, update_dtime, version_nbr
+
+Please use the actual column names found in the live schema if they differ.
+
+🧮 Logic for the script
+
+Wrap everything in a transaction, so we can roll back if anything looks wrong:
+
+BEGIN;
+...
+COMMIT;
+
+
+Create a temporary aggregate table (or CTE) that computes net stock per (warehouse_id, item_id):
+
+Group by warehouse_id, item_id, and UOM
+
+Calculate:
+
+total_in
+
+total_out
+
+net_qty = total_in - total_out
+
+Only keep rows where net_qty > 0.
+
+Insert into inventory:
+
+Left join this aggregate to inventory on (inventory_id = warehouse_id, item_id).
+
+Insert only where no matching inventory row exists.
+
+Set:
+
+usable_qty = net_qty
+
+reserved_qty = 0
+
+defective_qty = 0
+
+expired_qty = 0
+
+uom_code = item’s default UOM
+
+status_code = 'A'
+
+comments_text = 'Seeded from HADR import' (or append that if you need to keep existing comments)
+
+create_by_id = 'SYSTEM' (or another suitable system user)
+
+create_dtime = NOW() (with the correct timestamp precision)
+
+update_by_id, update_dtime, version_nbr according to existing patterns/constraints.
+
+Insert into itembatch:
+
+For the same aggregate, left join to itembatch on (inventory_id = warehouse_id, item_id).
+
+Insert one batch row where no batch exists yet for that (warehouse_id, item_id).
+
+Use:
+
+usable_qty = net_qty
+
+reserved_qty = 0
+
+defective_qty = 0
+
+expired_qty = 0
+
+uom_code = item’s default UOM
+
+status_code = 'A'
+
+comments_text = 'Seeded from HADR import'
+
+batch_no, batch_date, expiry_date = NULL (or a synthetic batch_no like 'HADR-' || warehouse_id || '-' || item_id if that’s allowed)
+
+create_by_id, create_dtime, update_by_id, update_dtime, version_nbr consistent with existing constraints.
+
+Add a safe rollback snippet at the end as a comment, so I can undo this later by removing all rows tagged as 'Seeded from HADR import' from both inventory and itembatch.
+
+📄 What I want as output
+
+Please produce:
+
+A single SQL script with:
+
+BEGIN;
+
+temp aggregate definition (TEMP TABLE or CTE)
+
+INSERT ... SELECT ... for inventory
+
+INSERT ... SELECT ... for itembatch
+
+COMMIT;
+
+The script must:
+
+Use the actual table and column names from the connected DB.
+
+Respect all existing CHECK constraints, NOT NULLs, and FKs.
+
+Clearly mark seeded rows via comments_text so they can be rolled back later if needed.
+
+At the end of the script (as comments), include:
+
+A rollback snippet:
+
+-- To rollback HADR seed:
+-- DELETE FROM itembatch WHERE comments_text = 'Seeded from HADR import';
+-- DELETE FROM inventory WHERE comments_text = 'Seeded from HADR import';
+
+
+Do not generate any application code, only the SQL. The script must be safe, additive only, and must not break schema, workflows, or security fixes.
