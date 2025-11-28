@@ -456,6 +456,17 @@ class FeatureRegistry:
             'navigation_group': 'dashboard',
             'priority': 7
         },
+        'aid_item_movement_detail': {
+            'name': 'Item Movement Detail',
+            'description': 'Drill-down view of aid movement for a specific item across warehouses',
+            'roles': list(EXECUTIVE_ROLES) + ['LOGISTICS_MANAGER'],
+            'route': 'dashboard.aid_item_movement_detail',
+            'url': '/dashboard/aid-movement/item-detail',
+            'icon': 'bi-box-arrow-in-down-right',
+            'category': 'dashboard',
+            'navigation_group': 'dashboard',
+            'priority': 8
+        },
         
         # =================================================================
         # USER & ACCOUNT MANAGEMENT

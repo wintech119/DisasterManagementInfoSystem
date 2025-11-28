@@ -1105,3 +1105,122 @@ def aid_movement_dashboard():
     }
     
     return render_template('dashboard/aid_movement_dashboard.html', **context)
+
+
+@dashboard_bp.route('/aid-movement/item-detail')
+@login_required
+@role_required('ODPEM_DG', 'ODPEM_DDG', 'ODPEM_DIR_PEOD', 'LOGISTICS_MANAGER')
+def aid_item_movement_detail():
+    """
+    Item Movement Detail Dashboard - Drill-down view for a specific item's movements.
+    
+    Access: DG, Deputy DG, Director PEOD, Logistics Manager
+    
+    Displays:
+    - Filters: Item selection (required), warehouse, movement type, date range
+    - Summary Cards: Total Received, Total Issued, In Store (for selected item)
+    - Detail Table: Per-warehouse breakdown for the selected item
+    """
+    from sqlalchemy import text
+    
+    item_id = request.args.get('item_id', '')
+    warehouse_id = request.args.get('warehouse_id', '')
+    movement_type = request.args.get('movement_type', '')
+    start_date = request.args.get('start_date', '')
+    end_date = request.args.get('end_date', '')
+    
+    items = Item.query.filter_by(status_code='A').order_by(Item.item_name).all()
+    warehouses = Warehouse.query.filter_by(status_code='A').order_by(Warehouse.warehouse_name).all()
+    
+    summary_totals = {
+        'total_received': 0,
+        'total_issued': 0,
+        'in_store': 0
+    }
+    detail_rows = []
+    selected_item = None
+    
+    if item_id:
+        selected_item = Item.query.get(int(item_id))
+        
+        base_conditions = ["t.item_id = :item_id"]
+        params = {'item_id': int(item_id)}
+        
+        if warehouse_id:
+            base_conditions.append("t.warehouse_id = :warehouse_id")
+            params['warehouse_id'] = int(warehouse_id)
+        
+        if movement_type:
+            base_conditions.append("t.ttype = :movement_type")
+            params['movement_type'] = movement_type
+        
+        if start_date:
+            base_conditions.append("t.created_at >= :start_date")
+            params['start_date'] = start_date
+        
+        if end_date:
+            base_conditions.append("t.created_at <= (:end_date)::date + interval '1 day'")
+            params['end_date'] = end_date
+        
+        where_clause = "WHERE " + " AND ".join(base_conditions)
+        
+        summary_sql = text(f"""
+            SELECT 
+                COALESCE(SUM(CASE WHEN t.ttype = 'IN' THEN t.qty ELSE 0 END), 0) as total_received,
+                COALESCE(SUM(CASE WHEN t.ttype = 'OUT' THEN t.qty ELSE 0 END), 0) as total_issued
+            FROM transaction t
+            {where_clause}
+        """)
+        
+        summary_result = db.session.execute(summary_sql, params).fetchone()
+        summary_totals['total_received'] = float(summary_result.total_received)
+        summary_totals['total_issued'] = float(summary_result.total_issued)
+        summary_totals['in_store'] = summary_totals['total_received'] - summary_totals['total_issued']
+        
+        detail_sql = text(f"""
+            SELECT 
+                w.warehouse_id,
+                w.warehouse_name,
+                w.warehouse_type,
+                COALESCE(SUM(CASE WHEN t.ttype = 'IN' THEN t.qty ELSE 0 END), 0) as total_received,
+                COALESCE(SUM(CASE WHEN t.ttype = 'OUT' THEN t.qty ELSE 0 END), 0) as total_issued,
+                COALESCE(SUM(CASE WHEN t.ttype = 'IN' THEN t.qty ELSE 0 END), 0) 
+                - COALESCE(SUM(CASE WHEN t.ttype = 'OUT' THEN t.qty ELSE 0 END), 0) as in_store
+            FROM transaction t
+            JOIN warehouse w ON w.warehouse_id = t.warehouse_id
+            {where_clause}
+            GROUP BY w.warehouse_id, w.warehouse_name, w.warehouse_type
+            ORDER BY w.warehouse_name
+        """)
+        
+        detail_results = db.session.execute(detail_sql, params).fetchall()
+        detail_rows = [
+            {
+                'warehouse_id': row.warehouse_id,
+                'warehouse_name': row.warehouse_name,
+                'warehouse_type': row.warehouse_type,
+                'total_received': float(row.total_received),
+                'total_issued': float(row.total_issued),
+                'in_store': float(row.in_store)
+            }
+            for row in detail_results
+        ]
+    
+    filters = {
+        'item_id': item_id,
+        'warehouse_id': warehouse_id,
+        'movement_type': movement_type,
+        'start_date': start_date,
+        'end_date': end_date
+    }
+    
+    context = {
+        'items': items,
+        'warehouses': warehouses,
+        'selected_item': selected_item,
+        'summary_totals': summary_totals,
+        'detail_rows': detail_rows,
+        'filters': filters
+    }
+    
+    return render_template('dashboard/aid_item_movement_detail.html', **context)

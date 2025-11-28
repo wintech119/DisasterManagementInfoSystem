@@ -1,0 +1,275 @@
+Replit prompt (add “Item Movement Detail” as sub-menu under Aid Movement Dashboard)
+
+Help me extend my existing Flask-based DMIS app by adding a new read-only dashboard page called “Item Movement Detail” as a sub-menu under the existing “Aid Movement Dashboard”.
+
+0. Hard constraints (DO NOT BREAK ANYTHING)
+
+Do NOT:
+
+Change or remove any existing routes, views, templates, models, database schema, workflows, or security fixes.
+
+Alter the existing Aid Movement Dashboard behaviour or layout.
+
+Only add:
+
+A new route/controller,
+
+A new Jinja template,
+
+A minimal nav change to show a sub-menu entry under Aid Movement.
+
+All queries must be read-only and use the existing DB helper / ORM pattern used in the project (no unsafe string SQL).
+
+1. Context – existing Aid Movement Dashboard
+
+There is already an Aid Movement Dashboard page that:
+
+Aggregates quantities from:
+
+transaction (or "transaction" table)
+
+item table
+
+warehouse table
+
+Is accessible only by:
+
+Logistics Manager (LM)
+
+Director General (DG)
+
+Deputy DG
+
+Director, PEOD
+
+Has its nav entry somewhere in the main sidebar/menu.
+
+First, locate:
+
+The existing Aid Movement Dashboard route (its Python function + URL).
+
+The template it renders.
+
+The nav template/partial where “Aid Movement Dashboard” is defined.
+
+The permission/feature mechanism used (e.g. @requires_feature("AID_MOVEMENT_DASHBOARD") or similar).
+
+Do not change these; just reuse the patterns.
+
+2. New sub-dashboard: “Item Movement Detail”
+
+Add a new dashboard page that drills down into a single item, with filters.
+
+2.1 Route / controller
+
+Create a new route in the same blueprint/module as the Aid Movement Dashboard, for example:
+
+URL: /aid-movement/item-detail (adjust to match existing routing style)
+
+HTTP method: GET
+
+Decorators:
+
+@login_required
+
+The same feature/permission decorator as Aid Movement Dashboard (or a new feature key mapped to the same roles).
+
+The controller should:
+
+Read filter parameters from the query string:
+
+item_id (required to show data)
+
+warehouse_id (optional)
+
+movement_type (optional: "IN", "OUT", or blank for both)
+
+start_date (optional, date)
+
+end_date (optional, date)
+
+Load:
+
+List of active items for a dropdown: item_id, item_name.
+
+List of active warehouses for a dropdown: warehouse_id, warehouse_name.
+
+If no item_id is selected:
+
+Render the page with just the filter UI and an empty state message.
+
+If item_id is selected:
+
+Query the transaction (or "transaction") table for that item, joined with warehouse, using the same ORM/DB helper used elsewhere.
+
+Apply optional filters:
+
+warehouse_id (if provided)
+
+movement_type (if "IN" or "OUT")
+
+DATE(timestamp_column) between start_date and end_date (if provided). Use the actual timestamp column name already in the schema (e.g. create_dtime).
+
+Build aggregates per warehouse for that item:
+
+SELECT
+  w.warehouse_id,
+  w.warehouse_name,
+  SUM(CASE WHEN t.ttype = 'IN'  THEN t.qty ELSE 0 END) AS total_received,
+  SUM(CASE WHEN t.ttype = 'OUT' THEN t.qty ELSE 0 END) AS total_issued,
+  SUM(CASE WHEN t.ttype = 'IN'  THEN t.qty ELSE 0 END)
+- SUM(CASE WHEN t.ttype = 'OUT' THEN t.qty ELSE 0 END) AS in_store
+FROM transaction t
+JOIN warehouse w ON w.warehouse_id = t.warehouse_id
+WHERE t.item_id = :item_id
+  [AND t.warehouse_id = :warehouse_id]
+  [AND t.ttype = :movement_type]        -- only if movement_type is IN or OUT
+  [AND DATE(t.<timestamp>) BETWEEN :start_date AND :end_date]
+GROUP BY w.warehouse_id, w.warehouse_name;
+
+
+Implement this using the existing query/ORM style, not raw interpolated SQL.
+
+Also compute overall totals across all warehouses for that item:
+
+total_received
+
+total_issued
+
+in_store = total_received - total_issued
+
+Pass to the template:
+
+items (for item dropdown)
+
+warehouses (for warehouse dropdown)
+
+current filter values
+
+summary_totals (overall totals)
+
+detail_rows (per-warehouse rows)
+
+2.2 Template: aid_item_movement_detail.html
+
+Create a new Jinja template in an appropriate folder, e.g. templates/dashboard/aid_item_movement_detail.html, that:
+
+Extends the same base layout as the Aid Movement Dashboard (e.g. {% extends "layouts/dashboard.html" %} or whatever is used).
+
+Uses the same block names and styling so it looks like a native part of the app.
+
+Structure:
+
+A. Header
+
+Title: Item Movement Detail
+
+Optional breadcrumb: Aid Movement Dashboard > Item Movement Detail (only if breadcrumbs exist already).
+
+B. Filter form (top)
+
+A form that submits via GET to the new route, using existing form styles:
+
+Item (required):
+
+<select name="item_id">
+
+Options from items (id + name).
+
+Warehouse (optional):
+
+<select name="warehouse_id">
+
+Options from warehouses, plus an “All locations” blank option.
+
+Movement Type (optional):
+
+<select name="movement_type">
+
+Options:
+
+blank → “Received & Issued”
+
+"IN" → “Received only”
+
+"OUT" → “Issued only”
+
+Date From / Date To (optional):
+
+<input type="date" name="start_date">
+
+<input type="date" name="end_date">
+
+Filter button (submit).
+
+Use <label> tags and the same CSS classes as other filter forms for consistency and accessibility.
+
+C. Summary cards (for the selected item)
+
+If an item_id is selected and there is data:
+
+Render 3 summary cards using the same card component/style as Aid Movement Dashboard:
+
+Total Received: summary_totals.total_received
+
+Total Issued: summary_totals.total_issued
+
+In Store: summary_totals.in_store
+
+D. Detail table
+
+Below the cards, add a table (using existing table styles) that shows, for the selected item:
+
+Columns:
+
+Warehouse / Location
+
+Total Received
+
+Total Issued
+
+In Store
+
+Backed by detail_rows (one row per warehouse).
+
+If the project has a standard way to paginate tables, reuse it; otherwise, a simple table is fine.
+
+If no item_id is selected, instead of the table show a short message like: “Please select an item to view its movement details.”
+
+3. Sub-menu / Navigation under Aid Movement Dashboard
+
+Update the navigation templates/partials to:
+
+Keep the existing Aid Movement Dashboard entry exactly as is.
+
+Add a sub-menu / child entry named “Item Movement Detail” under the Aid Movement Dashboard group/section.
+
+Use whatever pattern the app already uses for nested nav items:
+
+If the sidebar uses collapsible sections, put “Item Movement Detail” directly under “Aid Movement Dashboard”.
+
+If the Aid Movement Dashboard is a top-level item with children, add this as another child.
+
+The new nav entry should:
+
+Link to the new route (/aid-movement/item-detail or whatever URL you used).
+
+Be visible only to the same roles as Aid Movement Dashboard:
+
+LM, DG, Deputy DG, Director PEOD.
+
+Use the same permission/feature check mechanism (e.g. user_has_feature("AID_MOVEMENT_DASHBOARD") or a new AID_ITEM_MOVEMENT_DETAIL feature mapped to the same roles).
+
+Do not change the styling, IDs, or behaviour of any existing nav items.
+
+4. What to show me
+
+When you’re done, show:
+
+The new route/controller function for Item Movement Detail.
+
+The full aid_item_movement_detail.html template.
+
+The nav/snippet change that adds the sub-menu entry under Aid Movement Dashboard.
+
+Remember: no schema changes, no logic deletions, only additive, read-only code.
