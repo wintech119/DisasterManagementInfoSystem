@@ -198,7 +198,7 @@
                         {% endif %}
                     </td>
                     <td>
-                        <span class="badge bg-secondary">{{ txn.category_name or 'N/A' }}</span>
+                        <span class="badge bg-secondary">{{ txn.category_desc or 'N/A' }}</span>
                     </td>
                     <td class="text-end">
                         <strong class="{% if txn.ttype == 'IN' %}kpi-positive{% else %}kpi-negative{% endif %}">
@@ -208,8 +208,8 @@
                     <td>{{ txn.uom_name or 'Unit' }}</td>
                     <td>
                         <span class="text-body">{{ txn.warehouse_name or 'N/A' }}</span>
-                        {% if txn.warehouse_code %}
-                        <div class="table-sku">{{ txn.warehouse_code }}</div>
+                        {% if txn.warehouse_type %}
+                        <div class="table-sku">{{ txn.warehouse_type }}</div>
                         {% endif %}
                     </td>
                     <td>

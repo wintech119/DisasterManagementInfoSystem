@@ -1041,8 +1041,8 @@ def aid_movement_dashboard():
             i.item_name,
             i.item_desc,
             w.warehouse_name,
-            w.warehouse_code,
-            c.category_name,
+            w.warehouse_type,
+            c.category_desc,
             u.uom_name
         FROM transaction t
         LEFT JOIN item i ON t.item_id = i.item_id
