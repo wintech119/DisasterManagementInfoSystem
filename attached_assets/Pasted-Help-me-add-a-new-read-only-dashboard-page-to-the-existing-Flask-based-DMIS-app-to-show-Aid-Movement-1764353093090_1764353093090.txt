@@ -1,0 +1,299 @@
+Help me add a new read-only dashboard page to the existing Flask-based DMIS app to show Aid Movement (Total Received, Issued, and In Store), using only the existing UI templates, navigation patterns, and security model.
+
+⚠️ Critical constraints – don’t break anything
+
+Do not remove or modify any existing:
+
+routes,
+
+templates,
+
+menus,
+
+workflows,
+
+database tables,
+
+security headers,
+
+CSP or CSRF behaviour.
+
+All changes must be additive, backward-compatible, and safe.
+
+Assume this work is in a feature branch, but don’t touch main references.
+
+We already have clean data in the transaction, item, and warehouse tables:
+
+transaction:
+
+ttype = 'IN' or 'OUT'
+
+qty = transaction quantity
+
+item_id
+
+warehouse_id
+
+create_dtime (or similar timestamp – use the actual column name)
+
+item:
+
+item_id
+
+item_name
+
+warehouse:
+
+warehouse_id
+
+warehouse_name (e.g. “ODPEM KINGSTON WAREHOUSE (KW)”)
+
+If needed, you may create read-only views (no schema changes to core tables) like:
+
+CREATE OR REPLACE VIEW public.v_hadr_donations_in AS
+SELECT
+    t.id                AS transaction_id,
+    t.item_id,
+    i.item_name,
+    t.qty               AS qty_in,
+    t.warehouse_id,
+    w.warehouse_name,
+    t.create_dtime      AS trans_date
+FROM public."transaction" t
+JOIN public.item i       ON i.item_id = t.item_id
+JOIN public.warehouse w  ON w.warehouse_id = t.warehouse_id
+WHERE t.ttype = 'IN';
+
+CREATE OR REPLACE VIEW public.v_hadr_distributions_out AS
+SELECT
+    t.id                AS transaction_id,
+    t.item_id,
+    i.item_name,
+    t.qty               AS qty_out,
+    t.warehouse_id,
+    w.warehouse_name,
+    t.create_dtime      AS trans_date
+FROM public."transaction" t
+JOIN public.item i       ON i.item_id = t.item_id
+JOIN public.warehouse w  ON w.warehouse_id = t.warehouse_id
+WHERE t.ttype = 'OUT';
+
+
+Use the actual timestamp column name in transaction if it differs.
+
+1. New menu item (for LM & leadership roles only)
+
+Add a new menu entry called:
+
+Aid Movement Dashboard
+
+Use the same navigation structure and template partial used for other dashboards.
+Do not change the style or behaviour of existing menu entries.
+
+Restrict this menu item to the following roles (using the existing role→feature / permission mechanism):
+
+Logistics Manager (LM)
+
+Director General (DG)
+
+Deputy Director General
+
+Director, PEOD
+
+If the app uses a feature code system, add a new feature key like "AID_MOVEMENT_DASHBOARD" and map it so only these roles see it.
+
+2. New Flask route / controller
+
+Add a new route in the appropriate blueprint (for dashboards / analytics). Example:
+
+@dashboard_bp.route("/aid-movement-dashboard", methods=["GET"])
+@login_required
+@requires_feature("AID_MOVEMENT_DASHBOARD")  # or whatever the existing decorator/feature check is
+def aid_movement_dashboard():
+    """
+    Read-only view that shows totals of qty received, issued, and in store,
+    plus a filterable item/location table.
+    """
+
+    # Read filters from query string (optional)
+    item_search   = request.args.get("item_search", "").strip()
+    warehouse_id  = request.args.get("warehouse_id", "").strip()
+    start_date    = request.args.get("start_date", "").strip()
+    end_date      = request.args.get("end_date", "").strip()
+
+    # Build a base filterable query using existing DB helper / ORM used elsewhere.
+    # Use parameterized SQL. Do NOT build raw SQL from strings.
+
+    # 1) Summary totals across all items/locations (respecting filters)
+    #    total_received, total_issued, total_in_store = ...
+    #
+    # 2) Table data: group by item + warehouse:
+    #    item_name, warehouse_name, total_received, total_issued, qty_in_store
+    #
+    #    SELECT
+    #        i.item_id,
+    #        i.item_name,
+    #        w.warehouse_id,
+    #        w.warehouse_name,
+    #        SUM(CASE WHEN t.ttype = 'IN'  THEN t.qty ELSE 0 END) AS total_received,
+    #        SUM(CASE WHEN t.ttype = 'OUT' THEN t.qty ELSE 0 END) AS total_issued,
+    #        SUM(CASE WHEN t.ttype = 'IN'  THEN t.qty ELSE 0 END)
+    #      - SUM(CASE WHEN t.ttype = 'OUT' THEN t.qty ELSE 0 END) AS in_store
+    #    FROM transaction t
+    #    JOIN item i      ON i.item_id = t.item_id
+    #    JOIN warehouse w ON w.warehouse_id = t.warehouse_id
+    #    WHERE 1=1
+    #      [AND i.item_name ILIKE %item_search%]
+    #      [AND w.warehouse_id = :warehouse_id]
+    #      [AND DATE(t.create_dtime) BETWEEN :start_date AND :end_date]
+    #    GROUP BY i.item_id, i.item_name, w.warehouse_id, w.warehouse_name
+    #
+    # Use the existing DB abstraction or ORM instead of writing raw SQL if possible.
+
+    # 3) Load warehouses for dropdown filter
+    #    warehouses = list of (warehouse_id, warehouse_name) from existing master data.
+
+    return render_template(
+        "dashboard/aid_movement_dashboard.html",
+        item_search=item_search,
+        warehouse_id=warehouse_id,
+        start_date=start_date,
+        end_date=end_date,
+        warehouses=warehouses,
+        summary=summary_dict,       # e.g. { "total_received": ..., "total_issued": ..., "in_store": ... }
+        movement_rows=movement_rows # list of dicts for table: item + warehouse aggregates
+    )
+
+
+Use the actual DB helper / query style already used in the project (e.g. db.session, run_query, etc.).
+The key idea is: aggregate per item and warehouse with optional filters.
+
+3. New Jinja template (extends existing layout)
+
+Create a template, e.g. templates/dashboard/aid_movement_dashboard.html, that:
+
+Extends the existing base layout used for dashboards (e.g. {% extends "layouts/dashboard.html" %} or similar).
+
+Uses existing blocks (content, page_title, etc.) and existing CSS classes/components (cards, tables).
+
+The page should include:
+
+(A) Title / breadcrumb
+
+Title: Aid Movement Dashboard
+
+Optional breadcrumb consistent with the rest of the app.
+
+(B) Filter panel (top section)
+
+Use the existing form styles. Include:
+
+Item search (text input):
+
+Label: “Item”
+
+Placeholder: “Search by item name”
+
+Binds to item_search
+
+Location filter (dropdown from warehouses):
+
+Label: “Location”
+
+Options from warehouses: display warehouse_name, value = warehouse_id
+
+Optional date range:
+
+start_date (type date)
+
+end_date (type date)
+
+A Filter / Apply button that submits via GET to the same route.
+
+Make the form layout responsive and consistent with other filter forms in the app.
+
+(C) Summary KPI cards row
+
+Under the filters, add a row of 3 summary stat cards, reusing the same card styling used elsewhere:
+
+Total Quantity Received
+
+Show summary.total_received
+
+Total Quantity Issued
+
+Show summary.total_issued
+
+Quantity in Store
+
+Show summary.in_store (received – issued, or from DB)
+
+If a card component macro already exists, reuse it.
+
+(D) Filterable table (main content)
+
+Below the cards, create a table (using the existing table classes) with columns:
+
+Item
+
+Location
+
+Total Received
+
+Total Issued
+
+In Store
+
+Backed by movement_rows from the controller, where each row has:
+
+item_name
+
+warehouse_name
+
+total_received
+
+total_issued
+
+in_store
+
+Make sure:
+
+Column headers use <th> and are accessible.
+
+Numbers are formatted cleanly.
+
+The table supports scroll on smaller screens (relying on existing responsive styles).
+
+Optionally, if the existing project has built-in pagination helpers, apply those to movement_rows (but don’t invent a new pagination system).
+
+4. Optional: Day-level filter / grouping
+
+If it’s easy with existing code, add an optional “Group by day” toggle (checkbox or select):
+
+When enabled, group the aggregates by DATE(trans_date) as well as item + warehouse, and show an extra column “Date”.
+
+When disabled (default), show aggregates across the selected date range.
+
+If this is too complex, at minimum allow the user to filter by day via start_date/end_date set to the same day.
+
+5. Non-functional & safety requirements
+
+Do not change any CSP, headers, login behaviour, CSRF, or auth logic.
+
+Use only existing CSS/JS already used in dashboards. No new large JS frameworks.
+
+All queries must be read-only and parameterized to avoid SQL injection.
+
+Page must remain:
+
+WCAG-aligned (labels associated with inputs, good contrast)
+
+Mobile/tablet friendly, following the existing responsive grid.
+
+Finally, show me:
+
+The new route/controller code you added or modified.
+
+The complete aid_movement_dashboard.html template.
+
+The minimal menu/nav change you made to expose “Aid Movement Dashboard” to LM, DG, Deputy DG, and Director PEOD using the existing permission system.

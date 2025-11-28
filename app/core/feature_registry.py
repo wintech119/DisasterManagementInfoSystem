@@ -89,6 +89,7 @@ class FeatureRegistry:
         'reports_donations': 'reports.donations_summary',
         'donations_analytics': 'dashboard.donations_analytics',
         'relief_package_analytics': 'dashboard.relief_package_analytics',
+        'aid_movement_dashboard': 'dashboard.aid_movement_dashboard',
         
         # Admin
         'users_list': 'user_admin.index',
@@ -443,6 +444,17 @@ class FeatureRegistry:
             'category': 'dashboard',
             'navigation_group': 'dashboard',
             'priority': 6
+        },
+        'aid_movement_dashboard': {
+            'name': 'Aid Movement Dashboard',
+            'description': 'View aid movement totals: received, issued, and in store across warehouses',
+            'roles': list(EXECUTIVE_ROLES) + ['LOGISTICS_MANAGER'],
+            'route': 'dashboard.aid_movement_dashboard',
+            'url': '/dashboard/aid-movement',
+            'icon': 'bi-arrow-left-right',
+            'category': 'dashboard',
+            'navigation_group': 'dashboard',
+            'priority': 7
         },
         
         # =================================================================
