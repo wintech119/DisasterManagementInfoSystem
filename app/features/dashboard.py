@@ -1043,7 +1043,7 @@ def aid_movement_dashboard():
             w.warehouse_name,
             w.warehouse_type,
             c.category_desc,
-            u.uom_name
+            u.uom_desc
         FROM transaction t
         LEFT JOIN item i ON t.item_id = i.item_id
         LEFT JOIN warehouse w ON t.warehouse_id = w.warehouse_id

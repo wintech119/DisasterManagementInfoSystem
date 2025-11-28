@@ -205,7 +205,7 @@
                             {{ "{:,.2f}".format(txn.qty|float) }}
                         </strong>
                     </td>
-                    <td>{{ txn.uom_name or 'Unit' }}</td>
+                    <td>{{ txn.uom_desc or 'Unit' }}</td>
                     <td>
                         <span class="text-body">{{ txn.warehouse_name or 'N/A' }}</span>
                         {% if txn.warehouse_type %}
