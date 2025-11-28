@@ -186,12 +186,20 @@
         </div>
     </div>
 
-    {% if selected_item %}
-    <div class="mb-4">
+    {% if has_filter %}
+    <div class="mb-4 d-flex flex-wrap gap-2">
+        {% if selected_category %}
+        <span class="selected-item-badge">
+            <i class="bi bi-tag"></i>
+            Category: <strong>{{ selected_category.category_desc }}</strong>
+        </span>
+        {% endif %}
+        {% if selected_item %}
         <span class="selected-item-badge">
             <i class="bi bi-box-seam"></i>
-            Viewing: <strong>{{ selected_item.item_name }}</strong>
+            Item: <strong>{{ selected_item.item_name }}</strong>
         </span>
+        {% endif %}
     </div>
 
     {% set summary_metrics = [
@@ -275,15 +283,15 @@
     {% else %}
     <div class="text-center py-5">
         <i class="bi bi-inbox no-data-icon"></i>
-        <p class="mt-3 text-muted">No movement data found for this item with the selected filters.</p>
+        <p class="mt-3 text-muted">No movement data found with the selected filters.</p>
     </div>
     {% endif %}
 
     {% else %}
     <div class="text-center py-5">
         <i class="bi bi-box-seam no-data-icon"></i>
-        <h4 class="mt-3 text-muted">Select an Item</h4>
-        <p class="text-muted">Please select an item from the dropdown above to view its movement details across warehouses.</p>
+        <h4 class="mt-3 text-muted">Select a Category or Item</h4>
+        <p class="text-muted">Please select a category or item from the dropdown above to view movement details across warehouses.</p>
     </div>
     {% endif %}
 </div>

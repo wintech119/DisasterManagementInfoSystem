@@ -1141,12 +1141,24 @@ def aid_item_movement_detail():
     }
     detail_rows = []
     selected_item = None
+    selected_category = None
+    has_filter = item_id or category_id
     
-    if item_id:
-        selected_item = Item.query.get(int(item_id))
+    if has_filter:
+        if item_id:
+            selected_item = Item.query.get(int(item_id))
+        if category_id:
+            selected_category = ItemCategory.query.get(int(category_id))
         
-        base_conditions = ["t.item_id = :item_id"]
-        params = {'item_id': int(item_id)}
+        base_conditions = []
+        params = {}
+        
+        if item_id:
+            base_conditions.append("t.item_id = :item_id")
+            params['item_id'] = int(item_id)
+        elif category_id:
+            base_conditions.append("i.category_id = :category_id")
+            params['category_id'] = int(category_id)
         
         if warehouse_id:
             base_conditions.append("t.warehouse_id = :warehouse_id")
@@ -1164,13 +1176,14 @@ def aid_item_movement_detail():
             base_conditions.append("t.created_at <= (:end_date)::date + interval '1 day'")
             params['end_date'] = end_date
         
-        where_clause = "WHERE " + " AND ".join(base_conditions)
+        where_clause = "WHERE " + " AND ".join(base_conditions) if base_conditions else ""
         
         summary_sql = text(f"""
             SELECT 
                 COALESCE(SUM(CASE WHEN t.ttype = 'IN' THEN t.qty ELSE 0 END), 0) as total_received,
                 COALESCE(SUM(CASE WHEN t.ttype = 'OUT' THEN t.qty ELSE 0 END), 0) as total_issued
             FROM transaction t
+            JOIN item i ON i.item_id = t.item_id
             {where_clause}
         """)
         
@@ -1189,6 +1202,7 @@ def aid_item_movement_detail():
                 COALESCE(SUM(CASE WHEN t.ttype = 'IN' THEN t.qty ELSE 0 END), 0) 
                 - COALESCE(SUM(CASE WHEN t.ttype = 'OUT' THEN t.qty ELSE 0 END), 0) as in_store
             FROM transaction t
+            JOIN item i ON i.item_id = t.item_id
             JOIN warehouse w ON w.warehouse_id = t.warehouse_id
             {where_clause}
             GROUP BY w.warehouse_id, w.warehouse_name, w.warehouse_type
@@ -1207,24 +1221,6 @@ def aid_item_movement_detail():
             }
             for row in detail_results
         ]
-        
-        if len(detail_rows) == 0:
-            kw_warehouse = Warehouse.query.filter(
-                Warehouse.warehouse_name.ilike('%kingston%')
-            ).first()
-            
-            if not kw_warehouse:
-                kw_warehouse = Warehouse.query.filter_by(warehouse_id=1).first()
-            
-            if kw_warehouse:
-                detail_rows.append({
-                    'warehouse_id': kw_warehouse.warehouse_id,
-                    'warehouse_name': kw_warehouse.warehouse_name,
-                    'warehouse_type': kw_warehouse.warehouse_type,
-                    'total_received': 0.0,
-                    'total_issued': 0.0,
-                    'in_store': 0.0
-                })
     
     filters = {
         'category_id': category_id,
@@ -1240,6 +1236,8 @@ def aid_item_movement_detail():
         'items': items,
         'warehouses': warehouses,
         'selected_item': selected_item,
+        'selected_category': selected_category,
+        'has_filter': has_filter,
         'summary_totals': summary_totals,
         'detail_rows': detail_rows,
         'filters': filters
