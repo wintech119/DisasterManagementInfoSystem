@@ -115,7 +115,7 @@
             <div class="card-body">
                 <form method="get" action="{{ url_for('dashboard.aid_item_movement_detail') }}" id="filterForm">
                     <div class="row g-3 align-items-end">
-                        <div class="col-12 col-md-6 col-xl-2">
+                        <div class="col-12 col-md-6 col-lg-3">
                             <label for="category_id" class="form-label small fw-semibold">Category</label>
                             <select class="form-select" id="category_id" name="category_id">
                                 <option value="">All Categories</option>
@@ -126,7 +126,7 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-12 col-md-6 col-xl-3">
+                        <div class="col-12 col-md-6 col-lg-3">
                             <label for="item_id" class="form-label small fw-semibold">Item <span class="text-danger">*</span></label>
                             <select class="form-select" id="item_id" name="item_id" required>
                                 <option value="">-- Select an Item --</option>
@@ -137,7 +137,7 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-12 col-sm-6 col-md-4 col-xl-2">
+                        <div class="col-12 col-sm-6 col-md-4 col-lg-3">
                             <label for="warehouse_id" class="form-label small fw-semibold">Warehouse</label>
                             <select class="form-select" id="warehouse_id" name="warehouse_id">
                                 <option value="">All Warehouses</option>
@@ -148,7 +148,7 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-12 col-sm-6 col-md-4 col-xl-2">
+                        <div class="col-12 col-sm-6 col-md-4 col-lg-3">
                             <label for="movement_type" class="form-label small fw-semibold">Movement Type</label>
                             <select class="form-select" id="movement_type" name="movement_type">
                                 <option value="">Received & Issued</option>
@@ -156,7 +156,7 @@
                                 <option value="OUT" {% if filters.movement_type == 'OUT' %}selected{% endif %}>Issued Only</option>
                             </select>
                         </div>
-                        <div class="col-6 col-sm-6 col-md-4 col-xl-1">
+                        <div class="col-6 col-sm-4 col-md-2 col-lg-2">
                             <label for="start_date" class="form-label small fw-semibold">Date From</label>
                             <div class="date-input-wrapper">
                                 <input type="text" class="form-control" id="start_date" name="start_date" 
@@ -164,7 +164,7 @@
                                 <i class="bi bi-calendar3 calendar-icon"></i>
                             </div>
                         </div>
-                        <div class="col-6 col-sm-6 col-md-4 col-xl-1">
+                        <div class="col-6 col-sm-4 col-md-2 col-lg-2">
                             <label for="end_date" class="form-label small fw-semibold">Date To</label>
                             <div class="date-input-wrapper">
                                 <input type="text" class="form-control" id="end_date" name="end_date" 
@@ -172,11 +172,11 @@
                                 <i class="bi bi-calendar3 calendar-icon"></i>
                             </div>
                         </div>
-                        <div class="col-12 col-md-4 col-xl-1 d-flex gap-2 filter-buttons">
-                            <button type="submit" class="btn btn-primary">
+                        <div class="col-12 col-sm-4 col-md-4 col-lg-2 d-flex gap-2 align-items-end filter-buttons">
+                            <button type="submit" class="btn btn-primary flex-shrink-0">
                                 <i class="bi bi-search"></i> Filter
                             </button>
-                            <a href="{{ url_for('dashboard.aid_item_movement_detail') }}" class="btn btn-outline-secondary">
+                            <a href="{{ url_for('dashboard.aid_item_movement_detail') }}" class="btn btn-outline-secondary flex-shrink-0">
                                 <i class="bi bi-x-circle"></i> Reset
                             </a>
                         </div>
