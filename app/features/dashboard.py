@@ -1048,7 +1048,7 @@ def aid_movement_dashboard():
         LEFT JOIN item i ON t.item_id = i.item_id
         LEFT JOIN warehouse w ON t.warehouse_id = w.warehouse_id
         LEFT JOIN itemcatg c ON i.category_id = c.category_id
-        LEFT JOIN unitofmeasure u ON i.uom_code = u.uom_code
+        LEFT JOIN unitofmeasure u ON i.default_uom_code = u.uom_code
         {where_clause}
         ORDER BY t.created_at DESC
         LIMIT :limit OFFSET :offset
