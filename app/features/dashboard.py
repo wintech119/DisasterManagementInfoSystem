@@ -959,3 +959,143 @@ def relief_package_analytics():
     }
     
     return render_template('dashboard/relief_package_analytics.html', **context)
+
+
+@dashboard_bp.route('/aid-movement')
+@login_required
+@role_required('ODPEM_DG', 'ODPEM_DDG', 'ODPEM_DIR_PEOD', 'LOGISTICS_MANAGER')
+def aid_movement_dashboard():
+    """
+    Aid Movement Dashboard - Read-only analytics on aid received, issued, and in store.
+    
+    Access: DG, Deputy DG, Director PEOD, Logistics Manager
+    
+    Displays:
+    - KPIs: Total Received, Total Issued, In Store
+    - Filters: Item search, warehouse selection, date range
+    - Table: Aid movement transactions
+    """
+    from sqlalchemy import text
+    
+    warehouse_id = request.args.get('warehouse_id', '')
+    item_search = request.args.get('item_search', '')
+    date_from = request.args.get('date_from', '')
+    date_to = request.args.get('date_to', '')
+    page = request.args.get('page', 1, type=int)
+    per_page = 25
+    
+    warehouses = Warehouse.query.filter_by(status_code='A').order_by(Warehouse.warehouse_name).all()
+    
+    base_conditions = []
+    params = {}
+    
+    if warehouse_id:
+        base_conditions.append("t.warehouse_id = :warehouse_id")
+        params['warehouse_id'] = int(warehouse_id)
+    
+    if item_search:
+        base_conditions.append("LOWER(i.item_name) LIKE :item_search")
+        params['item_search'] = f'%{item_search.lower()}%'
+    
+    if date_from:
+        base_conditions.append("t.created_at >= :date_from")
+        params['date_from'] = date_from
+    
+    if date_to:
+        base_conditions.append("t.created_at <= :date_to::date + interval '1 day'")
+        params['date_to'] = date_to
+    
+    where_clause = "WHERE " + " AND ".join(base_conditions) if base_conditions else ""
+    
+    kpi_sql = text(f"""
+        SELECT 
+            COALESCE(SUM(CASE WHEN t.ttype = 'IN' THEN t.qty ELSE 0 END), 0) as total_received,
+            COALESCE(SUM(CASE WHEN t.ttype = 'OUT' THEN t.qty ELSE 0 END), 0) as total_issued
+        FROM transaction t
+        LEFT JOIN item i ON t.item_id = i.item_id
+        {where_clause}
+    """)
+    
+    kpi_result = db.session.execute(kpi_sql, params).fetchone()
+    total_received = float(kpi_result.total_received)
+    total_issued = float(kpi_result.total_issued)
+    in_store = total_received - total_issued
+    
+    count_sql = text(f"""
+        SELECT COUNT(*) as total
+        FROM transaction t
+        LEFT JOIN item i ON t.item_id = i.item_id
+        {where_clause}
+    """)
+    total_count = db.session.execute(count_sql, params).scalar() or 0
+    total_pages = (total_count + per_page - 1) // per_page if total_count > 0 else 1
+    
+    offset = (page - 1) * per_page
+    transactions_sql = text(f"""
+        SELECT 
+            t.id,
+            t.ttype,
+            t.qty,
+            t.created_at,
+            t.notes,
+            i.item_name,
+            i.item_desc,
+            w.warehouse_name,
+            w.warehouse_code,
+            c.category_name,
+            u.uom_name
+        FROM transaction t
+        LEFT JOIN item i ON t.item_id = i.item_id
+        LEFT JOIN warehouse w ON t.warehouse_id = w.warehouse_id
+        LEFT JOIN itemcatg c ON i.category_id = c.category_id
+        LEFT JOIN unitofmeasure u ON i.uom_code = u.uom_code
+        {where_clause}
+        ORDER BY t.created_at DESC
+        LIMIT :limit OFFSET :offset
+    """)
+    
+    query_params = {**params, 'limit': per_page, 'offset': offset}
+    transactions = db.session.execute(transactions_sql, query_params).fetchall()
+    
+    pagination = {
+        'page': page,
+        'per_page': per_page,
+        'total': total_count,
+        'pages': total_pages,
+        'has_prev': page > 1,
+        'has_next': page < total_pages,
+        'prev_num': page - 1 if page > 1 else None,
+        'next_num': page + 1 if page < total_pages else None,
+    }
+    
+    def iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2):
+        last = 0
+        for num in range(1, total_pages + 1):
+            if num <= left_edge or \
+               (num > page - left_current - 1 and num < page + right_current) or \
+               num > total_pages - right_edge:
+                if last + 1 != num:
+                    yield None
+                yield num
+                last = num
+    
+    pagination['iter_pages'] = iter_pages
+    
+    filters = {
+        'warehouse_id': warehouse_id,
+        'item_search': item_search,
+        'date_from': date_from,
+        'date_to': date_to
+    }
+    
+    context = {
+        'total_received': total_received,
+        'total_issued': total_issued,
+        'in_store': in_store,
+        'transactions': transactions,
+        'warehouses': warehouses,
+        'filters': filters,
+        'pagination': pagination
+    }
+    
+    return render_template('dashboard/aid_movement_dashboard.html', **context)
