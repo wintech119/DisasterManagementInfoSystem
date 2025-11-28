@@ -1,0 +1,280 @@
+diff --git a/app/features/dashboard.py b/app/features/dashboard.py
+index cb8c3ccd340a40e4151269d9ee724ef614902ddc..05a2969dfcffa34832384852d208859cc9977f70 100644
+--- a/app/features/dashboard.py
++++ b/app/features/dashboard.py
+@@ -1120,57 +1120,68 @@ def aid_item_movement_detail():
+     - Filters: Category, Item selection (required), warehouse, movement type, date range
+     - Summary Cards: Total Received, Total Issued, In Store (for selected item)
+     - Detail Table: Per-warehouse breakdown for the selected item
+     """
+     from sqlalchemy import text
+     
+     category_id = request.args.get('category_id', '')
+     item_id = request.args.get('item_id', '')
+     warehouse_id = request.args.get('warehouse_id', '')
+     movement_type = request.args.get('movement_type', '')
+     start_date = request.args.get('start_date', '')
+     end_date = request.args.get('end_date', '')
+     
+     categories = ItemCategory.query.filter_by(status_code='A').order_by(ItemCategory.category_desc).all()
+     items = Item.query.filter_by(status_code='A').order_by(Item.item_name).all()
+     warehouses = Warehouse.query.filter_by(status_code='A').order_by(Warehouse.warehouse_name).all()
+     
+     summary_totals = {
+         'total_received': 0,
+         'total_issued': 0,
+         'in_store': 0
+     }
+     detail_rows = []
+     selected_item = None
+     selected_category = None
++    selected_warehouse = None
++    movement_type_label = None
+     has_filter = item_id or category_id
+     
+     if has_filter:
+         if item_id:
+             selected_item = Item.query.get(int(item_id))
+         if category_id:
+             selected_category = ItemCategory.query.get(int(category_id))
++
++        if warehouse_id:
++            selected_warehouse = next((w for w in warehouses if str(w.warehouse_id) == warehouse_id), None)
++
++        if movement_type:
++            movement_type_label = {
++                'IN': 'Received Only',
++                'OUT': 'Issued Only'
++            }.get(movement_type, 'Received & Issued')
+         
+         base_conditions = []
+         params = {}
+         
+         if item_id:
+             base_conditions.append("t.item_id = :item_id")
+             params['item_id'] = int(item_id)
+         elif category_id:
+             base_conditions.append("i.category_id = :category_id")
+             params['category_id'] = int(category_id)
+         
+         if warehouse_id:
+             base_conditions.append("t.warehouse_id = :warehouse_id")
+             params['warehouse_id'] = int(warehouse_id)
+         
+         if movement_type:
+             base_conditions.append("t.ttype = :movement_type")
+             params['movement_type'] = movement_type
+         
+         if start_date:
+             base_conditions.append("t.created_at >= :start_date")
+             params['start_date'] = start_date
+         
+         if end_date:
+             base_conditions.append("t.created_at <= (:end_date)::date + interval '1 day'")
+@@ -1298,34 +1309,36 @@ def aid_item_movement_detail():
+             COALESCE(SUM(CASE WHEN t.ttype = 'IN' THEN t.qty ELSE 0 END), 0) 
+             - COALESCE(SUM(CASE WHEN t.ttype = 'OUT' THEN t.qty ELSE 0 END), 0) as in_store
+         FROM transaction t
+         JOIN item i ON i.item_id = t.item_id
+         JOIN warehouse w ON w.warehouse_id = t.warehouse_id
+         {chart_where_clause}
+         GROUP BY w.warehouse_id, w.warehouse_name
+         HAVING COALESCE(SUM(CASE WHEN t.ttype = 'IN' THEN t.qty ELSE 0 END), 0) > 0
+             OR COALESCE(SUM(CASE WHEN t.ttype = 'OUT' THEN t.qty ELSE 0 END), 0) > 0
+         ORDER BY total_received DESC
+     """)
+     
+     warehouse_results = db.session.execute(warehouse_sql, chart_params).fetchall()
+     for row in warehouse_results:
+         warehouse_chart_data['labels'].append(row.warehouse_name)
+         warehouse_chart_data['received'].append(float(row.total_received))
+         warehouse_chart_data['issued'].append(float(row.total_issued))
+         warehouse_chart_data['in_store'].append(float(row.in_store))
+     
+     context = {
+         'categories': categories,
+         'items': items,
+         'warehouses': warehouses,
+         'selected_item': selected_item,
+         'selected_category': selected_category,
++        'selected_warehouse': selected_warehouse,
++        'movement_type_label': movement_type_label,
+         'has_filter': has_filter,
+         'summary_totals': summary_totals,
+         'detail_rows': detail_rows,
+         'filters': filters,
+         'category_chart_data': category_chart_data,
+         'warehouse_chart_data': warehouse_chart_data
+     }
+     
+     return render_template('dashboard/aid_item_movement_detail.html', **context)
+diff --git a/templates/dashboard/aid_item_movement_detail.html b/templates/dashboard/aid_item_movement_detail.html
+index ab49e0556354cbc26631218e79135d56966c57e7..c195a70b653368969fd6bee914090cb612d85651 100644
+--- a/templates/dashboard/aid_item_movement_detail.html
++++ b/templates/dashboard/aid_item_movement_detail.html
+@@ -241,50 +241,74 @@
+                             </button>
+                             <a href="{{ url_for('dashboard.aid_item_movement_detail') }}" class="btn btn-outline-secondary flex-shrink-0">
+                                 <i class="bi bi-x-circle"></i> Reset
+                             </a>
+                         </div>
+                     </div>
+                 </form>
+             </div>
+         </div>
+     </div>
+ 
+     {% if has_filter %}
+     <div class="mb-4 d-flex flex-wrap gap-2">
+         {% if selected_category %}
+         <span class="selected-item-badge">
+             <i class="bi bi-tag"></i>
+             Category: <strong>{{ selected_category.category_desc }}</strong>
+         </span>
+         {% endif %}
+         {% if selected_item %}
+         <span class="selected-item-badge">
+             <i class="bi bi-box-seam"></i>
+             Item: <strong>{{ selected_item.item_name }}</strong>
+         </span>
+         {% endif %}
++        {% if selected_warehouse %}
++        <span class="selected-item-badge">
++            <i class="bi bi-house"></i>
++            Warehouse: <strong>{{ selected_warehouse.warehouse_name }}</strong>
++        </span>
++        {% endif %}
++        {% if movement_type_label %}
++        <span class="selected-item-badge">
++            <i class="bi bi-arrow-left-right"></i>
++            Movement: <strong>{{ movement_type_label }}</strong>
++        </span>
++        {% endif %}
++        {% if filters.start_date %}
++        <span class="selected-item-badge">
++            <i class="bi bi-calendar3"></i>
++            From: <strong>{{ filters.start_date }}</strong>
++        </span>
++        {% endif %}
++        {% if filters.end_date %}
++        <span class="selected-item-badge">
++            <i class="bi bi-calendar2-check"></i>
++            To: <strong>{{ filters.end_date }}</strong>
++        </span>
++        {% endif %}
+     </div>
+ 
+     {% set summary_metrics = [
+         {
+             'icon': 'box-arrow-in-down',
+             'label': 'Total Received',
+             'value': "{:,.0f}".format(summary_totals.total_received),
+             'variant': 'success'
+         },
+         {
+             'icon': 'box-arrow-up-right',
+             'label': 'Total Issued',
+             'value': "{:,.0f}".format(summary_totals.total_issued),
+             'variant': 'danger'
+         },
+         {
+             'icon': 'box-seam',
+             'label': 'In Store',
+             'value': "{:,.0f}".format(summary_totals.in_store),
+             'variant': 'primary'
+         }
+     ] %}
+     {{ render_summary_cards(summary_metrics) }}
+ 
+     {% if detail_rows %}
+diff --git a/templates/dashboard/aid_movement_dashboard.html b/templates/dashboard/aid_movement_dashboard.html
+index a8a47351f1a7e2709b060d9e1cba9f3856639da0..443d95803fa70f57d97ea90eab921ea741ac66b7 100644
+--- a/templates/dashboard/aid_movement_dashboard.html
++++ b/templates/dashboard/aid_movement_dashboard.html
+@@ -222,83 +222,83 @@
+                     </td>
+                     <td>
+                         {% if txn.notes %}
+                         <span class="text-muted" title="{{ txn.notes }}">{{ txn.notes[:30] }}{{ '...' if txn.notes|length > 30 else '' }}</span>
+                         {% else %}
+                         <span class="text-muted fst-italic">-</span>
+                         {% endif %}
+                     </td>
+                 </tr>
+                 {% endfor %}
+             </tbody>
+         </table>
+     </div>
+     
+     {% if pagination.pages > 1 %}
+     <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-4 gap-3 pagination-wrapper">
+         <small class="text-muted text-center text-md-start">
+             Showing {{ ((pagination.page - 1) * pagination.per_page) + 1 }} to 
+             {{ [pagination.page * pagination.per_page, pagination.total]|min }} of 
+             {{ pagination.total }} entries
+         </small>
+         <nav aria-label="Aid movement pagination">
+             <ul class="pagination pagination-sm mb-0 flex-wrap justify-content-center">
+                 {% if pagination.has_prev %}
+                 <li class="page-item">
+-                    <a class="page-link" href="{{ url_for('dashboard.aid_movement_dashboard', page=pagination.prev_num, warehouse_id=filters.warehouse_id, item_search=filters.item_search, date_from=filters.date_from, date_to=filters.date_to) }}">
++                    <a class="page-link" href="{{ url_for('dashboard.aid_movement_dashboard', page=pagination.prev_num, warehouse_id=filters.warehouse_id, item_search=filters.item_search, date_from=filters.date_from, date_to=filters.date_to, movement_type=filters.movement_type) }}">
+                         <i class="bi bi-chevron-left"></i><span class="d-none d-sm-inline"> Prev</span>
+                     </a>
+                 </li>
+                 {% else %}
+                 <li class="page-item disabled">
+                     <span class="page-link"><i class="bi bi-chevron-left"></i><span class="d-none d-sm-inline"> Prev</span></span>
+                 </li>
+                 {% endif %}
+                 
+                 {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=1) %}
+                     {% if page_num %}
+                         {% if page_num == pagination.page %}
+                         <li class="page-item active">
+                             <span class="page-link">{{ page_num }}</span>
+                         </li>
+                         {% else %}
+                         <li class="page-item">
+-                            <a class="page-link" href="{{ url_for('dashboard.aid_movement_dashboard', page=page_num, warehouse_id=filters.warehouse_id, item_search=filters.item_search, date_from=filters.date_from, date_to=filters.date_to) }}">
++                            <a class="page-link" href="{{ url_for('dashboard.aid_movement_dashboard', page=page_num, warehouse_id=filters.warehouse_id, item_search=filters.item_search, date_from=filters.date_from, date_to=filters.date_to, movement_type=filters.movement_type) }}">
+                                 {{ page_num }}
+                             </a>
+                         </li>
+                         {% endif %}
+                     {% else %}
+                         <li class="page-item disabled">
+                             <span class="page-link">...</span>
+                         </li>
+                     {% endif %}
+                 {% endfor %}
+                 
+                 {% if pagination.has_next %}
+                 <li class="page-item">
+-                    <a class="page-link" href="{{ url_for('dashboard.aid_movement_dashboard', page=pagination.next_num, warehouse_id=filters.warehouse_id, item_search=filters.item_search, date_from=filters.date_from, date_to=filters.date_to) }}">
++                    <a class="page-link" href="{{ url_for('dashboard.aid_movement_dashboard', page=pagination.next_num, warehouse_id=filters.warehouse_id, item_search=filters.item_search, date_from=filters.date_from, date_to=filters.date_to, movement_type=filters.movement_type) }}">
+                         <span class="d-none d-sm-inline">Next </span><i class="bi bi-chevron-right"></i>
+                     </a>
+                 </li>
+                 {% else %}
+                 <li class="page-item disabled">
+                     <span class="page-link"><span class="d-none d-sm-inline">Next </span><i class="bi bi-chevron-right"></i></span>
+                 </li>
+                 {% endif %}
+             </ul>
+         </nav>
+     </div>
+     {% endif %}
+     {% else %}
+     <div class="text-center py-5">
+         <i class="bi bi-inbox no-data-icon"></i>
+         <p class="mt-3 text-muted">No aid movement transactions found matching the selected criteria.</p>
+     </div>
+     {% endif %}
+ </div>
+ 
+ <script nonce="{{ csp_nonce() }}" src="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.js" integrity="sha384-5JqMv4L/Xa0hfvtF06qboNdhvuYXUku9ZrhZh3bSk8VXF0A/RuSLHpLsSV9Zqhl6" crossorigin="anonymous"></script>
+ <script nonce="{{ csp_nonce() }}">
+ document.addEventListener('DOMContentLoaded', function() {
+     const dateConfig = {
+         dateFormat: "Y-m-d",
