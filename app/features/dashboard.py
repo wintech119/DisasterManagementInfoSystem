@@ -1231,6 +1231,89 @@ def aid_item_movement_detail():
         'end_date': end_date
     }
     
+    category_chart_data = {'labels': [], 'received': [], 'issued': [], 'in_store': []}
+    warehouse_chart_data = {'labels': [], 'received': [], 'issued': [], 'in_store': []}
+    
+    chart_conditions = []
+    chart_params = {}
+    
+    if warehouse_id:
+        chart_conditions.append("t.warehouse_id = :warehouse_id")
+        chart_params['warehouse_id'] = int(warehouse_id)
+    
+    if movement_type:
+        chart_conditions.append("t.ttype = :movement_type")
+        chart_params['movement_type'] = movement_type
+    
+    if start_date:
+        chart_conditions.append("t.created_at >= :start_date")
+        chart_params['start_date'] = start_date
+    
+    if end_date:
+        chart_conditions.append("t.created_at <= (:end_date)::date + interval '1 day'")
+        chart_params['end_date'] = end_date
+    
+    if category_id:
+        chart_conditions.append("i.category_id = :category_id")
+        chart_params['category_id'] = int(category_id)
+    
+    if item_id:
+        chart_conditions.append("t.item_id = :item_id")
+        chart_params['item_id'] = int(item_id)
+    
+    chart_where_clause = "WHERE " + " AND ".join(chart_conditions) if chart_conditions else ""
+    
+    category_sql = text(f"""
+        SELECT 
+            ic.category_id,
+            ic.category_desc,
+            COALESCE(SUM(CASE WHEN t.ttype = 'IN' THEN t.qty ELSE 0 END), 0) as total_received,
+            COALESCE(SUM(CASE WHEN t.ttype = 'OUT' THEN t.qty ELSE 0 END), 0) as total_issued,
+            COALESCE(SUM(CASE WHEN t.ttype = 'IN' THEN t.qty ELSE 0 END), 0) 
+            - COALESCE(SUM(CASE WHEN t.ttype = 'OUT' THEN t.qty ELSE 0 END), 0) as in_store
+        FROM transaction t
+        JOIN item i ON i.item_id = t.item_id
+        JOIN itemcatg ic ON ic.category_id = i.category_id
+        {chart_where_clause}
+        GROUP BY ic.category_id, ic.category_desc
+        HAVING COALESCE(SUM(CASE WHEN t.ttype = 'IN' THEN t.qty ELSE 0 END), 0) 
+             - COALESCE(SUM(CASE WHEN t.ttype = 'OUT' THEN t.qty ELSE 0 END), 0) > 0
+        ORDER BY in_store DESC
+        LIMIT 10
+    """)
+    
+    category_results = db.session.execute(category_sql, chart_params).fetchall()
+    for row in category_results:
+        category_chart_data['labels'].append(row.category_desc)
+        category_chart_data['received'].append(float(row.total_received))
+        category_chart_data['issued'].append(float(row.total_issued))
+        category_chart_data['in_store'].append(float(row.in_store))
+    
+    warehouse_sql = text(f"""
+        SELECT 
+            w.warehouse_id,
+            w.warehouse_name,
+            COALESCE(SUM(CASE WHEN t.ttype = 'IN' THEN t.qty ELSE 0 END), 0) as total_received,
+            COALESCE(SUM(CASE WHEN t.ttype = 'OUT' THEN t.qty ELSE 0 END), 0) as total_issued,
+            COALESCE(SUM(CASE WHEN t.ttype = 'IN' THEN t.qty ELSE 0 END), 0) 
+            - COALESCE(SUM(CASE WHEN t.ttype = 'OUT' THEN t.qty ELSE 0 END), 0) as in_store
+        FROM transaction t
+        JOIN item i ON i.item_id = t.item_id
+        JOIN warehouse w ON w.warehouse_id = t.warehouse_id
+        {chart_where_clause}
+        GROUP BY w.warehouse_id, w.warehouse_name
+        HAVING COALESCE(SUM(CASE WHEN t.ttype = 'IN' THEN t.qty ELSE 0 END), 0) 
+             - COALESCE(SUM(CASE WHEN t.ttype = 'OUT' THEN t.qty ELSE 0 END), 0) > 0
+        ORDER BY in_store DESC
+    """)
+    
+    warehouse_results = db.session.execute(warehouse_sql, chart_params).fetchall()
+    for row in warehouse_results:
+        warehouse_chart_data['labels'].append(row.warehouse_name)
+        warehouse_chart_data['received'].append(float(row.total_received))
+        warehouse_chart_data['issued'].append(float(row.total_issued))
+        warehouse_chart_data['in_store'].append(float(row.in_store))
+    
     context = {
         'categories': categories,
         'items': items,
@@ -1240,7 +1323,9 @@ def aid_item_movement_detail():
         'has_filter': has_filter,
         'summary_totals': summary_totals,
         'detail_rows': detail_rows,
-        'filters': filters
+        'filters': filters,
+        'category_chart_data': category_chart_data,
+        'warehouse_chart_data': warehouse_chart_data
     }
     
     return render_template('dashboard/aid_item_movement_detail.html', **context)
