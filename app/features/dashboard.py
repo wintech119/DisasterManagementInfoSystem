@@ -1276,9 +1276,9 @@ def aid_item_movement_detail():
         JOIN itemcatg ic ON ic.category_id = i.category_id
         {chart_where_clause}
         GROUP BY ic.category_id, ic.category_desc
-        HAVING COALESCE(SUM(CASE WHEN t.ttype = 'IN' THEN t.qty ELSE 0 END), 0) 
-             - COALESCE(SUM(CASE WHEN t.ttype = 'OUT' THEN t.qty ELSE 0 END), 0) > 0
-        ORDER BY in_store DESC
+        HAVING COALESCE(SUM(CASE WHEN t.ttype = 'IN' THEN t.qty ELSE 0 END), 0) > 0
+            OR COALESCE(SUM(CASE WHEN t.ttype = 'OUT' THEN t.qty ELSE 0 END), 0) > 0
+        ORDER BY total_received DESC
         LIMIT 10
     """)
     
@@ -1302,9 +1302,9 @@ def aid_item_movement_detail():
         JOIN warehouse w ON w.warehouse_id = t.warehouse_id
         {chart_where_clause}
         GROUP BY w.warehouse_id, w.warehouse_name
-        HAVING COALESCE(SUM(CASE WHEN t.ttype = 'IN' THEN t.qty ELSE 0 END), 0) 
-             - COALESCE(SUM(CASE WHEN t.ttype = 'OUT' THEN t.qty ELSE 0 END), 0) > 0
-        ORDER BY in_store DESC
+        HAVING COALESCE(SUM(CASE WHEN t.ttype = 'IN' THEN t.qty ELSE 0 END), 0) > 0
+            OR COALESCE(SUM(CASE WHEN t.ttype = 'OUT' THEN t.qty ELSE 0 END), 0) > 0
+        ORDER BY total_received DESC
     """)
     
     warehouse_results = db.session.execute(warehouse_sql, chart_params).fetchall()
