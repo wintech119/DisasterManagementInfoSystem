@@ -116,13 +116,13 @@
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-body">
                 <form method="get" action="{{ url_for('dashboard.aid_movement_dashboard') }}" id="filterForm">
-                    <div class="row g-3">
-                        <div class="col-12 col-sm-6 col-lg-3">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-12 col-md-6 col-xl-2">
                             <label for="item_search" class="form-label small fw-semibold">Search Item</label>
                             <input type="text" class="form-control" id="item_search" name="item_search" 
                                    value="{{ filters.item_search }}" placeholder="Enter item name...">
                         </div>
-                        <div class="col-12 col-sm-6 col-lg-2">
+                        <div class="col-12 col-sm-6 col-md-3 col-xl-2">
                             <label for="warehouse_id" class="form-label small fw-semibold">Warehouse</label>
                             <select class="form-select" id="warehouse_id" name="warehouse_id">
                                 <option value="">All Warehouses</option>
@@ -133,7 +133,7 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-12 col-sm-6 col-lg-2">
+                        <div class="col-12 col-sm-6 col-md-3 col-xl-2">
                             <label for="movement_type" class="form-label small fw-semibold">Movement Type</label>
                             <select class="form-select" id="movement_type" name="movement_type">
                                 <option value="">All Movements</option>
@@ -141,7 +141,7 @@
                                 <option value="OUT" {% if filters.movement_type == 'OUT' %}selected{% endif %}>Issued (OUT)</option>
                             </select>
                         </div>
-                        <div class="col-6 col-sm-6 col-lg-1">
+                        <div class="col-6 col-sm-6 col-md-3 col-xl-2">
                             <label for="date_from" class="form-label small fw-semibold">Date From</label>
                             <div class="date-input-wrapper">
                                 <input type="text" class="form-control" id="date_from" name="date_from" 
@@ -149,7 +149,7 @@
                                 <i class="bi bi-calendar3 calendar-icon"></i>
                             </div>
                         </div>
-                        <div class="col-6 col-sm-6 col-lg-1">
+                        <div class="col-6 col-sm-6 col-md-3 col-xl-2">
                             <label for="date_to" class="form-label small fw-semibold">Date To</label>
                             <div class="date-input-wrapper">
                                 <input type="text" class="form-control" id="date_to" name="date_to" 
@@ -157,7 +157,7 @@
                                 <i class="bi bi-calendar3 calendar-icon"></i>
                             </div>
                         </div>
-                        <div class="col-12 col-lg-2 d-flex align-items-end gap-2 filter-buttons">
+                        <div class="col-12 col-md-6 col-xl-2 d-flex gap-2 filter-buttons">
                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-search"></i> Filter
                             </button>
