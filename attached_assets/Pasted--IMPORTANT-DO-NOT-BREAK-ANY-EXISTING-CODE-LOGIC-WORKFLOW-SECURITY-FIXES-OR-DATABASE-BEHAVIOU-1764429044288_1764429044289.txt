@@ -1,0 +1,58 @@
+**IMPORTANT — DO NOT BREAK ANY EXISTING CODE, LOGIC, WORKFLOW, SECURITY FIXES,
+OR DATABASE BEHAVIOUR. THIS MUST BE A CONTROLLED DROP-AND-CREATE OPERATION.  
+ALL FOREIGN KEY DEPENDENCIES MUST BE TEMPORARILY HANDLED SAFELY.**
+
+Execute the following steps in order, safely:
+
+1. Check if any table references reliefrqstitem_status.status_code via a FOREIGN KEY.
+   - If found (e.g., reliefrqst_item.status_code), temporarily DROP ONLY the FK constraint, NOT the column.
+     Example (adjust name accordingly):
+        ALTER TABLE reliefrqst_item DROP CONSTRAINT IF EXISTS fk_reliefrqstitem_status;
+
+2. Now safely drop the table if it exists:
+      DROP TABLE IF EXISTS reliefrqstitem_status CASCADE;
+
+3. Recreate the table EXACTLY as specified below:
+
+   CREATE TABLE reliefrqstitem_status
+   (
+       status_code char(1) NOT NULL
+           CONSTRAINT pk_reliefrqstitem_status PRIMARY KEY,
+
+       status_desc varchar(30) NOT NULL,
+
+       item_qty_rule char(2) NOT NULL
+           CONSTRAINT c_reliefrqstitem_status_2 CHECK (item_qty_rule IN ('EZ','GZ','ER')),
+
+       active_flag boolean NOT NULL DEFAULT TRUE,
+       create_by_id varchar(20) NOT NULL,
+       create_dtime timestamp(0) without time zone NOT NULL,
+       update_by_id varchar(20) NOT NULL,
+       update_dtime timestamp(0) without time zone NOT NULL,
+       version_nbr integer NOT NULL
+   );
+
+4. Seed the master data safely:
+
+   INSERT INTO reliefrqstitem_status VALUES
+       ('R', 'REQUESTED',            'EZ', TRUE, 'system', CURRENT_TIMESTAMP, 'system', CURRENT_TIMESTAMP, 1),
+       ('U', 'UNAVAILABLE',          'EZ', TRUE, 'system', CURRENT_TIMESTAMP, 'system', CURRENT_TIMESTAMP, 1),
+       ('W', 'AWAITING AVAILABILITY','EZ', TRUE, 'system', CURRENT_TIMESTAMP, 'system', CURRENT_TIMESTAMP, 1),
+       ('D', 'DENIED',               'EZ', TRUE, 'system', CURRENT_TIMESTAMP, 'system', CURRENT_TIMESTAMP, 1),
+       ('P', 'PARTLY FILLED',        'GZ', TRUE, 'system', CURRENT_TIMESTAMP, 'system', CURRENT_TIMESTAMP, 1),
+       ('L', 'ALLOWED LIMIT',        'GZ', TRUE, 'system', CURRENT_TIMESTAMP, 'system', CURRENT_TIMESTAMP, 1),
+       ('F', 'FILLED',               'ER', TRUE, 'system', CURRENT_TIMESTAMP, 'system', CURRENT_TIMESTAMP, 1);
+
+5. Re-add the foreign key on any dependent table(s).
+   Example for reliefrqst_item:
+       ALTER TABLE reliefrqst_item
+       ADD CONSTRAINT fk_reliefrqstitem_status
+           FOREIGN KEY (status_code)
+           REFERENCES reliefrqstitem_status(status_code);
+
+6. Confirm:
+   - status_code values match what DRIMS logic expects.
+   - No changes to UI behaviour, workflow logic, or security validation.
+   - No breakage to existing DRIMS controllers, services, or SQL queries.
+
+**END OF PROMPT**
